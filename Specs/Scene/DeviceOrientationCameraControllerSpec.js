@@ -82,7 +82,7 @@ defineSuite([
         var direction = Cartesian3.clone(camera.direction);
 
         fireEvent({
-            beta : 90.0
+            beta : -90.0
         });
 
         expect(camera.position).toEqual(position);
