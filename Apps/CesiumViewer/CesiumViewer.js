@@ -58,7 +58,15 @@ define([
         viewer = new Viewer('cesiumContainer', {
             imageryProvider : imageryProvider,
             baseLayerPicker : !defined(imageryProvider),
-            scene3DOnly : endUserOptions.scene3DOnly
+            scene3DOnly : endUserOptions.scene3DOnly,
+
+            // NOTE: Don't commit, just for local VR testing
+            vrButton: true,
+            timeline: false,
+            infoBox: false,
+            animation: false,
+            navigationHelpButton: false,
+            navigationInstructionsInitiallyVisible: false
         });
     } catch (exception) {
         loadingIndicator.style.display = 'none';
