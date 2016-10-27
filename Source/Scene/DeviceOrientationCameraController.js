@@ -98,7 +98,7 @@ define([
         var b = this._lastBeta - this._beta;
         var g = this._lastGamma - this._gamma;
 
-        rotate(this._scene.camera, -a, b, g);
+        rotate(this._scene.camera, -a, -b, g);
 
         this._lastAlpha = this._alpha;
         this._lastBeta = this._beta;
