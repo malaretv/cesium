@@ -3,6 +3,7 @@ define([
         '../Core/defaultValue',
         '../Core/defined',
         '../Core/destroyObject',
+        '../Core/Cartesian3',
         '../Core/DeveloperError',
         '../Core/Math',
         '../Core/Matrix3',
@@ -11,6 +12,7 @@ define([
         defaultValue,
         defined,
         destroyObject,
+        Cartesian3,
         DeveloperError,
         CesiumMath,
         Matrix3,
@@ -51,6 +53,7 @@ define([
             that._alpha = CesiumMath.toRadians(alpha);
             that._beta = CesiumMath.toRadians(e.beta);
             that._gamma = CesiumMath.toRadians(e.gamma);
+            that._orient = CesiumMath.toRadians(window.orientation || 0);
         }
 
         window.addEventListener('deviceorientation', callback, false);
@@ -64,22 +67,25 @@ define([
     var scratchQuaternion2 = new Quaternion();
     var scratchMatrix3 = new Matrix3();
 
-    function rotate(camera, alpha, beta, gamma) {
+    //var eulerMatrix = new Matrix3();
+    var quat = new Quaternion();
+    var matrix = new Matrix3();
+    var q1 = new Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) );
+    function rotate(camera, alpha, beta, gamma, orient) {
         var direction = camera.direction;
-        var right = camera.right;
-        var up = camera.up;
-
-        var bQuat = Quaternion.fromAxisAngle(direction, beta, scratchQuaternion2);
-        var gQuat = Quaternion.fromAxisAngle(right, gamma, scratchQuaternion1);
-
-        var rotQuat = Quaternion.multiply(gQuat, bQuat, gQuat);
-
-        var aQuat = Quaternion.fromAxisAngle(up, alpha, scratchQuaternion2);
-        Quaternion.multiply(aQuat, rotQuat, rotQuat);
-
-        var matrix = Matrix3.fromQuaternion(rotQuat, scratchMatrix3);
-        Matrix3.multiplyByVector(matrix, right, right);
-        Matrix3.multiplyByVector(matrix, up, up);
+        var eulerMatrix = new Matrix3();
+        Matrix3.fromRotationY(alpha, eulerMatrix);
+        Matrix3.fromRotationX(beta, eulerMatrix);
+        Matrix3.fromRotationZ(-gamma, eulerMatrix);
+        //console.log('Euler', eulerMatrix);
+        Quaternion.fromRotationMatrix(eulerMatrix, quat);
+        //console.log('quat', quat);
+        Quaternion.multiply(quat, q1, quat);
+        //console.log('*q1', quat);
+        Quaternion.multiply(quat, Quaternion.fromAxisAngle(Cartesian3.UNIT_Z, -orient), quat);
+        //console.log('*zee', quat);
+        Matrix3.fromQuaternion(quat, matrix);
+        //console.log('matrix', matrix);
         Matrix3.multiplyByVector(matrix, direction, direction);
     }
 
@@ -88,21 +94,12 @@ define([
             return;
         }
 
-        if (!defined(this._lastAlpha)) {
-            this._lastAlpha = this._alpha;
-            this._lastBeta = this._beta;
-            this._lastGamma = this._gamma;
-        }
+        var a = this._alpha;
+        var b = this._beta;
+        var g = this._gamma;
+        var orient = this._orient;
+        rotate(this._scene.camera, a, b, g, orient);
 
-        var a = this._lastAlpha - this._alpha;
-        var b = this._lastBeta - this._beta;
-        var g = this._lastGamma - this._gamma;
-
-        rotate(this._scene.camera, -a, -b, g);
-
-        this._lastAlpha = this._alpha;
-        this._lastBeta = this._beta;
-        this._lastGamma = this._gamma;
     };
 
     /**
