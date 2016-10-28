@@ -63,30 +63,40 @@ define([
         };
     }
 
-    var scratchQuaternion1 = new Quaternion();
-    var scratchQuaternion2 = new Quaternion();
-    var scratchMatrix3 = new Matrix3();
-
-    //var eulerMatrix = new Matrix3();
     var quat = new Quaternion();
     var matrix = new Matrix3();
     var q1 = new Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) );
+
     function rotate(camera, alpha, beta, gamma, orient) {
-        var direction = camera.direction;
-        var eulerMatrix = new Matrix3();
-        Matrix3.fromRotationY(alpha, eulerMatrix);
-        Matrix3.fromRotationX(beta, eulerMatrix);
-        Matrix3.fromRotationZ(-gamma, eulerMatrix);
-        //console.log('Euler', eulerMatrix);
-        Quaternion.fromRotationMatrix(eulerMatrix, quat);
-        //console.log('quat', quat);
+
+        // Get rotations
+        // NOTE: in no other implementation is alpha made negative
+        // but for some reason here it is required
+        var xRotation = Matrix3.fromRotationX(beta);
+        var yRotation = Matrix3.fromRotationY(-alpha);
+        var zRotation = Matrix3.fromRotationZ(-gamma);
+
+        // xRotation * yRotation * zRotation
+        Matrix3.multiply(yRotation, xRotation, matrix);
+        Matrix3.multiply(zRotation, matrix, matrix);
+
+        Quaternion.fromRotationMatrix(matrix, quat);
+
+        // Camera looks out back of device, not the top
         Quaternion.multiply(quat, q1, quat);
-        //console.log('*q1', quat);
+
+        // adjust for screen orientation
         Quaternion.multiply(quat, Quaternion.fromAxisAngle(Cartesian3.UNIT_Z, -orient), quat);
-        //console.log('*zee', quat);
+
         Matrix3.fromQuaternion(quat, matrix);
-        //console.log('matrix', matrix);
-        Matrix3.multiplyByVector(matrix, direction, direction);
+
+        // Set to camera
+        // NOTE: not sure why assignemnts differ from Dan Bagnelli's suggestions
+        // here https://groups.google.com/forum/#!searchin/cesium-dev/deviceorientation|sort:relevance/cesium-dev/cr2P2wfOwl4/e4opSe_5BrwJ
+        // where row 0 => right, row 1 => up, row 2 => direction
+        Matrix3.getRow(matrix, 0, camera.up);
+        Matrix3.getRow(matrix, 1, camera.direction);
+        Matrix3.getRow(matrix, 2, camera.right);
     }
 
     DeviceOrientationCameraController.prototype.update = function() {
@@ -98,6 +108,7 @@ define([
         var b = this._beta;
         var g = this._gamma;
         var orient = this._orient;
+
         rotate(this._scene.camera, a, b, g, orient);
 
     };
