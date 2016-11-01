@@ -50,53 +50,74 @@ define([
                 return;
             }
 
-            that._alpha = CesiumMath.toRadians(alpha);
+            that._alpha = CesiumMath.toRadians(e.alpha);
             that._beta = CesiumMath.toRadians(e.beta);
             that._gamma = CesiumMath.toRadians(e.gamma);
             that._orient = CesiumMath.toRadians(window.orientation || 0);
         }
-
+        // 90 0 -90 90
+        function screenCallback() {
+          console.log('orientation', window.orientation);
+          this._orient = CesiumMath.toRadians(window.orientation || 0);
+        }
         window.addEventListener('deviceorientation', callback, false);
-
+        window.addEventListener('screenorientation', screenCallback, false);
         this._removeListener = function() {
             window.removeEventListener('deviceorientation', callback, false);
+            window.removeEventListener('screenorientation', screenCallback, false);
         };
     }
 
+    function eulerToQuaternionInYXZOrder(_x, _y, _z) {
+      var c1 = Math.cos( _x / 2 );
+  		var c2 = Math.cos( _y / 2 );
+  		var c3 = Math.cos( _z / 2 );
+  		var s1 = Math.sin( _x / 2 );
+  		var s2 = Math.sin( _y / 2 );
+  		var s3 = Math.sin( _z / 2 );
+      var x = s1 * c2 * c3 + c1 * s2 * s3;
+			var y = c1 * s2 * c3 - s1 * c2 * s3;
+			var z = c1 * c2 * s3 - s1 * s2 * c3;
+			var w = c1 * c2 * c3 + s1 * s2 * s3;
+
+      return new Quaternion(x, y, z, w);
+    }
+    function eulerToQuaternionInZXYOrder(_x, _y, _z) {
+      var c1 = Math.cos( _x / 2 );
+  		var c2 = Math.cos( _y / 2 );
+  		var c3 = Math.cos( _z / 2 );
+  		var s1 = Math.sin( _x / 2 );
+  		var s2 = Math.sin( _y / 2 );
+  		var s3 = Math.sin( _z / 2 );
+      var x = s1 * c2 * c3 - c1 * s2 * s3;
+			var y = c1 * s2 * c3 + s1 * c2 * s3;
+			var z = c1 * c2 * s3 + s1 * s2 * c3;
+			var w = c1 * c2 * c3 - s1 * s2 * s3;
+
+      return new Quaternion(x, y, z, w);
+    }
     var quat = new Quaternion();
     var matrix = new Matrix3();
-    var q1 = new Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) );
+    var adjustToWorldQuat = new Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) );
 
     function rotate(camera, alpha, beta, gamma, orient) {
 
-        // Get rotations
-        // NOTE: in no other implementation is alpha made negative
-        // but for some reason here it is required
-        var xRotation = Matrix3.fromRotationX(beta);
-        var yRotation = Matrix3.fromRotationY(-alpha);
-        var zRotation = Matrix3.fromRotationZ(-gamma);
-
-        // xRotation * yRotation * zRotation
-        Matrix3.multiply(yRotation, xRotation, matrix);
-        Matrix3.multiply(zRotation, matrix, matrix);
-
-        Quaternion.fromRotationMatrix(matrix, quat);
+        var quat = eulerToQuaternionInYXZOrder(beta, alpha, -gamma);
 
         // Camera looks out back of device, not the top
-        Quaternion.multiply(quat, q1, quat);
+        Quaternion.multiply(quat, adjustToWorldQuat, quat);
 
         // adjust for screen orientation
         Quaternion.multiply(quat, Quaternion.fromAxisAngle(Cartesian3.UNIT_Z, -orient), quat);
 
+
+        // Quat -> Matrix
         Matrix3.fromQuaternion(quat, matrix);
 
-        // Set to camera
-        // NOTE: not sure why assignemnts differ from Dan Bagnelli's suggestions
-        // here https://groups.google.com/forum/#!searchin/cesium-dev/deviceorientation|sort:relevance/cesium-dev/cr2P2wfOwl4/e4opSe_5BrwJ
-        // where row 0 => right, row 1 => up, row 2 => direction
+        // Can't seem to get this part right...
         Matrix3.getRow(matrix, 0, camera.up);
-        Matrix3.getRow(matrix, 1, camera.direction);
-        Matrix3.getRow(matrix, 2, camera.right);
+        Matrix3.getRow(matrix, 2, camera.direction);
+        Matrix3.getRow(matrix, 1, camera.right);
     }
 
     DeviceOrientationCameraController.prototype.update = function() {
