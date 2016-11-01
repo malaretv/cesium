@@ -11,6 +11,8 @@ define([
         'Cesium/DataSources/GeoJsonDataSource',
         'Cesium/DataSources/KmlDataSource',
         'Cesium/Scene/createTileMapServiceImageryProvider',
+        'Cesium/Scene/DebugModelMatrixPrimitive',
+        'Cesium/Scene/DebugCameraPrimitive',
         'Cesium/Widgets/Viewer/Viewer',
         'Cesium/Widgets/Viewer/viewerCesiumInspectorMixin',
         'Cesium/Widgets/Viewer/viewerDragDropMixin',
@@ -27,6 +29,8 @@ define([
         GeoJsonDataSource,
         KmlDataSource,
         createTileMapServiceImageryProvider,
+        DebugModelMatrixPrimitive,
+        DebugCameraPrimitive,
         Viewer,
         viewerCesiumInspectorMixin,
         viewerDragDropMixin) {
@@ -82,7 +86,11 @@ define([
     if (endUserOptions.inspector) {
         viewer.extend(viewerCesiumInspectorMixin);
     }
-
+    var scene = viewer.scene;
+    var primitives = scene.primitives;
+    primitives.add(new DebugModelMatrixPrimitive({
+      width : 10.0
+    }));
     var showLoadError = function(name, error) {
         var title = 'An error occurred while loading the file: ' + name;
         var message = 'An error occurred while loading the file, which may indicate that it is invalid.  A detailed error report is below:';

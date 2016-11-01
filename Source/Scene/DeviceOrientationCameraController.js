@@ -96,28 +96,49 @@ define([
 
       return new Quaternion(x, y, z, w);
     }
+    function eulerToQuaternionInXYZOrder(_x, _y, _z) {
+      var c1 = Math.cos( _x / 2 );
+  		var c2 = Math.cos( _y / 2 );
+  		var c3 = Math.cos( _z / 2 );
+  		var s1 = Math.sin( _x / 2 );
+  		var s2 = Math.sin( _y / 2 );
+  		var s3 = Math.sin( _z / 2 );
+      var x = s1 * c2 * c3 + c1 * s2 * s3;
+			var y = c1 * s2 * c3 - s1 * c2 * s3;
+			var z = c1 * c2 * s3 + s1 * s2 * c3;
+			var w = c1 * c2 * c3 - s1 * s2 * s3;
+
+      return new Quaternion(x, y, z, w);
+    }
     var quat = new Quaternion();
     var matrix = new Matrix3();
-    var adjustToWorldQuat = new Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) );
+    var adjustToWorldQuat = new Quaternion( -Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) );
 
+    function degToRad(deg) {
+      return deg * Math.PI / 180;
+    }
     function rotate(camera, alpha, beta, gamma, orient) {
 
-        var quat = eulerToQuaternionInYXZOrder(beta, alpha, -gamma);
+        var quat = eulerToQuaternionInZXYOrder(beta, gamma, alpha);
 
+        // rotate -90 around z
+        // rotate -90 around y
+
+        Quaternion.multiply(quat, Quaternion.fromAxisAngle(Cartesian3.UNIT_Y, degToRad(90)), quat);
+        //Quaternion.multiply(quat, Quaternion.fromAxisAngle(Cartesian3.UNIT_Z, degToRad(90)), quat);
         // Camera looks out back of device, not the top
-        Quaternion.multiply(quat, adjustToWorldQuat, quat);
+        //Quaternion.multiply(quat, adjustToWorldQuat, quat);
 
         // adjust for screen orientation
-        Quaternion.multiply(quat, Quaternion.fromAxisAngle(Cartesian3.UNIT_Z, -orient), quat);
-
+        //Quaternion.multiply(quat, Quaternion.fromAxisAngle(Cartesian3.UNIT_Z, -orient), quat);
 
         // Quat -> Matrix
         Matrix3.fromQuaternion(quat, matrix);
 
-        // Can't seem to get this part right...
-        Matrix3.getRow(matrix, 0, camera.up);
-        Matrix3.getRow(matrix, 2, camera.direction);
-        Matrix3.getRow(matrix, 1, camera.right);
+        Matrix3.getColumn(matrix, 0, camera.direction);
+        Matrix3.getColumn(matrix, 2, camera.up);
+        Cartesian3.cross(camera.direction, camera.up, camera.right);
+
     }
 
     DeviceOrientationCameraController.prototype.update = function() {
@@ -129,7 +150,6 @@ define([
         var b = this._beta;
         var g = this._gamma;
         var orient = this._orient;
-
         rotate(this._scene.camera, a, b, g, orient);
 
     };
