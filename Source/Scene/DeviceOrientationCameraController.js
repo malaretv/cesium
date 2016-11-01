@@ -31,58 +31,29 @@ define([
 
         this._scene = scene;
 
-        this._lastAlpha = undefined;
-        this._lastBeta = undefined;
-        this._lastGamma = undefined;
-
-        this._alpha = undefined;
-        this._beta = undefined;
-        this._gamma = undefined;
+        this._deviceOrientation = {};
+        this._screenOrientation = window.orientation || 0;
 
         var that = this;
 
-        function callback(e) {
-            var alpha = e.alpha;
-            if (!defined(alpha)) {
-                that._alpha = undefined;
-                that._beta = undefined;
-                that._gamma = undefined;
-                return;
-            }
+        function deviceOrientationCallback(e) {
+          that._deviceOrientation = e;
+        }
 
-            that._alpha = CesiumMath.toRadians(e.alpha);
-            that._beta = CesiumMath.toRadians(e.beta);
-            that._gamma = CesiumMath.toRadians(e.gamma);
-            that._orient = CesiumMath.toRadians(window.orientation || 0);
+        function screenOrientationCallback() {
+          that._screenOrientation = window.orientation || 0;
         }
-        // 90 0 -90 90
-        function screenCallback() {
-          console.log('orientation', window.orientation);
-          this._orient = CesiumMath.toRadians(window.orientation || 0);
-        }
-        window.addEventListener('deviceorientation', callback, false);
-        window.addEventListener('screenorientation', screenCallback, false);
+
+        window.addEventListener('deviceorientation', deviceOrientationCallback, false);
+        window.addEventListener('orientationchange', screenOrientationCallback, false);
+
         this._removeListener = function() {
-            window.removeEventListener('deviceorientation', callback, false);
-            window.removeEventListener('screenorientation', screenCallback, false);
+            window.removeEventListener('deviceorientation', deviceOrientationCallback, false);
+            window.removeEventListener('orientationchange', screenOrientationCallback, false);
         };
     }
 
-    function eulerToQuaternionInYXZOrder(_x, _y, _z) {
-      var c1 = Math.cos( _x / 2 );
-  		var c2 = Math.cos( _y / 2 );
-  		var c3 = Math.cos( _z / 2 );
-  		var s1 = Math.sin( _x / 2 );
-  		var s2 = Math.sin( _y / 2 );
-  		var s3 = Math.sin( _z / 2 );
-      var x = s1 * c2 * c3 + c1 * s2 * s3;
-			var y = c1 * s2 * c3 - s1 * c2 * s3;
-			var z = c1 * c2 * s3 - s1 * s2 * c3;
-			var w = c1 * c2 * c3 + s1 * s2 * s3;
-
-      return new Quaternion(x, y, z, w);
-    }
-    function eulerToQuaternionInZXYOrder(_x, _y, _z) {
+    function eulerToQuaternionInZXYOrder(_x, _y, _z, quat) {
       var c1 = Math.cos( _x / 2 );
   		var c2 = Math.cos( _y / 2 );
   		var c3 = Math.cos( _z / 2 );
@@ -94,64 +65,55 @@ define([
 			var z = c1 * c2 * s3 + s1 * s2 * c3;
 			var w = c1 * c2 * c3 - s1 * s2 * s3;
 
-      return new Quaternion(x, y, z, w);
-    }
-    function eulerToQuaternionInXYZOrder(_x, _y, _z) {
-      var c1 = Math.cos( _x / 2 );
-  		var c2 = Math.cos( _y / 2 );
-  		var c3 = Math.cos( _z / 2 );
-  		var s1 = Math.sin( _x / 2 );
-  		var s2 = Math.sin( _y / 2 );
-  		var s3 = Math.sin( _z / 2 );
-      var x = s1 * c2 * c3 + c1 * s2 * s3;
-			var y = c1 * s2 * c3 - s1 * c2 * s3;
-			var z = c1 * c2 * s3 + s1 * s2 * c3;
-			var w = c1 * c2 * c3 - s1 * s2 * s3;
+      quat.x = x;
+      quat.y = y;
+      quat.z = z;
+      quat.w = w;
 
-      return new Quaternion(x, y, z, w);
+      return quat;
     }
-    var quat = new Quaternion();
-    var matrix = new Matrix3();
-    var adjustToWorldQuat = new Quaternion( -Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) );
 
-    function degToRad(deg) {
-      return deg * Math.PI / 180;
-    }
+    var rotQuat = new Quaternion();
+    var rotMatrix = new Matrix3();
+    var adjustToWorldQuat =
+      Quaternion.fromAxisAngle(Cartesian3.UNIT_Y, -CesiumMath.toRadians(270));
+
     function rotate(camera, alpha, beta, gamma, orient) {
 
-        var quat = eulerToQuaternionInZXYOrder(beta, gamma, alpha);
+        // device euler angles => quaternion
+        eulerToQuaternionInZXYOrder(beta, gamma, alpha, rotQuat);
 
-        // rotate -90 around z
-        // rotate -90 around y
+        // Look out back of device
+        Quaternion.multiply(rotQuat, adjustToWorldQuat, rotQuat);
 
-        Quaternion.multiply(quat, Quaternion.fromAxisAngle(Cartesian3.UNIT_Y, degToRad(90)), quat);
-        //Quaternion.multiply(quat, Quaternion.fromAxisAngle(Cartesian3.UNIT_Z, degToRad(90)), quat);
-        // Camera looks out back of device, not the top
-        //Quaternion.multiply(quat, adjustToWorldQuat, quat);
+        // Rotate to adjust for screen orientation
+        var adjustToScreen = Quaternion.fromAxisAngle(Cartesian3.UNIT_X, CesiumMath.PI_OVER_TWO - orient)
 
-        // adjust for screen orientation
-        //Quaternion.multiply(quat, Quaternion.fromAxisAngle(Cartesian3.UNIT_Z, -orient), quat);
+        Quaternion.multiply(rotQuat, adjustToScreen, rotQuat);
 
-        // Quat -> Matrix
-        Matrix3.fromQuaternion(quat, matrix);
+        // quaternion => matrix
+        Matrix3.fromQuaternion(rotQuat, rotMatrix);
 
-        Matrix3.getColumn(matrix, 0, camera.direction);
-        Matrix3.getColumn(matrix, 2, camera.up);
+        Matrix3.getColumn(rotMatrix, 0, camera.direction);
+        Matrix3.getColumn(rotMatrix, 2, camera.up);
         Cartesian3.cross(camera.direction, camera.up, camera.right);
-
     }
 
     DeviceOrientationCameraController.prototype.update = function() {
-        if (!defined(this._alpha)) {
+        if (!defined(this._deviceOrientation.alpha)) {
             return;
         }
 
-        var a = this._alpha;
-        var b = this._beta;
-        var g = this._gamma;
-        var orient = this._orient;
-        rotate(this._scene.camera, a, b, g, orient);
+        var alpha = this._deviceOrientation.alpha ?
+          CesiumMath.toRadians(this._deviceOrientation.alpha) : 0;
+        var beta = this._deviceOrientation.beta ?
+          CesiumMath.toRadians(this._deviceOrientation.beta) : 0;
+        var gamma = this._deviceOrientation.gamma ?
+          CesiumMath.toRadians(this._deviceOrientation.gamma) : 0;
+        console.log('screen', this._screenOrientation);
+        var orient = CesiumMath.toRadians(this._screenOrientation);
 
+        rotate(this._scene.camera, alpha, beta, gamma, orient);
     };
 
     /**
