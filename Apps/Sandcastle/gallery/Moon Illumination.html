@@ -97,6 +97,10 @@
           console.log(act_bodies_pos_moon_url);
           var response = await fetch(act_bodies_pos_moon_url);
           var bodiesPos = await response.json();
+
+          // TODO: This is just a patch put in by victor to fix app, not sure if what Calogero intended
+          bodiesPos = bodiesPos.utc_times[0];
+
           // SUN position
           sunLightDirectionSPICE.x = bodiesPos.SUN.light_direction[0];
           sunLightDirectionSPICE.y = bodiesPos.SUN.light_direction[1];
