@@ -27,10 +27,6 @@
   >
     <style>
       @import url(../templates/bucket.css);
-
-      .cesium-widget-credits {
-        display: none !important;
-      }
     </style>
     <div id="cesiumContainer" class="fullSize"></div>
     <div id="loadingOverlay"><h1>Loading...</h1></div>
@@ -475,7 +471,7 @@ console.log(earthPosSPICE);
 
         // viewer.timeline.addEventListener('settime', maybeUpdateBodiesPosSPICE, false);
         viewer.clock.onTick.addEventListener(maybeUpdateBodiesPosSPICE);
-        viewer.clock.onTick.addEventListener(updateTimeDisplay);
+        // viewer.clock.onTick.addEventListener(updateTimeDisplay);
 
         function setTime(iso8601) {
           var currentTime = Cesium.JulianDate.fromIso8601(iso8601);
@@ -546,16 +542,18 @@ new Cesium.JulianDate()
           terrainDisplay.innerHTML = msg;
         }
 
-        function updateTimeDisplay() {
-          var msg =
-            "Time: " + Cesium.JulianDate.toIso8601(viewer.clock.currentTime, 3);
-          setTimeDisplay(msg);
-        }
+        /*
+function updateTimeDisplay() {
+  var msg =
+    "Time: " + Cesium.JulianDate.toIso8601(viewer.clock.currentTime, 3);
+  setTimeDisplay(msg);
+}
 
-        var timeDisplay = document.createElement("div");
-        function setTimeDisplay(msg) {
-          timeDisplay.innerHTML = msg;
-        }
+var timeDisplay = document.createElement("div");
+function setTimeDisplay(msg) {
+  timeDisplay.innerHTML = msg;
+}
+*/
 
         // CONTROLS
         var illuminationOptions = [
@@ -1173,10 +1171,12 @@ udpateBodiesPosToDummyPolar(!checked);
         terrainDisplay.style.background = "rgba(42, 42, 42, 0.7)";
         terrainDisplay.style.padding = "5px 10px";
 
-        // Show the coords display below the toobar buttons.
-        timeDisplay.style.background = "rgba(42, 42, 42, 0.7)";
-        timeDisplay.style.padding = "5px 10px";
-        document.getElementById("toolbar").appendChild(timeDisplay);
+        /*
+// Show the coords display below the toobar buttons.
+timeDisplay.style.background = "rgba(42, 42, 42, 0.7)";
+timeDisplay.style.padding = "5px 10px";
+document.getElementById("toolbar").appendChild(timeDisplay);
+*/
 
         /*
 // Add buttons, for convenience.
@@ -1511,27 +1511,6 @@ updateEntityVectors();
 
         setLocation(locationsInfo.Tycho);
 
-        /*
-//====== adopted from 'clamp to terrain' sandcastle example. slightly modified starting and end point
-viewer.entities.add({
-  polyline: {
-    positions: Cesium.Cartesian3.fromDegreesArray([
-    -11.351,
-      0.,
-      -11.351,
-      -90.
-    ]),
-    clampToGround: true,
-    width: 15,
-    material: new Cesium.PolylineOutlineMaterialProperty({
-      color: Cesium.Color.ORANGE,
-      outlineWidth: 20,
-      outlineColor: Cesium.Color.BLACK,
-    }),
-  },
-});
-*/
-
         // CONTOUR
         var contourColor = Cesium.Color.RED.clone();
         var contourUniforms = {};
@@ -1589,6 +1568,61 @@ viewer.entities.add({
         }
 
         maybeUpdateContours();
+
+        // CLAMP TO GROUND
+        /*
+//====== adopted from 'clamp to terrain' sandcastle example. slightly modified starting and end point
+viewer.entities.add({
+  polyline: {
+    positions: Cesium.Cartesian3.fromDegreesArray([
+    -11.351,
+      0.,
+      -11.351,
+      -90.
+    ]),
+    clampToGround: true,
+    width: 15,
+    material: new Cesium.PolylineOutlineMaterialProperty({
+      color: Cesium.Color.ORANGE,
+      outlineWidth: 20,
+      outlineColor: Cesium.Color.BLACK,
+    }),
+  },
+});
+*/
+
+        /*
+var czml = [
+  {
+    id: "document",
+    name: "CZML Geometries: Polyline",
+    version: "1.0",
+  },
+  {
+    id: "redLine",
+    name: "Red line clamped to terain",
+    polyline: {
+      positions: {
+        cartographicDegrees: [-125, 85, 0, -125, -85, 0],
+      },
+      material: {
+        solidColor: {
+          color: {
+            rgba: [255, 0, 0, 255],
+          },
+        },
+      },
+      width: 5,
+      clampToGround: true,
+    },
+  },
+ 
+];
+
+var dataSourcePromise = Cesium.CzmlDataSource.load(czml);
+viewer.dataSources.add(dataSourcePromise);
+*/
+
         //Sandcastle_End
         Sandcastle.finishedLoading();
       }
