@@ -755,7 +755,10 @@ function createQuantizedMeshTerrainData(provider, buffer, level, x, y, layer) {
     pos += extensionLength;
   }
 
-  var skirtHeight = provider.getLevelMaximumGeometricError(level) * 5.0;
+  var skirtHeight = provider.getLevelMaximumGeometricError(level) * 1000.0;
+  console.log("skirtHeight " + skirtHeight);
+  // hard coding moon radius
+  // skirtHeight = 1737400;
 
   // The skirt is not included in the OBB computation. If this ever
   // causes any rendering artifacts (cracks), they are expected to be
