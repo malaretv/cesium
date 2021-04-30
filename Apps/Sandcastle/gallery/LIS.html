@@ -1004,6 +1004,12 @@ shadowMap.softShadows = checked;
           }
         );
 
+        Sandcastle.addToggleButton("Skirts", scene.globe.showSkirts, function (
+          checked
+        ) {
+          scene.globe.showSkirts = checked;
+        });
+
         /*
 Sandcastle.addToggleButton(
 "Fog simu",
