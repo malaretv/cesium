@@ -255,6 +255,7 @@ function CesiumTerrainProvider(options) {
       that._heightmapWidth,
       that._tilingScheme.getNumberOfXTilesAtLevel(0)
     );
+
     if (!data.scheme || data.scheme === "tms" || data.scheme === "slippyMap") {
       that._scheme = data.scheme;
     } else {
@@ -755,10 +756,9 @@ function createQuantizedMeshTerrainData(provider, buffer, level, x, y, layer) {
     pos += extensionLength;
   }
 
-  var skirtHeight = provider.getLevelMaximumGeometricError(level) * 1000.0;
-  console.log("skirtHeight " + skirtHeight);
-  // hard coding moon radius
-  // skirtHeight = 1737400;
+  var skirtHeight = provider.getLevelMaximumGeometricError(level) * 5.0;
+  skirtHeight = 100000;
+  //console.log("level: " + level + " sh: " + skirtHeight);
 
   // The skirt is not included in the OBB computation. If this ever
   // causes any rendering artifacts (cracks), they are expected to be
