@@ -978,7 +978,7 @@ function setTimeDisplay(msg) {
         );
 
         Sandcastle.addToggleButton(
-          "Contour Lines",
+          "Contours @ " + viewModel.contourSpacing.toFixed(0) + "m",
           viewModel.enableContour,
           function (checked) {
             viewModel.enableContour = checked;
@@ -1004,11 +1004,13 @@ shadowMap.softShadows = checked;
           }
         );
 
+        /*
         Sandcastle.addToggleButton("Skirts", scene.globe.showSkirts, function (
           checked
         ) {
           scene.globe.showSkirts = checked;
         });
+        */
 
         /*
 Sandcastle.addToggleButton(
