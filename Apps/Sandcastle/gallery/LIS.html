@@ -67,8 +67,11 @@
         var autoDemTransitionLatTol = 5; // deg
         // km. Enable automatic terrain switch when camera altitude is lower than this param
         var autoDemTransitionEnabledAlt = 2000;
-        var regularTerrainName = "sldem_lola";
-        var polarTerrainName = "GOTM";
+        var regularTerrainNameDef = "sldem_lola";
+        var polarTerrainNameDef = "GOTM";
+        var regularTerrainName = regularTerrainNameDef;
+        var polarTerrainName = polarTerrainNameDef;
+        var noNormalsNameSuffix = " - no normals";
 
         // The viewModel tracks the state of our mini application.
         var viewModel = {
@@ -606,16 +609,17 @@ function setTimeDisplay(msg) {
 
         var terrainNameList = [
           "automatic",
+          "automatic" + noNormalsNameSuffix,
           "sldem_lola",
-          "sldem_lola - no normals",
+          "sldem_lola" + noNormalsNameSuffix,
           "usgs_lola",
           "NASA JPL - no normals",
           "Optimized PolarDEM",
-          "Optimized PolarDEM - no normals",
+          "Optimized PolarDEM" + noNormalsNameSuffix,
           "GOTM",
-          "GOTM - no normals",
+          "GOTM" + noNormalsNameSuffix,
           "GOTM (High Res)",
-          "GOTM (High Res) - no normals",
+          "GOTM (High Res)" + noNormalsNameSuffix,
         ];
 
         // change terrain provider based on terrain name
@@ -756,11 +760,21 @@ function setTimeDisplay(msg) {
         // support "automatic" terrain for automatically switching between regular/polar terrain
         // based on latitude
         function newTerrainNameSelected(terrainName) {
-          if (terrainName === "automatic") {
+          if (
+            terrainName === "automatic" ||
+            terrainName === "automatic - no normals"
+          ) {
             console.log("enabling automatic terrain loading...");
             automaticPolarTerrainTransition = true;
             setCurrTerrainLabelVisible(true);
 
+            if (terrainName === "automatic") {
+              regularTerrainName = regularTerrainNameDef;
+              polarTerrainName = polarTerrainNameDef;
+            } else {
+              regularTerrainName = regularTerrainNameDef + noNormalsNameSuffix;
+              polarTerrainName = polarTerrainNameDef + noNormalsNameSuffix;
+            }
             maybeUpdateTerrainProvider();
           } else {
             if (automaticPolarTerrainTransition) {
@@ -889,7 +903,7 @@ function setTimeDisplay(msg) {
             color: Cesium.Color.WHITE,
             entity: null,
           },
-          testing: {
+          Hill_Top_Near_SP: {
             longitude: 222,
             latitude: -89.44,
             height: 2000,
