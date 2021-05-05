@@ -67,8 +67,11 @@
         var autoDemTransitionLatTol = 5; // deg
         // km. Enable automatic terrain switch when camera altitude is lower than this param
         var autoDemTransitionEnabledAlt = 2000;
-        var regularTerrainName = "sldem_lola";
-        var polarTerrainName = "GOTM";
+        var regularTerrainNameDef = "sldem_lola";
+        var polarTerrainNameDef = "GOTM";
+        var regularTerrainName = regularTerrainNameDef;
+        var polarTerrainName = polarTerrainNameDef;
+        var noNormalsNameSuffix = " - no normals";
 
         // The viewModel tracks the state of our mini application.
         var viewModel = {
@@ -606,16 +609,17 @@ function setTimeDisplay(msg) {
 
         var terrainNameList = [
           "automatic",
+          "automatic" + noNormalsNameSuffix,
           "sldem_lola",
-          "sldem_lola - no normals",
+          "sldem_lola" + noNormalsNameSuffix,
           "usgs_lola",
           "NASA JPL - no normals",
           "Optimized PolarDEM",
-          "Optimized PolarDEM - no normals",
+          "Optimized PolarDEM" + noNormalsNameSuffix,
           "GOTM",
-          "GOTM - no normals",
+          "GOTM" + noNormalsNameSuffix,
           "GOTM (High Res)",
-          "GOTM (High Res) - no normals",
+          "GOTM (High Res)" + noNormalsNameSuffix,
         ];
 
         // change terrain provider based on terrain name
@@ -756,11 +760,21 @@ function setTimeDisplay(msg) {
         // support "automatic" terrain for automatically switching between regular/polar terrain
         // based on latitude
         function newTerrainNameSelected(terrainName) {
-          if (terrainName === "automatic") {
+          if (
+            terrainName === "automatic" ||
+            terrainName === "automatic - no normals"
+          ) {
             console.log("enabling automatic terrain loading...");
             automaticPolarTerrainTransition = true;
             setCurrTerrainLabelVisible(true);
 
+            if (terrainName === "automatic") {
+              regularTerrainName = regularTerrainNameDef;
+              polarTerrainName = polarTerrainNameDef;
+            } else {
+              regularTerrainName = regularTerrainNameDef + noNormalsNameSuffix;
+              polarTerrainName = polarTerrainNameDef + noNormalsNameSuffix;
+            }
             maybeUpdateTerrainProvider();
           } else {
             if (automaticPolarTerrainTransition) {
@@ -889,7 +903,7 @@ function setTimeDisplay(msg) {
             color: Cesium.Color.WHITE,
             entity: null,
           },
-          testing: {
+          Hill_Top_Near_SP: {
             longitude: 222,
             latitude: -89.44,
             height: 2000,
@@ -933,33 +947,69 @@ function setTimeDisplay(msg) {
         Sandcastle.addToolbarMenu(illuminationOptions);
         Sandcastle.addToolbarMenu(terrainOptions);
 
+        var polesHiresData = Cesium.GeoJsonDataSource.load(
+          "https://files.actgate.com/temp/poles_hires.geojson",
+          {
+            fill: Cesium.Color.PINK.withAlpha(0.1),
+            clampToGround: true,
+          }
+        );
+
+        var dataSource;
+        var dataSourceLastIndex = -1;
+        Sandcastle.addToggleButton("hires dem regions", false, function (
+          checked
+        ) {
+          if (checked) {
+            dataSourceLastIndex = viewer.dataSources.length;
+            viewer.dataSources.add(polesHiresData);
+          } else {
+            if (viewer.dataSources.length > dataSourceLastIndex) {
+              // console.log("removing data source");
+              var res = viewer.dataSources.remove(dataSource, false);
+              if (res) {
+                // console.log("data source removed");
+                dataSourceLastIndex -= 1;
+              }
+            }
+          }
+        });
+
+        viewer.dataSources.dataSourceAdded.addEventListener(function () {
+          // console.log("data source added");
+          if (viewer.dataSources.length > dataSourceLastIndex) {
+            dataSource = viewer.dataSources.get(dataSourceLastIndex);
+            dataSourceLastIndex = viewer.dataSources.length - 1;
+          }
+        });
+
         Sandcastle.addToolbarMenu([
           {
-            text: "Terrain Mesh Max Err: 1",
+            text: "mesh surf. max_err: 1m",
             onselect: function () {
               updateTerrainMeshMaxError(1);
             },
           },
           {
-            text: "Terrain Mesh Max Err: 0.01",
+            text: "mesh surf. max_err: 0.01m",
             onselect: function () {
               updateTerrainMeshMaxError(0.01);
             },
           },
           {
-            text: "Terrain Mesh Max Err: 0.1",
+            text: "mesh surf. max_err: 0.1m",
             onselect: function () {
               updateTerrainMeshMaxError(0.1);
             },
           },
           {
-            text: "Terrain Mesh Max Err: 10",
+            text: "mesh surf. max_err: 10m",
             onselect: function () {
               updateTerrainMeshMaxError(10);
             },
           },
           {
-            text: "Terrain Mesh Max Err: 20",
+            text: "mesh surf. max_err: 20m",
             onselect: function () {
               updateTerrainMeshMaxError(20);
             },
@@ -978,7 +1028,7 @@ function setTimeDisplay(msg) {
         );
 
         Sandcastle.addToggleButton(
-          "Contour Lines",
+          "Contours @ " + viewModel.contourSpacing.toFixed(0) + "m",
           viewModel.enableContour,
           function (checked) {
             viewModel.enableContour = checked;
@@ -1004,11 +1054,13 @@ shadowMap.softShadows = checked;
           }
         );
 
+        /*
         Sandcastle.addToggleButton("Skirts", scene.globe.showSkirts, function (
           checked
         ) {
           scene.globe.showSkirts = checked;
         });
+        */
 
         /*
 Sandcastle.addToggleButton(
