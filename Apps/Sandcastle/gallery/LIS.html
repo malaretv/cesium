@@ -947,6 +947,42 @@ function setTimeDisplay(msg) {
         Sandcastle.addToolbarMenu(illuminationOptions);
         Sandcastle.addToolbarMenu(terrainOptions);
 
+        var polesHiresData = Cesium.GeoJsonDataSource.load(
+          "https://files.actgate.com/temp/poles_hires.geojson",
+          {
+            fill: Cesium.Color.PINK.withAlpha(0.1),
+            clampToGround: true,
+          }
+        );
+
+        var dataSource;
+        var dataSourceLastIndex = -1;
+        Sandcastle.addToggleButton("hires dem regions", false, function (
+          checked
+        ) {
+          if (checked) {
+            dataSourceLastIndex = viewer.dataSources.length;
+            viewer.dataSources.add(polesHiresData);
+          } else {
+            if (viewer.dataSources.length > dataSourceLastIndex) {
+              // console.log("removing data source");
+              var res = viewer.dataSources.remove(dataSource, false);
+              if (res) {
+                // console.log("data source removed");
+                dataSourceLastIndex -= 1;
+              }
+            }
+          }
+        });
+
+        viewer.dataSources.dataSourceAdded.addEventListener(function () {
+          // console.log("data source added");
+          if (viewer.dataSources.length > dataSourceLastIndex) {
+            dataSource = viewer.dataSources.get(dataSourceLastIndex);
+            dataSourceLastIndex = viewer.dataSources.length - 1;
+          }
+        });
+
         Sandcastle.addToolbarMenu([
           {
             text: "mesh surf. max_err: 1m",
