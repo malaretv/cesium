@@ -1016,7 +1016,6 @@ function setTimeDisplay(msg) {
           },
         ]);
 
-        Sandcastle.addToolbarMenu(locationToolbarOptions);
         Sandcastle.addToggleButton(
           "Terrain Shadows",
           viewer.terrainShadows === Cesium.ShadowMode.ENABLED,
@@ -1116,6 +1115,8 @@ udpateBodiesPosToDummyPolar(!checked);
             },
           },
         ]);
+
+        Sandcastle.addToolbarMenu(locationToolbarOptions);
 
         // SHOW COORDINATES
         var cartesian = new Cesium.Cartesian3();
