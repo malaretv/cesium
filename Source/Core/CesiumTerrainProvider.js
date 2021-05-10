@@ -759,32 +759,32 @@ function createQuantizedMeshTerrainData(provider, buffer, level, x, y, layer) {
   }
 
   var skirtHeight = provider.getLevelMaximumGeometricError(level) * 5.0;
-  // skirtHeight = 100000;
+  // // skirtHeight = 100000;
 
-  var cartoTile = provider._tilingScheme.positionToTileXY(
-    Cartographic.ZERO,
-    level
-  );
-  var rectTile = provider._tilingScheme.tileXYToRectangle(
-    cartoTile.x,
-    cartoTile.y,
-    level
-  );
-  //console.log("tile0 rect: " + rectTile.west + ", " + rectTile.east + ", " + rectTile.north + ", " + rectTile.south);
-  var tileXSize =
-    Math.abs(rectTile.east - rectTile.west) *
-    provider._tilingScheme.ellipsoid.maximumRadius;
-  // var tileYSize = Math.abs(rectTile.north - rectTile.south) * provider._tilingScheme.ellipsoid.maximumRadius;
+  // var cartoTile = provider._tilingScheme.positionToTileXY(
+  //   Cartographic.ZERO,
+  //   level
+  // );
+  // var rectTile = provider._tilingScheme.tileXYToRectangle(
+  //   cartoTile.x,
+  //   cartoTile.y,
+  //   level
+  // );
+  // //console.log("tile0 rect: " + rectTile.west + ", " + rectTile.east + ", " + rectTile.north + ", " + rectTile.south);
+  // var tileXSize =
+  //   Math.abs(rectTile.east - rectTile.west) *
+  //   provider._tilingScheme.ellipsoid.maximumRadius;
+  // // var tileYSize = Math.abs(rectTile.north - rectTile.south) * provider._tilingScheme.ellipsoid.maximumRadius;
 
-  skirtHeight = tileXSize;
-  console.log("skirt height " + skirtHeight + " (lev " + level + ")");
+  // skirtHeight = tileXSize;
+  // console.log("skirt height " + skirtHeight + " (lev " + level + ")");
 
-  // console.log("tileXSize: " + tileXSize);
-  // console.log("tileYSize: " + tileYSize);
-  // var xres = tileXSize / 512;
-  // var yres = tileYSize / 512;
-  // console.log("xres: " + xres);
-  // console.log("yres: " + yres);
+  // // console.log("tileXSize: " + tileXSize);
+  // // console.log("tileYSize: " + tileYSize);
+  // // var xres = tileXSize / 512;
+  // // var yres = tileYSize / 512;
+  // // console.log("xres: " + xres);
+  // // console.log("yres: " + yres);
 
   // The skirt is not included in the OBB computation. If this ever
   // causes any rendering artifacts (cracks), they are expected to be

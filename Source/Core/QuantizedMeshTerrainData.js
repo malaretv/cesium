@@ -330,6 +330,7 @@ QuantizedMeshTerrainData.prototype.createMesh = function (options) {
     relativeToCenter: this._boundingSphere.center,
     ellipsoid: ellipsoid,
     exaggeration: exaggeration,
+    level: level,
   });
 
   if (!defined(verticesPromise)) {

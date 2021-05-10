@@ -20,6 +20,9 @@ import createTaskProcessorWorker from "./createTaskProcessorWorker.js";
 
 var maxShort = 32767;
 
+var enableAdditionalSkirt = true;
+var skirtAdditionalAbsHeight = 10000;
+
 var cartesian3Scratch = new Cartesian3();
 var scratchMinimum = new Cartesian3();
 var scratchMaximum = new Cartesian3();
@@ -33,6 +36,8 @@ function createVerticesFromQuantizedTerrainMesh(
   parameters,
   transferableObjects
 ) {
+  var enableAdditionalSkirtEff = enableAdditionalSkirt && parameters.level > 6;
+
   var quantizedVertices = parameters.quantizedVertices;
   var quantizedVertexCount = quantizedVertices.length / 3;
   var octEncodedNormals = parameters.octEncodedNormals;
@@ -41,6 +46,9 @@ function createVerticesFromQuantizedTerrainMesh(
     parameters.eastIndices.length +
     parameters.southIndices.length +
     parameters.northIndices.length;
+  if (enableAdditionalSkirtEff) {
+    edgeVertexCount += 2 * 4;
+  }
   var includeWebMercatorT = parameters.includeWebMercatorT;
 
   var rectangle = Rectangle.clone(parameters.rectangle);
@@ -254,6 +262,10 @@ function createVerticesFromQuantizedTerrainMesh(
     )
   );
 
+  // if (enableAdditionalSkirtEff) {
+  //   hMin =  Math.min(hMin, -skirtAdditionalAbsHeight);
+  // }
+
   var aaBox = new AxisAlignedBoundingBox(minimum, maximum, center);
   var encoding = new TerrainEncoding(
     aaBox,
@@ -334,6 +346,10 @@ function createVerticesFromQuantizedTerrainMesh(
   var southLatitudeOffset = -latOffset;
 
   // Add skirts.
+  var terrainHeight;
+  if (enableAdditionalSkirtEff) {
+    terrainHeight = hMin;
+  }
   var vertexBufferIndex = quantizedVertexCount * vertexStride;
   addSkirt(
     vertexBuffer,
@@ -350,7 +366,8 @@ function createVerticesFromQuantizedTerrainMesh(
     southMercatorY,
     oneOverMercatorHeight,
     westLongitudeOffset,
-    westLatitudeOffset
+    westLatitudeOffset,
+    terrainHeight
   );
   vertexBufferIndex += parameters.westIndices.length * vertexStride;
   addSkirt(
@@ -368,7 +385,8 @@ function createVerticesFromQuantizedTerrainMesh(
     southMercatorY,
     oneOverMercatorHeight,
     southLongitudeOffset,
-    southLatitudeOffset
+    southLatitudeOffset,
+    terrainHeight
   );
   vertexBufferIndex += parameters.southIndices.length * vertexStride;
   addSkirt(
@@ -386,7 +404,8 @@ function createVerticesFromQuantizedTerrainMesh(
     southMercatorY,
     oneOverMercatorHeight,
     eastLongitudeOffset,
-    eastLatitudeOffset
+    eastLatitudeOffset,
+    terrainHeight
   );
   vertexBufferIndex += parameters.eastIndices.length * vertexStride;
   addSkirt(
@@ -404,10 +423,86 @@ function createVerticesFromQuantizedTerrainMesh(
     southMercatorY,
     oneOverMercatorHeight,
     northLongitudeOffset,
-    northLatitudeOffset
+    northLatitudeOffset,
+    terrainHeight
   );
 
-  TerrainProvider.addSkirtIndices(
+  if (enableAdditionalSkirtEff) {
+    vertexBufferIndex += parameters.northIndices.length * vertexStride;
+    addAdditionalSkirt(
+      vertexBuffer,
+      vertexBufferIndex,
+      westIndicesSouthToNorth,
+      encoding,
+      heights,
+      uvs,
+      octEncodedNormals,
+      ellipsoid,
+      rectangle,
+      parameters.westSkirtHeight,
+      exaggeration,
+      southMercatorY,
+      oneOverMercatorHeight,
+      westLongitudeOffset,
+      westLatitudeOffset
+    );
+    vertexBufferIndex += 2 * vertexStride;
+    addAdditionalSkirt(
+      vertexBuffer,
+      vertexBufferIndex,
+      southIndicesEastToWest,
+      encoding,
+      heights,
+      uvs,
+      octEncodedNormals,
+      ellipsoid,
+      rectangle,
+      parameters.southSkirtHeight,
+      exaggeration,
+      southMercatorY,
+      oneOverMercatorHeight,
+      southLongitudeOffset,
+      southLatitudeOffset
+    );
+    vertexBufferIndex += 2 * vertexStride;
+    addAdditionalSkirt(
+      vertexBuffer,
+      vertexBufferIndex,
+      eastIndicesNorthToSouth,
+      encoding,
+      heights,
+      uvs,
+      octEncodedNormals,
+      ellipsoid,
+      rectangle,
+      parameters.eastSkirtHeight,
+      exaggeration,
+      southMercatorY,
+      oneOverMercatorHeight,
+      eastLongitudeOffset,
+      eastLatitudeOffset
+    );
+    vertexBufferIndex += 2 * vertexStride;
+    addAdditionalSkirt(
+      vertexBuffer,
+      vertexBufferIndex,
+      northIndicesWestToEast,
+      encoding,
+      heights,
+      uvs,
+      octEncodedNormals,
+      ellipsoid,
+      rectangle,
+      parameters.northSkirtHeight,
+      exaggeration,
+      southMercatorY,
+      oneOverMercatorHeight,
+      northLongitudeOffset,
+      northLatitudeOffset
+    );
+  }
+
+  var offset = TerrainProvider.addSkirtIndices(
     westIndicesSouthToNorth,
     southIndicesEastToWest,
     eastIndicesNorthToSouth,
@@ -416,6 +511,18 @@ function createVerticesFromQuantizedTerrainMesh(
     indexBuffer,
     parameters.indices.length
   );
+
+  if (enableAdditionalSkirtEff) {
+    TerrainProvider.addAdditionalSkirtIndices(
+      westIndicesSouthToNorth,
+      southIndicesEastToWest,
+      eastIndicesNorthToSouth,
+      northIndicesWestToEast,
+      quantizedVertexCount,
+      indexBuffer,
+      offset
+    );
+  }
 
   transferableObjects.push(vertexBuffer.buffer, indexBuffer.buffer);
 
@@ -484,7 +591,156 @@ function findMinMaxSkirts(
   return hMin;
 }
 
+function addSkirtVertex(
+  vertexBuffer,
+  vertexBufferIndex,
+  encoding,
+  index,
+  height,
+  uv,
+  octEncodedNormals,
+  ellipsoid,
+  north,
+  south,
+  east,
+  west,
+  exaggeration,
+  southMercatorY,
+  oneOverMercatorHeight,
+  longitudeOffset,
+  latitudeOffset
+) {
+  var hasVertexNormals = defined(octEncodedNormals);
+
+  cartographicScratch.longitude =
+    CesiumMath.lerp(west, east, uv.x) + longitudeOffset;
+  cartographicScratch.latitude =
+    CesiumMath.lerp(south, north, uv.y) + latitudeOffset;
+  cartographicScratch.height = height;
+
+  var position = ellipsoid.cartographicToCartesian(
+    cartographicScratch,
+    cartesian3Scratch
+  );
+
+  if (hasVertexNormals) {
+    var n = index * 2.0;
+    toPack.x = octEncodedNormals[n];
+    toPack.y = octEncodedNormals[n + 1];
+
+    if (exaggeration !== 1.0) {
+      var normal = AttributeCompression.octDecode(
+        toPack.x,
+        toPack.y,
+        scratchNormal
+      );
+      var fromENUNormal = Transforms.eastNorthUpToFixedFrame(
+        cartesian3Scratch,
+        ellipsoid,
+        scratchFromENU
+      );
+      var toENUNormal = Matrix4.inverseTransformation(
+        fromENUNormal,
+        scratchToENU
+      );
+
+      Matrix4.multiplyByPointAsVector(toENUNormal, normal, normal);
+      normal.z *= exaggeration;
+      Cartesian3.normalize(normal, normal);
+
+      Matrix4.multiplyByPointAsVector(fromENUNormal, normal, normal);
+      Cartesian3.normalize(normal, normal);
+
+      AttributeCompression.octEncode(normal, toPack);
+    }
+  }
+
+  var webMercatorT;
+  if (encoding.hasWebMercatorT) {
+    webMercatorT =
+      (WebMercatorProjection.geodeticLatitudeToMercatorAngle(
+        cartographicScratch.latitude
+      ) -
+        southMercatorY) *
+      oneOverMercatorHeight;
+  }
+
+  vertexBufferIndex = encoding.encode(
+    vertexBuffer,
+    vertexBufferIndex,
+    position,
+    uv,
+    cartographicScratch.height,
+    toPack,
+    webMercatorT
+  );
+
+  return vertexBufferIndex;
+}
+
 function addSkirt(
+  vertexBuffer,
+  vertexBufferIndex,
+  edgeVertices,
+  encoding,
+  heights,
+  uvs,
+  octEncodedNormals,
+  ellipsoid,
+  rectangle,
+  skirtLength,
+  exaggeration,
+  southMercatorY,
+  oneOverMercatorHeight,
+  longitudeOffset,
+  latitudeOffset,
+  terrainHeight
+) {
+  var north = rectangle.north;
+  var south = rectangle.south;
+  var east = rectangle.east;
+  var west = rectangle.west;
+
+  if (east < west) {
+    east += CesiumMath.TWO_PI;
+  }
+
+  var index;
+  var uv;
+  var height;
+  if (terrainHeight) height = terrainHeight;
+  var length = edgeVertices.length;
+  for (var i = 0; i < length; ++i) {
+    index = edgeVertices[i];
+    uv = uvs[index];
+
+    if (!terrainHeight) {
+      var h = heights[index];
+      height = h - skirtLength;
+    }
+    vertexBufferIndex = addSkirtVertex(
+      vertexBuffer,
+      vertexBufferIndex,
+      encoding,
+      index,
+      height,
+      uv,
+      octEncodedNormals,
+      ellipsoid,
+      north,
+      south,
+      east,
+      west,
+      exaggeration,
+      southMercatorY,
+      oneOverMercatorHeight,
+      longitudeOffset,
+      latitudeOffset
+    );
+  }
+}
+
+function addAdditionalSkirt(
   vertexBuffer,
   vertexBufferIndex,
   edgeVertices,
@@ -501,8 +757,6 @@ function addSkirt(
   longitudeOffset,
   latitudeOffset
 ) {
-  var hasVertexNormals = defined(octEncodedNormals);
-
   var north = rectangle.north;
   var south = rectangle.south;
   var east = rectangle.east;
@@ -512,75 +766,55 @@ function addSkirt(
     east += CesiumMath.TWO_PI;
   }
 
-  var length = edgeVertices.length;
-  for (var i = 0; i < length; ++i) {
-    var index = edgeVertices[i];
-    var h = heights[index];
-    var uv = uvs[index];
+  var index;
+  var uv;
+  var height;
 
-    cartographicScratch.longitude =
-      CesiumMath.lerp(west, east, uv.x) + longitudeOffset;
-    cartographicScratch.latitude =
-      CesiumMath.lerp(south, north, uv.y) + latitudeOffset;
-    cartographicScratch.height = h - skirtLength;
+  // add to more vertices for additional simplified skirt to put to the bottom of the main skirt
+  height = -skirtAdditionalAbsHeight;
+  index = edgeVertices[0];
+  uv = uvs[index];
+  vertexBufferIndex = addSkirtVertex(
+    vertexBuffer,
+    vertexBufferIndex,
+    encoding,
+    index,
+    height,
+    uv,
+    octEncodedNormals,
+    ellipsoid,
+    north,
+    south,
+    east,
+    west,
+    exaggeration,
+    southMercatorY,
+    oneOverMercatorHeight,
+    longitudeOffset,
+    latitudeOffset
+  );
 
-    var position = ellipsoid.cartographicToCartesian(
-      cartographicScratch,
-      cartesian3Scratch
-    );
-
-    if (hasVertexNormals) {
-      var n = index * 2.0;
-      toPack.x = octEncodedNormals[n];
-      toPack.y = octEncodedNormals[n + 1];
-
-      if (exaggeration !== 1.0) {
-        var normal = AttributeCompression.octDecode(
-          toPack.x,
-          toPack.y,
-          scratchNormal
-        );
-        var fromENUNormal = Transforms.eastNorthUpToFixedFrame(
-          cartesian3Scratch,
-          ellipsoid,
-          scratchFromENU
-        );
-        var toENUNormal = Matrix4.inverseTransformation(
-          fromENUNormal,
-          scratchToENU
-        );
-
-        Matrix4.multiplyByPointAsVector(toENUNormal, normal, normal);
-        normal.z *= exaggeration;
-        Cartesian3.normalize(normal, normal);
-
-        Matrix4.multiplyByPointAsVector(fromENUNormal, normal, normal);
-        Cartesian3.normalize(normal, normal);
-
-        AttributeCompression.octEncode(normal, toPack);
-      }
-    }
-
-    var webMercatorT;
-    if (encoding.hasWebMercatorT) {
-      webMercatorT =
-        (WebMercatorProjection.geodeticLatitudeToMercatorAngle(
-          cartographicScratch.latitude
-        ) -
-          southMercatorY) *
-        oneOverMercatorHeight;
-    }
-
-    vertexBufferIndex = encoding.encode(
-      vertexBuffer,
-      vertexBufferIndex,
-      position,
-      uv,
-      cartographicScratch.height,
-      toPack,
-      webMercatorT
-    );
-  }
+  index = edgeVertices[edgeVertices.length - 1];
+  uv = uvs[index];
+  vertexBufferIndex = addSkirtVertex(
+    vertexBuffer,
+    vertexBufferIndex,
+    encoding,
+    index,
+    height,
+    uv,
+    octEncodedNormals,
+    ellipsoid,
+    north,
+    south,
+    east,
+    west,
+    exaggeration,
+    southMercatorY,
+    oneOverMercatorHeight,
+    longitudeOffset,
+    latitudeOffset
+  );
 }
 
 function copyAndSort(typedArray, comparator) {
