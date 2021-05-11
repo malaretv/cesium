@@ -21,7 +21,7 @@ import createTaskProcessorWorker from "./createTaskProcessorWorker.js";
 var maxShort = 32767;
 
 var enableAdditionalSkirt = true;
-var skirtAdditionalAbsHeight = 10000;
+var skirtAdditionalAbsHeight = 50000;
 
 var cartesian3Scratch = new Cartesian3();
 var scratchMinimum = new Cartesian3();
@@ -429,6 +429,12 @@ function createVerticesFromQuantizedTerrainMesh(
 
   if (enableAdditionalSkirtEff) {
     vertexBufferIndex += parameters.northIndices.length * vertexStride;
+
+    var tileXSize =
+      Math.abs(rectangle.east - rectangle.west) * ellipsoid.maximumRadius;
+
+    var addSkirtHeight = hMin - tileXSize;
+
     addAdditionalSkirt(
       vertexBuffer,
       vertexBufferIndex,
@@ -439,7 +445,7 @@ function createVerticesFromQuantizedTerrainMesh(
       octEncodedNormals,
       ellipsoid,
       rectangle,
-      parameters.westSkirtHeight,
+      addSkirtHeight,
       exaggeration,
       southMercatorY,
       oneOverMercatorHeight,
@@ -457,7 +463,7 @@ function createVerticesFromQuantizedTerrainMesh(
       octEncodedNormals,
       ellipsoid,
       rectangle,
-      parameters.southSkirtHeight,
+      addSkirtHeight,
       exaggeration,
       southMercatorY,
       oneOverMercatorHeight,
@@ -475,7 +481,7 @@ function createVerticesFromQuantizedTerrainMesh(
       octEncodedNormals,
       ellipsoid,
       rectangle,
-      parameters.eastSkirtHeight,
+      addSkirtHeight,
       exaggeration,
       southMercatorY,
       oneOverMercatorHeight,
@@ -493,7 +499,7 @@ function createVerticesFromQuantizedTerrainMesh(
       octEncodedNormals,
       ellipsoid,
       rectangle,
-      parameters.northSkirtHeight,
+      addSkirtHeight,
       exaggeration,
       southMercatorY,
       oneOverMercatorHeight,
@@ -750,7 +756,7 @@ function addAdditionalSkirt(
   octEncodedNormals,
   ellipsoid,
   rectangle,
-  skirtLength,
+  addSkirtHeight,
   exaggeration,
   southMercatorY,
   oneOverMercatorHeight,
@@ -771,7 +777,7 @@ function addAdditionalSkirt(
   var height;
 
   // add to more vertices for additional simplified skirt to put to the bottom of the main skirt
-  height = -skirtAdditionalAbsHeight;
+  height = addSkirtHeight;
   index = edgeVertices[0];
   uv = uvs[index];
   vertexBufferIndex = addSkirtVertex(
