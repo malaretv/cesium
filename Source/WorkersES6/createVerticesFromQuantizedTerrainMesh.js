@@ -20,7 +20,8 @@ import createTaskProcessorWorker from "./createTaskProcessorWorker.js";
 
 var maxShort = 32767;
 
-var enableAdditionalSkirt = true;
+var enableAdditionalSkirt = false;
+var enableSkirtsBottomPlane = true;
 
 var cartesian3Scratch = new Cartesian3();
 var scratchMinimum = new Cartesian3();
@@ -36,6 +37,8 @@ function createVerticesFromQuantizedTerrainMesh(
   transferableObjects
 ) {
   var enableAdditionalSkirtEff = enableAdditionalSkirt && parameters.level > 6;
+  var enableSkirtsBottomPlaneEff =
+    enableSkirtsBottomPlane && parameters.level > 6;
 
   var quantizedVertices = parameters.quantizedVertices;
   var quantizedVertexCount = quantizedVertices.length / 3;
@@ -340,6 +343,10 @@ function createVerticesFromQuantizedTerrainMesh(
   }
 
   var indexBufferLength = parameters.indices.length + edgeTriangleCount * 3;
+  if (enableSkirtsBottomPlaneEff) {
+    // 2 more triangles for bottom skirts plane
+    indexBufferLength += 2 * 3;
+  }
   var indexBuffer;
   var totVertextCount = quantizedVertexCount + edgeVertexCount;
   if (enableAdditionalSkirtEff) totVertextCount += addSkirtVertexCount;
@@ -363,7 +370,7 @@ function createVerticesFromQuantizedTerrainMesh(
 
   // Add skirts.
   var terrainHeight;
-  if (enableAdditionalSkirtEff) {
+  if (enableAdditionalSkirtEff || enableSkirtsBottomPlaneEff) {
     terrainHeight = hMin;
   }
   var vertexBufferIndex = quantizedVertexCount * vertexStride;
@@ -534,6 +541,17 @@ function createVerticesFromQuantizedTerrainMesh(
       southIndicesEastToWest,
       eastIndicesNorthToSouth,
       northIndicesWestToEast,
+      quantizedVertexCount,
+      indexBuffer,
+      offset
+    );
+  }
+
+  if (enableSkirtsBottomPlaneEff) {
+    TerrainProvider.addSkirtsBottomPlane(
+      westIndicesSouthToNorth,
+      southIndicesEastToWest,
+      eastIndicesNorthToSouth,
       quantizedVertexCount,
       indexBuffer,
       offset

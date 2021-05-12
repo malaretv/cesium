@@ -348,6 +348,33 @@ TerrainProvider.addAdditionalSkirtIndices = function (
   );
 };
 
+TerrainProvider.addSkirtsBottomPlane = function (
+  westIndicesSouthToNorth,
+  southIndicesEastToWest,
+  eastIndicesNorthToSouth,
+  vertexCount,
+  indices,
+  offset
+) {
+  var vertexIndex = vertexCount;
+  var WSVertexIndex = vertexIndex;
+  var WNVertexIndex = vertexIndex + westIndicesSouthToNorth.length - 1;
+  vertexIndex += westIndicesSouthToNorth.length;
+  vertexIndex += southIndicesEastToWest.length;
+  var ENVertexIndex = vertexIndex;
+  var ESVertexIndex = vertexIndex + eastIndicesNorthToSouth.length - 1;
+  vertexIndex += eastIndicesNorthToSouth.length;
+
+  // add triangles for additional skirt
+  indices[offset++] = WSVertexIndex;
+  indices[offset++] = WNVertexIndex;
+  indices[offset++] = ENVertexIndex;
+
+  indices[offset++] = WSVertexIndex;
+  indices[offset++] = ENVertexIndex;
+  indices[offset++] = ESVertexIndex;
+};
+
 function getEdgeIndices(width, height) {
   var westIndicesSouthToNorth = new Array(height);
   var southIndicesEastToWest = new Array(width);
