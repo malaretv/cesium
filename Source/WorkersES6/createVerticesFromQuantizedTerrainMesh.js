@@ -21,7 +21,6 @@ import createTaskProcessorWorker from "./createTaskProcessorWorker.js";
 var maxShort = 32767;
 
 var enableAdditionalSkirt = true;
-var skirtAdditionalAbsHeight = 50000;
 
 var cartesian3Scratch = new Cartesian3();
 var scratchMinimum = new Cartesian3();
@@ -262,14 +261,23 @@ function createVerticesFromQuantizedTerrainMesh(
     )
   );
 
-  // if (enableAdditionalSkirtEff) {
-  //   hMin =  Math.min(hMin, -skirtAdditionalAbsHeight);
-  // }
+  var addSkirtHeight;
+  var fullHMin;
+  if (enableAdditionalSkirtEff) {
+    var tileXSize =
+      Math.abs(rectangle.east - rectangle.west) * ellipsoid.maximumRadius;
+
+    addSkirtHeight = hMin - tileXSize;
+
+    fullHMin = Math.min(hMin, addSkirtHeight);
+  } else {
+    fullHMin = hMin;
+  }
 
   var aaBox = new AxisAlignedBoundingBox(minimum, maximum, center);
   var encoding = new TerrainEncoding(
     aaBox,
-    hMin,
+    fullHMin,
     maximumHeight,
     fromENU,
     hasVertexNormals,
@@ -429,12 +437,6 @@ function createVerticesFromQuantizedTerrainMesh(
 
   if (enableAdditionalSkirtEff) {
     vertexBufferIndex += parameters.northIndices.length * vertexStride;
-
-    var tileXSize =
-      Math.abs(rectangle.east - rectangle.west) * ellipsoid.maximumRadius;
-
-    var addSkirtHeight = hMin - tileXSize;
-
     addAdditionalSkirt(
       vertexBuffer,
       vertexBufferIndex,
