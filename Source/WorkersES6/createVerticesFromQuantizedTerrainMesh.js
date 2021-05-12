@@ -45,9 +45,7 @@ function createVerticesFromQuantizedTerrainMesh(
     parameters.eastIndices.length +
     parameters.southIndices.length +
     parameters.northIndices.length;
-  if (enableAdditionalSkirtEff) {
-    edgeVertexCount += 2 * 4;
-  }
+  var addSkirtVertexCount = 2 * 4;
   var includeWebMercatorT = parameters.includeWebMercatorT;
 
   var rectangle = Rectangle.clone(parameters.rectangle);
@@ -285,7 +283,9 @@ function createVerticesFromQuantizedTerrainMesh(
   );
   var vertexStride = encoding.getStride();
   var size =
-    quantizedVertexCount * vertexStride + edgeVertexCount * vertexStride;
+    quantizedVertexCount * vertexStride +
+    edgeVertexCount * vertexStride +
+    addSkirtVertexCount * vertexStride;
   var vertexBuffer = new Float32Array(size);
 
   var bufferIndex = 0;
@@ -333,10 +333,11 @@ function createVerticesFromQuantizedTerrainMesh(
     );
   }
 
-  var edgeTriangleCount = Math.max(0, (edgeVertexCount - 4) * 2);
+  var edgeTriangleCount =
+    Math.max(0, (edgeVertexCount - 4) * 2) + addSkirtVertexCount;
   var indexBufferLength = parameters.indices.length + edgeTriangleCount * 3;
   var indexBuffer = IndexDatatype.createTypedArray(
-    quantizedVertexCount + edgeVertexCount,
+    quantizedVertexCount + edgeVertexCount + addSkirtVertexCount,
     indexBufferLength
   );
   indexBuffer.set(parameters.indices, 0);
