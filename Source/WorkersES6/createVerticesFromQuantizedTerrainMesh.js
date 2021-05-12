@@ -283,9 +283,10 @@ function createVerticesFromQuantizedTerrainMesh(
   );
   var vertexStride = encoding.getStride();
   var size =
-    quantizedVertexCount * vertexStride +
-    edgeVertexCount * vertexStride +
-    addSkirtVertexCount * vertexStride;
+    quantizedVertexCount * vertexStride + edgeVertexCount * vertexStride;
+  if (enableAdditionalSkirtEff) {
+    size += addSkirtVertexCount * vertexStride;
+  }
   var vertexBuffer = new Float32Array(size);
 
   var bufferIndex = 0;
@@ -333,11 +334,17 @@ function createVerticesFromQuantizedTerrainMesh(
     );
   }
 
-  var edgeTriangleCount =
-    Math.max(0, (edgeVertexCount - 4) * 2) + addSkirtVertexCount;
+  var edgeTriangleCount = Math.max(0, (edgeVertexCount - 4) * 2);
+  if (enableAdditionalSkirtEff) {
+    edgeTriangleCount += addSkirtVertexCount;
+  }
+
   var indexBufferLength = parameters.indices.length + edgeTriangleCount * 3;
-  var indexBuffer = IndexDatatype.createTypedArray(
-    quantizedVertexCount + edgeVertexCount + addSkirtVertexCount,
+  var indexBuffer;
+  var totVertextCount = quantizedVertexCount + edgeVertexCount;
+  if (enableAdditionalSkirtEff) totVertextCount += addSkirtVertexCount;
+  indexBuffer = IndexDatatype.createTypedArray(
+    totVertextCount,
     indexBufferLength
   );
   indexBuffer.set(parameters.indices, 0);
