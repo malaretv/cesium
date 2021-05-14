@@ -20,7 +20,7 @@ import createTaskProcessorWorker from "./createTaskProcessorWorker.js";
 
 var maxShort = 32767;
 
-var enableAdditionalSkirt = false;
+var enableAdditionalSkirt = true;
 var enableSkirtsBottomPlane = true;
 
 var cartesian3Scratch = new Cartesian3();
@@ -265,9 +265,17 @@ function createVerticesFromQuantizedTerrainMesh(
   var addSkirtHeight;
   var fullHMin;
   if (enableAdditionalSkirtEff) {
-    var tileXSize =
-      Math.abs(rectangle.east - rectangle.west) * ellipsoid.maximumRadius;
+    var eastT = rectangle.east;
+    var westT = rectangle.west;
 
+    if (eastT < westT) {
+      eastT += CesiumMath.TWO_PI;
+    }
+
+    var tileXSize = (eastT - westT) * ellipsoid.maximumRadius;
+    if (tileXSize < 4000) {
+      tileXSize = 4000;
+    }
     addSkirtHeight = hMin - tileXSize;
 
     fullHMin = Math.min(hMin, addSkirtHeight);
@@ -548,11 +556,38 @@ function createVerticesFromQuantizedTerrainMesh(
   }
 
   if (enableSkirtsBottomPlaneEff) {
+    var WSVertexIndex, WNVertexIndex, ENVertexIndex, ESVertexIndex;
+    if (enableAdditionalSkirtEff) {
+      // add the bottom plane to additional skirts
+      var skirtVertexCount =
+        westIndicesSouthToNorth.length +
+        southIndicesEastToWest.length +
+        eastIndicesNorthToSouth.length +
+        northIndicesWestToEast.length;
+      var addVertexIndex = quantizedVertexCount + skirtVertexCount;
+      // add the bottom plane to skirts
+      WSVertexIndex = addVertexIndex;
+      WNVertexIndex = addVertexIndex + 1;
+      addVertexIndex += 2;
+      addVertexIndex += 2;
+      ENVertexIndex = addVertexIndex;
+      ESVertexIndex = addVertexIndex + 1;
+    } else {
+      // add the bottom plane to skirts
+      var vertexIndex = quantizedVertexCount;
+      WSVertexIndex = vertexIndex;
+      WNVertexIndex = vertexIndex + westIndicesSouthToNorth.length - 1;
+      vertexIndex += westIndicesSouthToNorth.length;
+      vertexIndex += southIndicesEastToWest.length;
+      ENVertexIndex = vertexIndex;
+      ESVertexIndex = vertexIndex + eastIndicesNorthToSouth.length - 1;
+    }
+
     TerrainProvider.addSkirtsBottomPlane(
-      westIndicesSouthToNorth,
-      southIndicesEastToWest,
-      eastIndicesNorthToSouth,
-      quantizedVertexCount,
+      WSVertexIndex,
+      WNVertexIndex,
+      ENVertexIndex,
+      ESVertexIndex,
       indexBuffer,
       offset
     );

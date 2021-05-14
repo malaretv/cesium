@@ -349,22 +349,13 @@ TerrainProvider.addAdditionalSkirtIndices = function (
 };
 
 TerrainProvider.addSkirtsBottomPlane = function (
-  westIndicesSouthToNorth,
-  southIndicesEastToWest,
-  eastIndicesNorthToSouth,
-  vertexCount,
+  WSVertexIndex,
+  WNVertexIndex,
+  ENVertexIndex,
+  ESVertexIndex,
   indices,
   offset
 ) {
-  var vertexIndex = vertexCount;
-  var WSVertexIndex = vertexIndex;
-  var WNVertexIndex = vertexIndex + westIndicesSouthToNorth.length - 1;
-  vertexIndex += westIndicesSouthToNorth.length;
-  vertexIndex += southIndicesEastToWest.length;
-  var ENVertexIndex = vertexIndex;
-  var ESVertexIndex = vertexIndex + eastIndicesNorthToSouth.length - 1;
-  vertexIndex += eastIndicesNorthToSouth.length;
-
   // add triangles for additional skirt
   indices[offset++] = WSVertexIndex;
   indices[offset++] = WNVertexIndex;
