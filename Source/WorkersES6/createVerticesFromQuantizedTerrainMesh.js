@@ -274,7 +274,9 @@ function createVerticesFromQuantizedTerrainMesh(
 
     var tileXSize = (eastT - westT) * ellipsoid.maximumRadius;
     if (tileXSize < 4000) {
-      tileXSize = 4000;
+      // Note: force high skirt size in order to force rendering
+      // (additional skirts they are not shown if too small)
+      tileXSize = 5000;
     }
     addSkirtHeight = hMin - tileXSize;
 

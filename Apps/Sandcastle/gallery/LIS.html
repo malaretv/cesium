@@ -292,7 +292,7 @@
           return cartesianCoords;
         }
 
-        function udpateBodiesPosToDummyPolar() {
+        function updateBodiesPosToDummyPolar() {
           var bodiesPos = bodiesPosList[lastBodiesPosActiveIndex];
           // SUN position
           sunLightDirectionSPICE.x = bodiesPos.SUN.light_direction[0];
@@ -321,7 +321,7 @@
           earthPosSPICE = adjustCartesianCoords(earthPosSPICE);
         }
 
-        function udpateEntitiesPos() {
+        function updateEntitiesPos() {
           for (var locationName in locationsInfo) {
             if (locationsInfo.hasOwnProperty(locationName)) {
               var location = locationsInfo[locationName];
@@ -348,9 +348,10 @@
             viewer.trackedEntity = undefined;
           }
 
-          udpateBodiesPosToDummyPolar();
-          udpateEntitiesPos();
+          updateBodiesPosToDummyPolar();
+          updateEntitiesPos();
           updateEntityVectors(true);
+          updateImageryLayersUrl();
 
           // preserve camera position/orientation
           var newCameraPos;
@@ -983,6 +984,76 @@ function setTimeDisplay(msg) {
           }
         });
 
+        var layer_url_template =
+          "https://act-test.lroc.asu.edu/fcgi-bin/fprovweb.exe?_xtype=dynamic&z={zPlusOne}&x={x}&y={y}&format=jpg&layer=__LAYER__&bodyview=__BODY_VIEW__&cmd_script=get_tile.msh";
+
+        function createLayer(layerName, bodyView) {
+          var layerUrl = layer_url_template.replace("__LAYER__", layerName);
+          if (!bodyView) {
+            bodyView = isOptimizedPolarTerrain
+              ? "lunar-polarshifted-eqc"
+              : "lunar-fulleqc";
+          }
+          layerUrl = layerUrl.replace("__BODY_VIEW__", bodyView);
+          const layerProvider = new Cesium.UrlTemplateImageryProvider({
+            url: layerUrl,
+            tilingScheme: new Cesium.GeographicTilingScheme({
+              ellipsoid,
+              numberOfLevelZeroTilesX: 2,
+              numberOfLevelZeroTilesY: 1,
+            }),
+            tileWidth: 512,
+            tileHeight: 512,
+            customTags: {
+              zPlusOne: function (imageryProvider, x, y, z) {
+                return z + 1;
+              },
+            },
+          });
+          return new Cesium.ImageryLayer(layerProvider);
+        }
+
+        // regular WAC no shadows layer
+        var layerWACAlbedo = createLayer("wac_albedo", "lunar-fulleqc");
+        layerWACAlbedo.show = false;
+        viewer.imageryLayers.add(layerWACAlbedo);
+        // polar optimized WAC no shadows layer
+        var layerWACAlbedoPolar = createLayer(
+          "wac_albedo",
+          "lunar-polarshifted-eqc"
+        );
+        layerWACAlbedoPolar.show = false;
+        viewer.imageryLayers.add(layerWACAlbedoPolar);
+
+        Sandcastle.addToggleButton("WAC Mosaic (no shadows)", false, function (
+          checked
+        ) {
+          if (checked) {
+            if (isOptimizedPolarTerrain) {
+              layerWACAlbedoPolar.show = true;
+            } else {
+              layerWACAlbedo.show = true;
+            }
+          } else {
+            layerWACAlbedo.show = false;
+            layerWACAlbedoPolar.show = false;
+          }
+        });
+
+        function updateImageryLayersUrl() {
+          if (isOptimizedPolarTerrain) {
+            if (layerWACAlbedo.show) {
+              layerWACAlbedo.show = false;
+              layerWACAlbedoPolar.show = true;
+            }
+          } else {
+            if (layerWACAlbedoPolar.show) {
+              layerWACAlbedoPolar.show = false;
+              layerWACAlbedo.show = true;
+            }
+          }
+        }
+
         Sandcastle.addToolbarMenu([
           {
             text: "mesh surf. max_err: 1m",
@@ -1016,7 +1087,6 @@ function setTimeDisplay(msg) {
           },
         ]);
 
-        Sandcastle.addToolbarMenu(locationToolbarOptions);
         Sandcastle.addToggleButton(
           "Terrain Shadows",
           viewer.terrainShadows === Cesium.ShadowMode.ENABLED,
@@ -1116,6 +1186,8 @@ udpateBodiesPosToDummyPolar(!checked);
             },
           },
         ]);
+
+        Sandcastle.addToolbarMenu(locationToolbarOptions);
 
         // SHOW COORDINATES
         var cartesian = new Cesium.Cartesian3();
@@ -1627,60 +1699,6 @@ updateEntityVectors();
         }
 
         maybeUpdateContours();
-
-        // CLAMP TO GROUND
-        /*
-//====== adopted from 'clamp to terrain' sandcastle example. slightly modified starting and end point
-viewer.entities.add({
-  polyline: {
-    positions: Cesium.Cartesian3.fromDegreesArray([
-    -11.351,
-      0.,
-      -11.351,
-      -90.
-    ]),
-    clampToGround: true,
-    width: 15,
-    material: new Cesium.PolylineOutlineMaterialProperty({
-      color: Cesium.Color.ORANGE,
-      outlineWidth: 20,
-      outlineColor: Cesium.Color.BLACK,
-    }),
-  },
-});
-*/
-
-        /*
-var czml = [
-  {
-    id: "document",
-    name: "CZML Geometries: Polyline",
-    version: "1.0",
-  },
-  {
-    id: "redLine",
-    name: "Red line clamped to terain",
-    polyline: {
-      positions: {
-        cartographicDegrees: [-125, 85, 0, -125, -85, 0],
-      },
-      material: {
-        solidColor: {
-          color: {
-            rgba: [255, 0, 0, 255],
-          },
-        },
-      },
-      width: 5,
-      clampToGround: true,
-    },
-  },
- 
-];
-
-var dataSourcePromise = Cesium.CzmlDataSource.load(czml);
-viewer.dataSources.add(dataSourcePromise);
-*/
 
         //Sandcastle_End
         Sandcastle.finishedLoading();
