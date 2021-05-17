@@ -621,6 +621,8 @@ function setTimeDisplay(msg) {
           "GOTM" + noNormalsNameSuffix,
           "GOTM (High Res)",
           "GOTM (High Res)" + noNormalsNameSuffix,
+          "GOTM2",
+          "GOTM2" + noNormalsNameSuffix,
         ];
 
         // change terrain provider based on terrain name
@@ -736,6 +738,30 @@ function setTimeDisplay(msg) {
 
           if (terrainName === "GOTM (High Res) - no normals") {
             terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/poles_hires";
+            requestVertexNormals = false;
+            optimizedPolarTerrain = true;
+            updateTerrainProvider(
+              terrainBaseUrl,
+              optimizedPolarTerrain,
+              requestVertexNormals
+            );
+            return;
+          }
+
+          if (terrainName === "GOTM2") {
+            terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles";
+            requestVertexNormals = true;
+            optimizedPolarTerrain = true;
+            updateTerrainProvider(
+              terrainBaseUrl,
+              optimizedPolarTerrain,
+              requestVertexNormals
+            );
+            return;
+          }
+
+          if (terrainName === "GOTM2 - no normals") {
+            terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/poles";
             requestVertexNormals = false;
             optimizedPolarTerrain = true;
             updateTerrainProvider(
