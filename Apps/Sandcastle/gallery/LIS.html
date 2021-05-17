@@ -237,8 +237,8 @@
 
         // apply a scale factor to earth size/distance in order to have it nearer to the viewer
         // when too far away the earth is not rendered some time when not in the near frustum
-        // var earthScaleFactor = 5.0;
-        var earthScaleFactor = 1.0;
+        var earthScaleFactor = 5.0;
+        // var earthScaleFactor = 1.0;
 
         function cartesianToDummyPolar(cartesianCoords) {
           // rotate along y axis by 90 deg
@@ -985,10 +985,11 @@ function setTimeDisplay(msg) {
         });
 
         var layer_url_template =
-          "https://act-test.lroc.asu.edu/fcgi-bin/fprovweb.exe?_xtype=dynamic&z={zPlusOne}&x={x}&y={y}&format=jpg&layer=__LAYER__&bodyview=__BODY_VIEW__&cmd_script=get_tile.msh";
+          "https://act-test.lroc.asu.edu/fcgi-bin/fprovweb.exe?_xtype=dynamic&z={zPlusOne}&x={x}&y={y}&format=__FORMAT__&layer=__LAYER__&bodyview=__BODY_VIEW__&cmd_script=get_tile.msh";
 
-        function createLayer(layerName, bodyView) {
+        function createLayer(layerName, bodyView, format) {
           var layerUrl = layer_url_template.replace("__LAYER__", layerName);
+          var layerUrl = layerUrl.replace("__FORMAT__", format);
           if (!bodyView) {
             bodyView = isOptimizedPolarTerrain
               ? "lunar-polarshifted-eqc"
@@ -1014,16 +1015,25 @@ function setTimeDisplay(msg) {
         }
 
         // regular WAC no shadows layer
-        var layerWACAlbedo = createLayer("wac_albedo", "lunar-fulleqc");
+        var layerWACAlbedo = createLayer("wac_albedo", "lunar-fulleqc", "jpg");
         layerWACAlbedo.show = false;
         viewer.imageryLayers.add(layerWACAlbedo);
         // polar optimized WAC no shadows layer
         var layerWACAlbedoPolar = createLayer(
           "wac_albedo",
-          "lunar-polarshifted-eqc"
+          "lunar-polarshifted-eqc",
+          "jpg"
         );
         layerWACAlbedoPolar.show = false;
         viewer.imageryLayers.add(layerWACAlbedoPolar);
+        // polar optimized Sun Visibility 60m layer
+        var layerSunVis60mPolar = createLayer(
+          "lavgvis_s_60m",
+          "lunar-polarshifted-eqc",
+          "png"
+        );
+        layerSunVis60mPolar.show = false;
+        viewer.imageryLayers.add(layerSunVis60mPolar);
 
         Sandcastle.addToggleButton("WAC Mosaic (no shadows)", false, function (
           checked
@@ -1040,16 +1050,38 @@ function setTimeDisplay(msg) {
           }
         });
 
+        var sunVisibility60mChecked = false;
+        Sandcastle.addToggleButton(
+          "Sun Visibility 60m",
+          sunVisibility60mChecked,
+          function (checked) {
+            sunVisibility60mChecked = checked;
+            if (checked) {
+              if (isOptimizedPolarTerrain) {
+                layerSunVis60mPolar.show = true;
+              }
+            } else {
+              layerSunVis60mPolar.show = false;
+            }
+          }
+        );
+
         function updateImageryLayersUrl() {
           if (isOptimizedPolarTerrain) {
             if (layerWACAlbedo.show) {
               layerWACAlbedo.show = false;
               layerWACAlbedoPolar.show = true;
             }
+            if (sunVisibility60mChecked) {
+              layerSunVis60mPolar.show = true;
+            }
           } else {
             if (layerWACAlbedoPolar.show) {
               layerWACAlbedoPolar.show = false;
               layerWACAlbedo.show = true;
+            }
+            if (sunVisibility60mChecked) {
+              layerSunVis60mPolar.show = false;
             }
           }
         }
@@ -1368,8 +1400,8 @@ setHeightKm(500);
 
         var materialEarth = Cesium.Material.fromType(Cesium.Material.ImageType);
         // materialEarth.uniforms.color = Cesium.Color.BLUE;
-        var earthTextureUrl = "http://files.actgate.com/earth/earthSmall.jpg";
-        // var earthTextureUrl = "http://files.actgate.com/earth/earthNoCloudsSmall.jpg";
+        var earthTextureUrl = "https://files.actgate.com/earth/earthSmall.jpg";
+        // var earthTextureUrl = "https://files.actgate.com/earth/earthNoCloudsSmall.jpg";
         materialEarth.uniforms.image = earthTextureUrl;
         materialEarth.translucent = false;
 
