@@ -241,35 +241,55 @@
         // var earthScaleFactor = 1.0;
 
         function cartesianToDummyPolar(cartesianCoords) {
-          // rotate along y axis by 90 deg
+          // rotate along y axis by -90 deg
           // multiple vector my rotation matrix
-          // R = (0, 0, 1)
+          // R1 = (0, 0, -1)
           //     (0, 1, 0)
-          //     (-1, 0, 0)
+          //     (1, 0, 0)
+          // rotate along z axis by 180 deg
+          // R2 = (-1, 0, 0)
+          //      (0, -1, 0)
+          //      (0, 0, 1)
+          // final rotation
+          // R = R1 * R2 =
+          //      (0, 0, -1)
+          //      (0, -1, 0)
+          //      (-1, 0, 0)
           // v = (x, y, z)
 
           // optimization
-          // vr = v * R = -z, y, x
+          // vr = v * R = -z, -y, -x
 
           var polarCartesianCoords = Cesium.Cartesian3.clone(cartesianCoords);
           polarCartesianCoords.x = -cartesianCoords.z;
-          polarCartesianCoords.z = cartesianCoords.x;
+          polarCartesianCoords.y = -cartesianCoords.y;
+          polarCartesianCoords.z = -cartesianCoords.x;
           return polarCartesianCoords;
         }
 
         function dummyPolarToCartesian(cartesianCoords) {
-          // rotate along y axis by 90 deg
+          // rotate along y axis by -90 deg
           // multiple vector my rotation matrix
-          // R = (0, 0, -1)
+          // R1 = (0, 0, -1)
           //     (0, 1, 0)
           //     (1, 0, 0)
+          // rotate along z axis by 180 deg
+          // R2 = (-1, 0, 0)
+          //      (0, -1, 0)
+          //      (0, 0, 1)
+          // final rotation
+          // R = R1 * R2 =
+          //      (0, 0, -1)
+          //      (0, -1, 0)
+          //      (-1, 0, 0)
           // v = (x, y, z)
 
           // optimization
-          // vr = v * R = z, y, -x
+          // vr = v * R = -z, -y, -x
 
           var polarCartesianCoords = Cesium.Cartesian3.clone(cartesianCoords);
-          polarCartesianCoords.x = cartesianCoords.z;
+          polarCartesianCoords.x = -cartesianCoords.z;
+          polarCartesianCoords.y = -cartesianCoords.y;
           polarCartesianCoords.z = -cartesianCoords.x;
           return polarCartesianCoords;
         }
@@ -621,8 +641,6 @@ function setTimeDisplay(msg) {
           "GOTM" + noNormalsNameSuffix,
           "GOTM (High Res)",
           "GOTM (High Res)" + noNormalsNameSuffix,
-          "GOTM2",
-          "GOTM2" + noNormalsNameSuffix,
         ];
 
         // change terrain provider based on terrain name
@@ -701,54 +719,6 @@ function setTimeDisplay(msg) {
           }
 
           if (terrainName === "GOTM") {
-            terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/poles";
-            requestVertexNormals = true;
-            optimizedPolarTerrain = true;
-            updateTerrainProvider(
-              terrainBaseUrl,
-              optimizedPolarTerrain,
-              requestVertexNormals
-            );
-            return;
-          }
-
-          if (terrainName === "GOTM - no normals") {
-            terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/poles";
-            requestVertexNormals = false;
-            optimizedPolarTerrain = true;
-            updateTerrainProvider(
-              terrainBaseUrl,
-              optimizedPolarTerrain,
-              requestVertexNormals
-            );
-            return;
-          }
-
-          if (terrainName === "GOTM (High Res)") {
-            terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/poles_hires";
-            requestVertexNormals = true;
-            optimizedPolarTerrain = true;
-            updateTerrainProvider(
-              terrainBaseUrl,
-              optimizedPolarTerrain,
-              requestVertexNormals
-            );
-            return;
-          }
-
-          if (terrainName === "GOTM (High Res) - no normals") {
-            terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/poles_hires";
-            requestVertexNormals = false;
-            optimizedPolarTerrain = true;
-            updateTerrainProvider(
-              terrainBaseUrl,
-              optimizedPolarTerrain,
-              requestVertexNormals
-            );
-            return;
-          }
-
-          if (terrainName === "GOTM2") {
             terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles";
             requestVertexNormals = true;
             optimizedPolarTerrain = true;
@@ -760,8 +730,34 @@ function setTimeDisplay(msg) {
             return;
           }
 
-          if (terrainName === "GOTM2 - no normals") {
-            terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/poles";
+          if (terrainName === "GOTM - no normals") {
+            terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles";
+            requestVertexNormals = false;
+            optimizedPolarTerrain = true;
+            updateTerrainProvider(
+              terrainBaseUrl,
+              optimizedPolarTerrain,
+              requestVertexNormals
+            );
+            return;
+          }
+
+          if (terrainName === "GOTM (High Res)") {
+            terrainBaseUrl =
+              "https://lunar-dem-tiles2.quickmap.io/alt_poles_hires";
+            requestVertexNormals = true;
+            optimizedPolarTerrain = true;
+            updateTerrainProvider(
+              terrainBaseUrl,
+              optimizedPolarTerrain,
+              requestVertexNormals
+            );
+            return;
+          }
+
+          if (terrainName === "GOTM (High Res) - no normals") {
+            terrainBaseUrl =
+              "https://lunar-dem-tiles2.quickmap.io/alt_poles_hires";
             requestVertexNormals = false;
             optimizedPolarTerrain = true;
             updateTerrainProvider(
@@ -1040,6 +1036,15 @@ function setTimeDisplay(msg) {
           return new Cesium.ImageryLayer(layerProvider);
         }
 
+        // polar optimized Sun Visibility 60m layer
+        var layerSunVis60mPolar = createLayer(
+          "lavgvis_s_60m",
+          "lunar-polarshifted-eqc",
+          "png"
+        );
+        layerSunVis60mPolar.show = false;
+        viewer.imageryLayers.add(layerSunVis60mPolar);
+
         // regular WAC no shadows layer
         var layerWACAlbedo = createLayer("wac_albedo", "lunar-fulleqc", "jpg");
         layerWACAlbedo.show = false;
@@ -1052,14 +1057,6 @@ function setTimeDisplay(msg) {
         );
         layerWACAlbedoPolar.show = false;
         viewer.imageryLayers.add(layerWACAlbedoPolar);
-        // polar optimized Sun Visibility 60m layer
-        var layerSunVis60mPolar = createLayer(
-          "lavgvis_s_60m",
-          "lunar-polarshifted-eqc",
-          "png"
-        );
-        layerSunVis60mPolar.show = false;
-        viewer.imageryLayers.add(layerSunVis60mPolar);
 
         Sandcastle.addToggleButton("WAC Mosaic (no shadows)", false, function (
           checked
