@@ -147,11 +147,11 @@
 
         viewer.imageryLayers.removeAll();
 
-        function resetSPICEAccumulationEvents() {
-          if (updateBodiesPosTimerId > 0) {
+        function resetStateUpdateAccumulationEvents() {
+          if (updateStateTimerId > 0) {
             // stop timer
-            clearInterval(updateBodiesPosTimerId);
-            updateBodiesPosTimerId = -1;
+            clearInterval(updateStateTimerId);
+            updateStateTimerId = -1;
             // reset events accumulation counter
             accumulateTimeEventsCount = 0;
           }
@@ -166,8 +166,6 @@
         var secsFromStartUTCArray = [];
         var lastBodiesPosActiveIndex = -1;
         async function updateBodiesPosSPICE() {
-          resetSPICEAccumulationEvents();
-
           // build url to get the source light direction
           var startUTCTime = viewer.clock.startTime;
           var endUTCTime = viewer.clock.stopTime;
@@ -456,11 +454,7 @@ console.log(earthPosSPICE);
         // let us send a request when a certain amount of events is reached
         // or when a timer expires
         // define some constants
-        var MAX_NUM_CUMULATED_EVENTS = 10;
-        var FORCE_UPDATE_TRIGGER_INTERVAL = 300; // ms
-        var accumulateTimeEventsCount = 0;
-        var updateBodiesPosTimerId = -1;
-        var lastTime = -1;
+        var lastBodiesUpdateTime = -1;
         function maybeUpdateBodiesPosSPICE() {
           if (
             scene.light === sunLightSPICE ||
@@ -468,10 +462,38 @@ console.log(earthPosSPICE);
           ) {
             var date = viewer.clock.currentTime;
             var time = Cesium.JulianDate.toIso8601(date, 3);
-            if (lastTime !== time) {
-              lastTime = time;
+            if (lastBodiesUpdateTime !== time) {
+              lastBodiesUpdateTime = time;
               updateBodiesPos();
+            }
+          }
+        }
 
+        var MAX_NUM_CUMULATED_EVENTS = 100;
+        var FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL = 1000; // ms
+        var accumulateTimeEventsCount = 0;
+        var updateStateTimerId = -1;
+        var lastUrlStateUpdateTime = -1;
+        function maybeUpdateStateUrl() {
+          var date = viewer.clock.currentTime;
+          var time = Cesium.JulianDate.toIso8601(date, 3);
+          if (lastUrlStateUpdateTime !== time) {
+            lastUrlStateUpdateTime = time;
+            if (accumulateTimeEventsCount === 0) {
+              // first event
+              // let us set the timer
+              // it will trigger if the max amount of events is not reached before the timer expires
+              updateStateTimerId = setInterval(
+                saveStateToQueryString,
+                FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL
+              );
+            }
+
+            if (accumulateTimeEventsCount < MAX_NUM_CUMULATED_EVENTS) {
+              // wait before triggering new url update
+              accumulateTimeEventsCount += 1;
+            } else {
+              // force url update
               saveStateToQueryString();
             }
           }
@@ -499,7 +521,7 @@ console.log(earthPosSPICE);
 
         // viewer.timeline.addEventListener('settime', maybeUpdateBodiesPosSPICE, false);
         viewer.clock.onTick.addEventListener(maybeUpdateBodiesPosSPICE);
-        // viewer.clock.onTick.addEventListener(updateTimeDisplay);
+        viewer.clock.onTick.addEventListener(maybeUpdateStateUrl);
 
         function setTime(iso8601) {
           var currentTime = Cesium.JulianDate.fromIso8601(iso8601);
@@ -552,7 +574,7 @@ new Cesium.JulianDate()
 
           scene.globe.dynamicAtmosphereLighting = true;
           scene.globe.dynamicAtmosphereLightingFromSun = false;
-          resetSPICEAccumulationEvents();
+          resetStateUpdateAccumulationEvents();
         }
 
         var coordsDisplay = document.createElement("div");
@@ -1802,6 +1824,8 @@ updateEntityVectors();
          * Get current base state and saves to querystring
          */
         function saveStateToQueryString() {
+          resetStateUpdateAccumulationEvents();
+
           // store pos and orientation. Note: use regular terrain coords (not accounting for polar view rotation)
           var camera_position = Cesium.Cartesian3.pack(
             invAdjustCartesianCoords(camera.positionWC),
