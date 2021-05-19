@@ -55,6 +55,7 @@
         var requestVertexNormals = true;
         var isOptimizedPolarTerrain = false;
         var currTerrainName;
+        var defaultUTCTime = "2022-12-04T00:00:00.000Z";
 
         // for automatic regular/polar terrain switch
         var automaticPolarTerrainTransition = false;
@@ -470,6 +471,8 @@ console.log(earthPosSPICE);
             if (lastTime !== time) {
               lastTime = time;
               updateBodiesPos();
+
+              saveStateToQueryString();
             }
           }
         }
@@ -1334,6 +1337,8 @@ udpateBodiesPosToDummyPolar(!checked);
 
           maybeUpdateTerrainProvider(camLat, camH);
           maybeUpdateContours(camH);
+
+          saveStateToQueryString();
         });
 
         function setHeightKm(heightInKilometers) {
@@ -1697,9 +1702,7 @@ updateEntityVectors();
 */
 
         newTerrainNameSelected(defaultTerrainName);
-
-        setTime("2022-12-04T00:00:00.000Z");
-        // recenter on the first item
+        setTime(defaultUTCTime);
 
         setLocation(locationsInfo.Tycho);
 
@@ -1760,6 +1763,110 @@ updateEntityVectors();
         }
 
         maybeUpdateContours();
+
+        //
+        /*************
+        ================================
+        Load/Save base state in URL
+        ================================
+
+        Note that demo only works via "Open in New Window" mode.
+
+        State is saved to url every time it changes.
+        The application attempts to load state if present at each application load.
+
+        Camera state is stored as `position` array of the Cartesian3 coordinates and
+        a `orientation` as camera direction and up vectors arrays.
+        Both position and orientation is saved in regular terrain reference system.
+
+        ****/
+
+        /**
+         * Utility function to update querystring in url.
+         *
+         * takes a `params` object and updates those values in the querystring
+         */
+        function updateUrlParams(params) {
+          if (history.pushState) {
+            const url = new URL(window.location);
+            for (var [key, value] of Object.entries(params)) {
+              url.searchParams.set(key, value);
+            }
+            window.history.pushState({}, "", url);
+          } else {
+            console.log("browser does not support querystring updating");
+          }
+        }
+
+        /**
+         * Get current base state and saves to querystring
+         */
+        function saveStateToQueryString() {
+          // store pos and orientation. Note: use regular terrain coords (not accounting for polar view rotation)
+          var camera_position = Cesium.Cartesian3.pack(
+            invAdjustCartesianCoords(camera.positionWC),
+            []
+          );
+          var camera_direction = Cesium.Cartesian3.pack(
+            invAdjustCartesianCoords(camera.direction),
+            []
+          );
+          var camera_up = Cesium.Cartesian3.pack(
+            invAdjustCartesianCoords(camera.up),
+            []
+          );
+          var UTCtime = viewer.clock.currentTime;
+
+          // updateUrlParams({position, orientation});
+          updateUrlParams({
+            camera_position,
+            camera_direction,
+            camera_up,
+            UTCtime,
+          });
+        }
+
+        /**
+         * Check if base state info are available if so loads them
+         */
+        function loadStateFromQueryString() {
+          var searchParams = new URL(window.location).searchParams;
+          // camera position and orientation
+          if (
+            searchParams.has("camera_position") &&
+            searchParams.has("camera_direction") &&
+            searchParams.has("camera_up")
+          ) {
+            var camera_position = searchParams
+              .get("camera_position")
+              .split(",")
+              .map(Number);
+            var camera_direction = searchParams
+              .get("camera_direction")
+              .split(",")
+              .map(Number);
+            var camera_up = searchParams
+              .get("camera_up")
+              .split(",")
+              .map(Number);
+            viewer.scene.camera.flyTo({
+              destination: Cesium.Cartesian3.unpack(camera_position),
+              orientation: {
+                direction: Cesium.Cartesian3.unpack(camera_direction),
+                up: Cesium.Cartesian3.unpack(camera_up),
+              },
+            });
+          }
+
+          // time
+          if (searchParams.has("UTCtime")) {
+            var UTCtime = searchParams.get("UTCtime");
+            setTime(UTCtime);
+          }
+        }
+
+        // Load QueryString on initial app load
+        loadStateFromQueryString();
 
         //Sandcastle_End
         Sandcastle.finishedLoading();
