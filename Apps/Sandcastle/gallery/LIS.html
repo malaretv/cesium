@@ -520,6 +520,11 @@ console.log(earthPosSPICE);
         });
 
         // viewer.timeline.addEventListener('settime', maybeUpdateBodiesPosSPICE, false);
+        // catch click on home button
+        viewer.homeButton.viewModel.command.beforeExecute.addEventListener(
+          resetTerrain
+        );
+        // time tick event
         viewer.clock.onTick.addEventListener(maybeUpdateBodiesPosSPICE);
         viewer.clock.onTick.addEventListener(maybeUpdateStateUrl);
 
@@ -893,6 +898,15 @@ function setTimeDisplay(msg) {
           var bestTerrainName = getBestLatTerrainName(lat, height);
           // console.log("best terrain (" + lat.toFixed(3) + "): " + bestTerrainName);
           setTerrain(bestTerrainName);
+        }
+
+        function resetTerrain() {
+          if (!automaticPolarTerrainTransition) {
+            // nothing to do
+            return;
+          }
+
+          setTerrain(regularTerrainName);
         }
 
         function maybeUpdateGlobeCartesianPositions(wasOptimizedPolarTerrain) {
@@ -1824,6 +1838,7 @@ updateEntityVectors();
          * Get current base state and saves to querystring
          */
         function saveStateToQueryString() {
+          console.log("update state");
           resetStateUpdateAccumulationEvents();
 
           // store pos and orientation. Note: use regular terrain coords (not accounting for polar view rotation)
