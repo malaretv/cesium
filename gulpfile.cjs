@@ -1856,6 +1856,8 @@ function buildLIS() {
       gulp
         .src("Apps/LIS/index.html")
         .pipe(gulpReplace('type="module"', ""))
+        .pipe(gulpReplace("LIS (dev)", "LIS"))
+        .pipe(gulpReplace('"development"', '"production"'))
         .pipe(gulp.dest(LISOutputDirectory)),
 
       gulp.src([

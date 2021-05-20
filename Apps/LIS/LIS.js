@@ -1289,7 +1289,9 @@ setHeightKm(500);
 });
 */
 
-viewer.extend(Cesium.viewerCesiumInspectorMixin);
+if (window.LIS_MODE === "development") {
+  viewer.extend(Cesium.viewerCesiumInspectorMixin);
+}
 
 document.getElementById("toolbar").style.width = "50%";
 

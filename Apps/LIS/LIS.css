@@ -12,6 +12,7 @@ body {
   overflow: hidden;
   padding: 0;
   background: #000;
+  color: #eee;
 }
 
 .fullSize {
