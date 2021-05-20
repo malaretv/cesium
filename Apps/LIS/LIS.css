@@ -63,5 +63,5 @@ body {
 }
 
 .cesium-widget-credits {
-  display: none;
+  display: none !important;
 }
