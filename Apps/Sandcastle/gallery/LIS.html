@@ -147,13 +147,11 @@
 
         viewer.imageryLayers.removeAll();
 
-        function resetStateUpdateAccumulationEvents() {
+        function resetStateUpdateTimer() {
           if (updateStateTimerId > 0) {
             // stop timer
             clearInterval(updateStateTimerId);
             updateStateTimerId = -1;
-            // reset events accumulation counter
-            accumulateTimeEventsCount = 0;
           }
         }
 
@@ -469,33 +467,26 @@ console.log(earthPosSPICE);
           }
         }
 
-        var MAX_NUM_CUMULATED_EVENTS = 100;
         var FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL = 1000; // ms
-        var accumulateTimeEventsCount = 0;
         var updateStateTimerId = -1;
         var lastUrlStateUpdateTime = -1;
+        // wait FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL since last time update before updating the url
+        // this is needed in order to avoid to many history.push requests (there is a limit on Safari browser)
         function maybeUpdateStateUrl() {
           var date = viewer.clock.currentTime;
           var time = Cesium.JulianDate.toIso8601(date, 3);
           if (lastUrlStateUpdateTime !== time) {
             lastUrlStateUpdateTime = time;
-            if (accumulateTimeEventsCount === 0) {
-              // first event
-              // let us set the timer
-              // it will trigger if the max amount of events is not reached before the timer expires
-              updateStateTimerId = setInterval(
-                saveStateToQueryString,
-                FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL
-              );
+            if (updateStateTimerId >= 0) {
+              // reset the timer
+              resetStateUpdateTimer();
             }
 
-            if (accumulateTimeEventsCount < MAX_NUM_CUMULATED_EVENTS) {
-              // wait before triggering new url update
-              accumulateTimeEventsCount += 1;
-            } else {
-              // force url update
-              saveStateToQueryString();
-            }
+            // let us set the timer
+            updateStateTimerId = setInterval(
+              saveStateToQueryString,
+              FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL
+            );
           }
         }
 
@@ -579,7 +570,7 @@ new Cesium.JulianDate()
 
           scene.globe.dynamicAtmosphereLighting = true;
           scene.globe.dynamicAtmosphereLightingFromSun = false;
-          resetStateUpdateAccumulationEvents();
+          resetStateUpdateTimer();
         }
 
         var coordsDisplay = document.createElement("div");
@@ -1838,8 +1829,7 @@ updateEntityVectors();
          * Get current base state and saves to querystring
          */
         function saveStateToQueryString() {
-          console.log("update state");
-          resetStateUpdateAccumulationEvents();
+          resetStateUpdateTimer();
 
           // store pos and orientation. Note: use regular terrain coords (not accounting for polar view rotation)
           var camera_position = Cesium.Cartesian3.pack(
