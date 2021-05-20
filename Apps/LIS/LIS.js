@@ -112,13 +112,11 @@ function init() {
 
   viewer.imageryLayers.removeAll();
 
-  function resetStateUpdateAccumulationEvents() {
+  function resetStateUpdateTimer() {
     if (updateStateTimerId > 0) {
       // stop timer
       clearInterval(updateStateTimerId);
       updateStateTimerId = -1;
-      // reset events accumulation counter
-      accumulateTimeEventsCount = 0;
     }
   }
 
@@ -130,7 +128,6 @@ function init() {
   var bodiesPosList;
   var secsFromStartUTCArray = [];
   var lastBodiesPosActiveIndex = -1;
-
   async function updateBodiesPosSPICE() {
     // build url to get the source light direction
     var startUTCTime = viewer.clock.startTime;
@@ -399,11 +396,11 @@ function init() {
       updateEntityVectors(false);
 
       /*
-        console.log("sun pos");
-        console.log(sunPosSPICE);
-        console.log("earth pos");
-        console.log(earthPosSPICE);
-        */
+console.log("sun pos");
+console.log(sunPosSPICE);
+console.log("earth pos");
+console.log(earthPosSPICE);
+*/
     }
   }
 
@@ -423,33 +420,26 @@ function init() {
     }
   }
 
-  var MAX_NUM_CUMULATED_EVENTS = 100;
   var FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL = 1000; // ms
-  var accumulateTimeEventsCount = 0;
   var updateStateTimerId = -1;
   var lastUrlStateUpdateTime = -1;
+  // wait FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL since last time update before updating the url
+  // this is needed in order to avoid to many history.push requests (there is a limit on Safari browser)
   function maybeUpdateStateUrl() {
     var date = viewer.clock.currentTime;
     var time = Cesium.JulianDate.toIso8601(date, 3);
     if (lastUrlStateUpdateTime !== time) {
       lastUrlStateUpdateTime = time;
-      if (accumulateTimeEventsCount === 0) {
-        // first event
-        // let us set the timer
-        // it will trigger if the max amount of events is not reached before the timer expires
-        updateStateTimerId = setInterval(
-          saveStateToQueryString,
-          FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL
-        );
+      if (updateStateTimerId >= 0) {
+        // reset the timer
+        resetStateUpdateTimer();
       }
 
-      if (accumulateTimeEventsCount < MAX_NUM_CUMULATED_EVENTS) {
-        // wait before triggering new url update
-        accumulateTimeEventsCount += 1;
-      } else {
-        // force url update
-        saveStateToQueryString();
-      }
+      // let us set the timer
+      updateStateTimerId = setInterval(
+        saveStateToQueryString,
+        FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL
+      );
     }
   }
 
@@ -474,6 +464,11 @@ function init() {
   });
 
   // viewer.timeline.addEventListener('settime', maybeUpdateBodiesPosSPICE, false);
+  // catch click on home button
+  viewer.homeButton.viewModel.command.beforeExecute.addEventListener(
+    resetTerrain
+  );
+  // time tick event
   viewer.clock.onTick.addEventListener(maybeUpdateBodiesPosSPICE);
   viewer.clock.onTick.addEventListener(maybeUpdateStateUrl);
 
@@ -485,28 +480,28 @@ function init() {
       new Cesium.JulianDate()
     );
     /*
-      // lunar day: 29 days, 12 hr, 44 min, 3 sec
-      var endTime = Cesium.JulianDate.addDays(
-      currentTime,
-      29,
-      new Cesium.JulianDate()
-      );
-      endTime = Cesium.JulianDate.addHours(
-      endTime,
-      12,
-      new Cesium.JulianDate()
-      );
-      endTime = Cesium.JulianDate.addMinutes(
-      endTime,
-      44,
-      new Cesium.JulianDate()
-      );
-      endTime = Cesium.JulianDate.addSeconds(
-      endTime,
-      3,
-      new Cesium.JulianDate()
-      );
-      */
+// lunar day: 29 days, 12 hr, 44 min, 3 sec
+var endTime = Cesium.JulianDate.addDays(
+currentTime,
+29,
+new Cesium.JulianDate()
+);
+endTime = Cesium.JulianDate.addHours(
+endTime,
+12,
+new Cesium.JulianDate()
+);
+endTime = Cesium.JulianDate.addMinutes(
+endTime,
+44,
+new Cesium.JulianDate()
+);
+endTime = Cesium.JulianDate.addSeconds(
+endTime,
+3,
+new Cesium.JulianDate()
+);
+*/
 
     viewer.clock.currentTime = currentTime;
     viewer.timeline.zoomTo(currentTime, endTime);
@@ -528,7 +523,7 @@ function init() {
 
     scene.globe.dynamicAtmosphereLighting = true;
     scene.globe.dynamicAtmosphereLightingFromSun = false;
-    resetStateUpdateAccumulationEvents();
+    resetStateUpdateTimer();
   }
 
   var coordsDisplay = document.createElement("div");
@@ -547,17 +542,17 @@ function init() {
   }
 
   /*
-    function updateTimeDisplay() {
-      var msg =
-        "Time: " + Cesium.JulianDate.toIso8601(viewer.clock.currentTime, 3);
-      setTimeDisplay(msg);
-    }
-    
-    var timeDisplay = document.createElement("div");
-    function setTimeDisplay(msg) {
-      timeDisplay.innerHTML = msg;
-    }
-    */
+function updateTimeDisplay() {
+  var msg =
+    "Time: " + Cesium.JulianDate.toIso8601(viewer.clock.currentTime, 3);
+  setTimeDisplay(msg);
+}
+
+var timeDisplay = document.createElement("div");
+function setTimeDisplay(msg) {
+  timeDisplay.innerHTML = msg;
+}
+*/
 
   // CONTROLS
   var illuminationOptions = [
@@ -614,8 +609,8 @@ function init() {
     "sldem_lola" + noNormalsNameSuffix,
     "usgs_lola",
     "NASA JPL - no normals",
-    "Optimized PolarDEM",
-    "Optimized PolarDEM" + noNormalsNameSuffix,
+    //        "Optimized PolarDEM",
+    //        "Optimized PolarDEM" + noNormalsNameSuffix,
     "GOTM",
     "GOTM" + noNormalsNameSuffix,
     "GOTM (High Res)",
@@ -838,6 +833,15 @@ function init() {
     var bestTerrainName = getBestLatTerrainName(lat, height);
     // console.log("best terrain (" + lat.toFixed(3) + "): " + bestTerrainName);
     setTerrain(bestTerrainName);
+  }
+
+  function resetTerrain() {
+    if (!automaticPolarTerrainTransition) {
+      // nothing to do
+      return;
+    }
+
+    setTerrain(regularTerrainName);
   }
 
   function maybeUpdateGlobeCartesianPositions(wasOptimizedPolarTerrain) {
@@ -1111,39 +1115,11 @@ function init() {
   ]);
 
   Sandcastle.addToggleButton(
-    "Terrain Shadows",
-    viewer.terrainShadows === Cesium.ShadowMode.ENABLED,
-    function (checked) {
-      viewer.terrainShadows = checked
-        ? Cesium.ShadowMode.ENABLED
-        : Cesium.ShadowMode.DISABLED;
-    }
-  );
-
-  Sandcastle.addToggleButton(
     "Contours @ " + viewModel.contourSpacing.toFixed(0) + "m",
     viewModel.enableContour,
     function (checked) {
       viewModel.enableContour = checked;
       updateContours();
-    }
-  );
-
-  /*
-    Sandcastle.addToggleButton(
-    "Soft Shadows",
-    shadowMap.softShadows,
-    function (checked) {
-    shadowMap.softShadows = checked;
-    }
-    );
-    */
-
-  Sandcastle.addToggleButton(
-    "Atm simu",
-    scene.globe.showGroundAtmosphere,
-    function (checked) {
-      scene.globe.showGroundAtmosphere = checked;
     }
   );
 
@@ -1154,6 +1130,16 @@ function init() {
   });
 
   Sandcastle.addToggleButton(
+    "Terrain Shadows",
+    viewer.terrainShadows === Cesium.ShadowMode.ENABLED,
+    function (checked) {
+      viewer.terrainShadows = checked
+        ? Cesium.ShadowMode.ENABLED
+        : Cesium.ShadowMode.DISABLED;
+    }
+  );
+
+  Sandcastle.addToggleButton(
     "Shadows Fading",
     shadowMap.fadingEnabled,
     function (checked) {
@@ -1162,26 +1148,36 @@ function init() {
   );
 
   /*
-    Sandcastle.addToggleButton(
-    "Fog simu",
-    scene.fog.enabled,
-    function (checked) {
-    scene.fog.enabled = checked;
-    }
-    );
-    */
+Sandcastle.addToggleButton(
+"Soft Shadows",
+shadowMap.softShadows,
+function (checked) {
+shadowMap.softShadows = checked;
+}
+);
+*/
 
   /*
-    var dummyPolesBodies = false;
-    Sandcastle.addToggleButton(
-    "Dummy Pole Light",
-    dummyPolesBodies,
-    function (checked) {
-    dummyPolesBodies = checked;
-    udpateBodiesPosToDummyPolar(!checked);
-    }
-    );
-    */
+Sandcastle.addToggleButton(
+"Fog simu",
+scene.fog.enabled,
+function (checked) {
+scene.fog.enabled = checked;
+}
+);
+*/
+
+  /*
+var dummyPolesBodies = false;
+Sandcastle.addToggleButton(
+"Dummy Pole Light",
+dummyPolesBodies,
+function (checked) {
+dummyPolesBodies = checked;
+udpateBodiesPosToDummyPolar(!checked);
+}
+);
+*/
 
   Sandcastle.addToolbarMenu([
     {
@@ -1215,6 +1211,14 @@ function init() {
       },
     },
   ]);
+
+  Sandcastle.addToggleButton(
+    "Atm simu",
+    scene.globe.showGroundAtmosphere,
+    function (checked) {
+      scene.globe.showGroundAtmosphere = checked;
+    }
+  );
 
   Sandcastle.addToolbarMenu(locationToolbarOptions);
 
@@ -1325,27 +1329,27 @@ function init() {
   terrainDisplay.style.padding = "5px 10px";
 
   /*
-    // Show the coords display below the toobar buttons.
-    timeDisplay.style.background = "rgba(42, 42, 42, 0.7)";
-    timeDisplay.style.padding = "5px 10px";
-    document.getElementById("toolbar").appendChild(timeDisplay);
-    */
+// Show the coords display below the toobar buttons.
+timeDisplay.style.background = "rgba(42, 42, 42, 0.7)";
+timeDisplay.style.padding = "5px 10px";
+document.getElementById("toolbar").appendChild(timeDisplay);
+*/
 
   /*
-    // Add buttons, for convenience.
-    Sandcastle.addToolbarButton("1km height", function () {
-    setHeightKm(1);
-    });
-    Sandcastle.addToolbarButton("10km height", function () {
-    setHeightKm(10);
-    });
-    Sandcastle.addToolbarButton("100km height", function () {
-    setHeightKm(100);
-    });
-    Sandcastle.addToolbarButton("500km height", function () {
-    setHeightKm(500);
-    });
-    */
+// Add buttons, for convenience.
+Sandcastle.addToolbarButton("1km height", function () {
+setHeightKm(1);
+});
+Sandcastle.addToolbarButton("10km height", function () {
+setHeightKm(10);
+});
+Sandcastle.addToolbarButton("100km height", function () {
+setHeightKm(100);
+});
+Sandcastle.addToolbarButton("500km height", function () {
+setHeightKm(500);
+});
+*/
 
   viewer.extend(Cesium.viewerCesiumInspectorMixin);
 
@@ -1515,19 +1519,19 @@ function init() {
     });
 
     /*
-      // earth rise
-      destination : Cesium.Cartesian3.fromDegrees(
-      -121.012,
-      72.995,
-      29700,
-      Cesium.Ellipsoid.WGS84),
-      orientation: {
-      heading : Cesium.Math.toRadians(62.6),
-      pitch : Cesium.Math.toRadians(-23.7),
-      roll : Cesium.Math.toRadians(359.7)
-      }
-      });
-      */
+// earth rise
+destination : Cesium.Cartesian3.fromDegrees(
+-121.012,
+72.995,
+29700,
+Cesium.Ellipsoid.WGS84),
+orientation: {
+heading : Cesium.Math.toRadians(62.6),
+pitch : Cesium.Math.toRadians(-23.7),
+roll : Cesium.Math.toRadians(359.7)
+}
+});
+*/
   }
 
   // ENTITY TO SUN/EARTH VECTORS
@@ -1627,24 +1631,24 @@ function init() {
   }
 
   /*
-    Sandcastle.addToggleButton(
-    "Sun Vector",
-    itemToSunArrow.polyline.show,
-    function (checked) {
-    itemToSunArrow.polyline.show = checked;
-    updateEntityVectors();
-    }
-    );
-    
-    Sandcastle.addToggleButton(
-    "Earth Vector",
-    itemToEarthArrow.polyline.show,
-    function (checked) {
-    itemToEarthArrow.polyline.show = checked;
-    updateEntityVectors();
-    }
-    );
-    */
+Sandcastle.addToggleButton(
+"Sun Vector",
+itemToSunArrow.polyline.show,
+function (checked) {
+itemToSunArrow.polyline.show = checked;
+updateEntityVectors();
+}
+);
+
+Sandcastle.addToggleButton(
+"Earth Vector",
+itemToEarthArrow.polyline.show,
+function (checked) {
+itemToEarthArrow.polyline.show = checked;
+updateEntityVectors();
+}
+);
+*/
 
   newTerrainNameSelected(defaultTerrainName);
   setTime(defaultUTCTime);
@@ -1711,20 +1715,20 @@ function init() {
 
   //
   /*************
-            ================================
-            Load/Save base state in URL
-            ================================
-    
-            Note that demo only works via "Open in New Window" mode.
-    
-            State is saved to url every time it changes.
-            The application attempts to load state if present at each application load.
-    
-            Camera state is stored as `position` array of the Cartesian3 coordinates and
-            a `orientation` as camera direction and up vectors arrays.
-            Both position and orientation is saved in regular terrain reference system.
-    
-            ****/
+        ================================
+        Load/Save base state in URL
+        ================================
+
+        Note that demo only works via "Open in New Window" mode.
+
+        State is saved to url every time it changes.
+        The application attempts to load state if present at each application load.
+
+        Camera state is stored as `position` array of the Cartesian3 coordinates and
+        a `orientation` as camera direction and up vectors arrays.
+        Both position and orientation is saved in regular terrain reference system.
+
+        ****/
 
   /**
    * Utility function to update querystring in url.
@@ -1747,7 +1751,7 @@ function init() {
    * Get current base state and saves to querystring
    */
   function saveStateToQueryString() {
-    resetStateUpdateAccumulationEvents();
+    resetStateUpdateTimer();
 
     // store pos and orientation. Note: use regular terrain coords (not accounting for polar view rotation)
     var camera_position = Cesium.Cartesian3.pack(

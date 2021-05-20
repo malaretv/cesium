@@ -1826,7 +1826,7 @@ function buildLIS() {
           rollupPluginStripPragma({
             pragmas: ["debug"],
           }),
-          // rollupPluginUglify.uglify(),
+          rollupPluginUglify.uglify(),
         ],
         onwarn: rollupWarning,
       })
