@@ -210,6 +210,11 @@ var earthScaleFactor = 5.0;
 // var earthScaleFactor = 1.0;
 
 function updateBodiesPosToDummyPolar() {
+  if (lastBodiesPosActiveIndex < 0) {
+    // nothing to do
+    return;
+  }
+
   var bodiesPos = bodiesPosList[lastBodiesPosActiveIndex];
   // SUN position
   sunLightDirectionSPICE.x = bodiesPos.SUN.light_direction[0];
@@ -502,20 +507,27 @@ var illuminationOptions = [
   {
     text: "Sun -> Moon (SatV)",
     onselect: function () {
+      console.log("SUN -> Moon selected...");
       reset();
-      scene.light = sunLightSPICE;
-      updateBodiesPosSPICE();
+      setSceneLight(sunLightSPICE);
     },
   },
   {
     text: "Earth -> Moon (SatV)",
     onselect: function () {
+      console.log("Earth -> Moon selected...");
       reset();
-      scene.light = earthLightSPICE;
-      updateBodiesPosSPICE();
+      setSceneLight(earthLightSPICE);
     },
   },
 ];
+
+function setSceneLight(lightSource) {
+  console.log("setSceneLight");
+  scene.light = lightSource;
+  updateBodiesPosSPICE();
+  saveStateToQueryString();
+}
 
 function updateTerrainProvider(
   terrainBaseUrl,
@@ -696,6 +708,7 @@ function setCurrTerrainLabelVisible(showLbl) {
 // support "automatic" terrain for automatically switching between regular/polar terrain
 // based on latitude
 function newTerrainNameSelected(terrainName) {
+  console.log("terrain name selected: " + terrainName);
   if (terrainName === "automatic" || terrainName === "automatic - no normals") {
     console.log("enabling automatic terrain loading...");
     automaticPolarTerrainTransition = true;
@@ -716,6 +729,8 @@ function newTerrainNameSelected(terrainName) {
     automaticPolarTerrainTransition = false;
     setTerrain(terrainName);
   }
+
+  saveStateToQueryString();
 }
 
 function setTerrainFunction(terrainName) {
@@ -882,7 +897,9 @@ locationToolbarOptions.push({
 });
 
 Sandcastle.addToolbarMenu(illuminationOptions);
+var illuminationMenu = document.getElementById("toolbar").lastChild;
 Sandcastle.addToolbarMenu(terrainOptions);
+var terrainMenu = document.getElementById("toolbar").lastChild;
 
 var polesHiresData = Cesium.GeoJsonDataSource.load(
   "https://files.actgate.com/temp/poles_hires.geojson",
@@ -1069,15 +1086,23 @@ Sandcastle.addToggleButton("Skirts", scene.globe.showSkirts, function (
   scene.globe.showSkirts = checked;
 });
 
-Sandcastle.addToggleButton(
-  "Terrain Shadows",
-  viewer.terrainShadows === Cesium.ShadowMode.ENABLED,
-  function (checked) {
+function setTerrainShadowsEnabledFunction() {
+  return function (checked) {
     viewer.terrainShadows = checked
       ? Cesium.ShadowMode.ENABLED
       : Cesium.ShadowMode.DISABLED;
-  }
+  };
+}
+
+Sandcastle.addToggleButton(
+  "Terrain Shadows",
+  viewer.terrainShadows === Cesium.ShadowMode.ENABLED,
+  setTerrainShadowsEnabledFunction()
 );
+// get checkbox input to be able to modify it programmatically
+var terrainShadowsButton = document.getElementById("toolbar").lastChild;
+var terrainShadowsLbl = terrainShadowsButton.lastChild; // label
+var terrainShadowsCbx = terrainShadowsLbl.firstChild; // input
 
 Sandcastle.addToggleButton("Shadows Fading", shadowMap.fadingEnabled, function (
   checked
@@ -1588,9 +1613,11 @@ updateEntityVectors();
 );
 */
 
+// set initial state
+reset();
+setSceneLight(sunLightSPICE);
 newTerrainNameSelected(defaultTerrainName);
 setTime(defaultUTCTime);
-
 setLocation(locationsInfo.Tycho);
 
 // CONTOUR
@@ -1655,6 +1682,12 @@ maybeUpdateContours();
  * Get current base state and saves to querystring
  */
 function saveStateToQueryString() {
+  console.log("updating state url...");
+  if (!stateLoaded) {
+    // wait the state has been loaded before updating it
+    return;
+  }
+
   resetStateUpdateTimer();
 
   // store pos and orientation. Note: use regular terrain coords (not accounting for polar view rotation)
@@ -1672,18 +1705,29 @@ function saveStateToQueryString() {
   );
   var UTCtime = viewer.clock.currentTime;
 
+  // illumination
+  var lightSourceIdx = illuminationMenu.selectedIndex;
+
+  // terrain
+  var terrainProviderIdx = terrainMenu.selectedIndex;
+
+  // terrain shadows enabled
+
   // updateUrlParams({position, orientation});
   updateUrlParams({
     camera_position,
     camera_direction,
     camera_up,
     UTCtime,
+    lightSourceIdx,
+    terrainProviderIdx,
   });
 }
 
 /**
  * Check if base state info are available if so loads them
  */
+var stateLoaded = false;
 function loadStateFromQueryString() {
   var searchParams = new URL(window.location).searchParams;
   // camera position and orientation
@@ -1715,10 +1759,33 @@ function loadStateFromQueryString() {
     var UTCtime = searchParams.get("UTCtime");
     setTime(UTCtime);
   }
-}
 
-// Load QueryString on initial app load
-loadStateFromQueryString();
+  // illumination
+  if (searchParams.has("lightSourceIdx")) {
+    var lightSourceIdx = searchParams.get("lightSourceIdx");
+    console.log("lightSourceIdx: " + lightSourceIdx);
+    illuminationMenu.selectedIndex = lightSourceIdx;
+    illuminationOptions[lightSourceIdx].onselect();
+  }
+
+  // terrain provider
+  if (searchParams.has("terrainProviderIdx")) {
+    var terrainProviderIdx = searchParams.get("terrainProviderIdx");
+    terrainMenu.selectedIndex = terrainProviderIdx;
+    terrainOptions[terrainProviderIdx].onselect();
+  }
+
+  // terrainShadowsCbx.checked = false;
+  // var setTerrainShadowsEnabled = setTerrainShadowsEnabledFunction();
+  // setTerrainShadowsEnabled(false);
+
+  stateLoaded = true;
+}
 
 //Sandcastle_End
 Sandcastle.finishedLoading();
+
+// Load QueryString on initial app load
+// Note: load after the Sandcastle interface has been fully loaded in order to properly
+// override default initial state
+loadStateFromQueryString();
