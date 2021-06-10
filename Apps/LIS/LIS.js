@@ -2,7 +2,12 @@ window.CESIUM_BASE_URL = "../../Source/";
 
 import * as Cesium from "../../Source/Cesium.js";
 
-import { updateUrlParams } from "./utils.js";
+import {
+  maybeUpdateStateUrl,
+  resetStateUpdateTimer,
+  viewModel,
+} from "./viewModel.js";
+
 import {
   cartesianToDummyPolar,
   dummyPolarToCartesian,
@@ -24,7 +29,7 @@ var terrainMeshScale = 3;
 var terrainMeshAlgorithm = "delatin";
 var terrainMeshMaxError = 1.0;
 var requestVertexNormals = true;
-var isOptimizedPolarTerrain = false;
+export var isOptimizedPolarTerrain = false;
 var currTerrainName;
 var defaultUTCTime = "2022-12-04T00:00:00.000Z";
 
@@ -46,7 +51,7 @@ var polarTerrainName = polarTerrainNameDef;
 var noNormalsNameSuffix = " - no normals";
 
 // The viewModel tracks the state of our mini application.
-var viewModel = {
+var contoursViewModel = {
   enableContour: false,
   contourSpacing: 150.0,
   contourWidth: 2.0,
@@ -117,14 +122,6 @@ shadowMap.normalOffset = false;
 shadowMap.darkness = 0; // lower -> darker shadows
 
 viewer.imageryLayers.removeAll();
-
-function resetStateUpdateTimer() {
-  if (updateStateTimerId > 0) {
-    // stop timer
-    clearInterval(updateStateTimerId);
-    updateStateTimerId = -1;
-  }
-}
 
 // update celestial bodies positions using ACT SPICE based service
 var sunLightDirectionSPICE = new Cesium.Cartesian3(1, 1, 1);
@@ -269,7 +266,6 @@ function updateGlobeCartesianPositions() {
     // untrack the current entity in order to properly rotate around the globe center
     viewer.trackedEntity = undefined;
   }
-
   updateBodiesPosToDummyPolar();
   updateEntitiesPos();
   updateEntityVectors(true);
@@ -368,29 +364,6 @@ function maybeUpdateBodiesPosSPICE() {
   }
 }
 
-var FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL = 1000; // ms
-var updateStateTimerId = -1;
-var lastUrlStateUpdateTime = -1;
-// wait FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL since last time update before updating the url
-// this is needed in order to avoid to many history.push requests (there is a limit on Safari browser)
-function maybeUpdateStateUrl() {
-  var date = viewer.clock.currentTime;
-  var time = Cesium.JulianDate.toIso8601(date, 3);
-  if (lastUrlStateUpdateTime !== time) {
-    lastUrlStateUpdateTime = time;
-    if (updateStateTimerId >= 0) {
-      // reset the timer
-      resetStateUpdateTimer();
-    }
-
-    // let us set the timer
-    updateStateTimerId = setInterval(
-      saveStateToQueryString,
-      FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL
-    );
-  }
-}
-
 var sunLightSPICE = new Cesium.DirectionalLight({
   direction: sunLightDirectionSPICE,
   color: Cesium.Color.WHITE,
@@ -418,9 +391,14 @@ viewer.homeButton.viewModel.command.beforeExecute.addEventListener(
 );
 // time tick event
 viewer.clock.onTick.addEventListener(maybeUpdateBodiesPosSPICE);
-viewer.clock.onTick.addEventListener(maybeUpdateStateUrl);
+viewer.clock.onTick.addEventListener(timeUpdated);
 
-function setTime(iso8601) {
+function timeUpdated() {
+  // update view model
+  viewModel.UTCtime = viewer.clock.currentTime;
+}
+
+function initializeTime(iso8601) {
   var currentTime = Cesium.JulianDate.fromIso8601(iso8601);
   var endTime = Cesium.JulianDate.addDays(
     currentTime,
@@ -428,28 +406,28 @@ function setTime(iso8601) {
     new Cesium.JulianDate()
   );
   /*
-// lunar day: 29 days, 12 hr, 44 min, 3 sec
-var endTime = Cesium.JulianDate.addDays(
-currentTime,
-29,
-new Cesium.JulianDate()
-);
-endTime = Cesium.JulianDate.addHours(
-endTime,
-12,
-new Cesium.JulianDate()
-);
-endTime = Cesium.JulianDate.addMinutes(
-endTime,
-44,
-new Cesium.JulianDate()
-);
-endTime = Cesium.JulianDate.addSeconds(
-endTime,
-3,
-new Cesium.JulianDate()
-);
-*/
+  // lunar day: 29 days, 12 hr, 44 min, 3 sec
+  var endTime = Cesium.JulianDate.addDays(
+  currentTime,
+  29,
+  new Cesium.JulianDate()
+  );
+  endTime = Cesium.JulianDate.addHours(
+  endTime,
+  12,
+  new Cesium.JulianDate()
+  );
+  endTime = Cesium.JulianDate.addMinutes(
+  endTime,
+  44,
+  new Cesium.JulianDate()
+  );
+  endTime = Cesium.JulianDate.addSeconds(
+  endTime,
+  3,
+  new Cesium.JulianDate()
+  );
+  */
 
   viewer.clock.currentTime = currentTime;
   viewer.timeline.zoomTo(currentTime, endTime);
@@ -457,6 +435,11 @@ new Cesium.JulianDate()
   viewer.clock.startTime = currentTime;
   viewer.clock.stopTime = endTime;
   viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+}
+
+function setTime(iso8601) {
+  var currentTime = Cesium.JulianDate.fromIso8601(iso8601);
+  viewer.clock.currentTime = currentTime;
 }
 
 function reset() {
@@ -526,7 +509,9 @@ function setSceneLight(lightSource) {
   console.log("setSceneLight");
   scene.light = lightSource;
   updateBodiesPosSPICE();
-  saveStateToQueryString();
+
+  // update model
+  viewModel.lightSourceIdx = illuminationMenu.selectedIndex;
 }
 
 function updateTerrainProvider(
@@ -539,6 +524,7 @@ function updateTerrainProvider(
   // check if reference system changed
   var wasOptimizedPolarTerrain = isOptimizedPolarTerrain;
   isOptimizedPolarTerrain = optimizedPolarTerrain;
+
   maybeUpdateGlobeCartesianPositions(
     wasOptimizedPolarTerrain,
     isOptimizedPolarTerrain
@@ -730,7 +716,8 @@ function newTerrainNameSelected(terrainName) {
     setTerrain(terrainName);
   }
 
-  saveStateToQueryString();
+  // update view model
+  viewModel.terrainProviderIdx = terrainMenu.selectedIndex;
 }
 
 function setTerrainFunction(terrainName) {
@@ -1072,10 +1059,10 @@ Sandcastle.addToolbarMenu([
 ]);
 
 Sandcastle.addToggleButton(
-  "Contours @ " + viewModel.contourSpacing.toFixed(0) + "m",
-  viewModel.enableContour,
+  "Contours @ " + contoursViewModel.contourSpacing.toFixed(0) + "m",
+  contoursViewModel.enableContour,
   function (checked) {
-    viewModel.enableContour = checked;
+    contoursViewModel.enableContour = checked;
     updateContours();
   }
 );
@@ -1091,6 +1078,9 @@ function setTerrainShadowsEnabledFunction() {
     viewer.terrainShadows = checked
       ? Cesium.ShadowMode.ENABLED
       : Cesium.ShadowMode.DISABLED;
+
+    // update view model
+    viewModel.terrainShadowsEnabled = viewer.terrainShadows;
   };
 }
 
@@ -1267,7 +1257,10 @@ viewer.camera.moveEnd.addEventListener(function () {
   maybeUpdateTerrainProvider(camLat, camH);
   maybeUpdateContours(camH);
 
-  saveStateToQueryString();
+  // update view model
+  viewModel.camera_position = camera.positionWC;
+  viewModel.camera_direction = camera.direction;
+  viewModel.camera_up = camera.up;
 });
 
 function setHeightKm(heightInKilometers) {
@@ -1617,7 +1610,7 @@ updateEntityVectors();
 reset();
 setSceneLight(sunLightSPICE);
 newTerrainNameSelected(defaultTerrainName);
-setTime(defaultUTCTime);
+initializeTime(defaultUTCTime);
 setLocation(locationsInfo.Tycho);
 
 // CONTOUR
@@ -1626,7 +1619,7 @@ var contourUniforms = {};
 var countoursVisible = false;
 
 function maybeUpdateContours(height) {
-  if (!viewModel.enableContour) {
+  if (!contoursViewModel.enableContour) {
     // nothing to do
     return;
   }
@@ -1649,7 +1642,7 @@ function maybeUpdateContours(height) {
 }
 
 function updateContours(height) {
-  var hasContour = viewModel.enableContour;
+  var hasContour = contoursViewModel.enableContour;
   var material;
   countoursVisible = false;
   if (hasContour) {
@@ -1665,8 +1658,8 @@ function updateContours(height) {
     if (height < showContourAlt) {
       material = Cesium.Material.fromType("ElevationContour");
       contourUniforms = material.uniforms;
-      contourUniforms.width = viewModel.contourWidth;
-      contourUniforms.spacing = viewModel.contourSpacing;
+      contourUniforms.width = contoursViewModel.contourWidth;
+      contourUniforms.spacing = contoursViewModel.contourSpacing;
       contourUniforms.color = contourColor;
 
       countoursVisible = true;
@@ -1678,81 +1671,8 @@ function updateContours(height) {
 
 maybeUpdateContours();
 
-/**
- * Get current base state and saves to querystring
- */
-function saveStateToQueryString() {
-  console.log("updating state url...");
-  if (!stateLoaded) {
-    // wait the state has been loaded before updating it
-    return;
-  }
-
-  resetStateUpdateTimer();
-
-  // store pos and orientation. Note: use regular terrain coords (not accounting for polar view rotation)
-  var camera_position = Cesium.Cartesian3.pack(
-    invAdjustCartesianCoords(camera.positionWC, isOptimizedPolarTerrain),
-    []
-  );
-  var camera_direction = Cesium.Cartesian3.pack(
-    invAdjustCartesianCoords(camera.direction, isOptimizedPolarTerrain),
-    []
-  );
-  var camera_up = Cesium.Cartesian3.pack(
-    invAdjustCartesianCoords(camera.up, isOptimizedPolarTerrain),
-    []
-  );
-  var UTCtime = viewer.clock.currentTime;
-
-  // illumination
-  var lightSourceIdx = illuminationMenu.selectedIndex;
-
-  // terrain
-  var terrainProviderIdx = terrainMenu.selectedIndex;
-
-  // terrain shadows enabled
-
-  // updateUrlParams({position, orientation});
-  updateUrlParams({
-    camera_position,
-    camera_direction,
-    camera_up,
-    UTCtime,
-    lightSourceIdx,
-    terrainProviderIdx,
-  });
-}
-
-/**
- * Check if base state info are available if so loads them
- */
-var stateLoaded = false;
 function loadStateFromQueryString() {
   var searchParams = new URL(window.location).searchParams;
-  // camera position and orientation
-  if (
-    searchParams.has("camera_position") &&
-    searchParams.has("camera_direction") &&
-    searchParams.has("camera_up")
-  ) {
-    var camera_position = searchParams
-      .get("camera_position")
-      .split(",")
-      .map(Number);
-    var camera_direction = searchParams
-      .get("camera_direction")
-      .split(",")
-      .map(Number);
-    var camera_up = searchParams.get("camera_up").split(",").map(Number);
-    viewer.scene.camera.flyTo({
-      destination: Cesium.Cartesian3.unpack(camera_position),
-      orientation: {
-        direction: Cesium.Cartesian3.unpack(camera_direction),
-        up: Cesium.Cartesian3.unpack(camera_up),
-      },
-    });
-  }
 
   // time
   if (searchParams.has("UTCtime")) {
@@ -1775,11 +1695,48 @@ function loadStateFromQueryString() {
     terrainOptions[terrainProviderIdx].onselect();
   }
 
+  // camera position and orientation
+  if (
+    searchParams.has("camera_position") &&
+    searchParams.has("camera_direction") &&
+    searchParams.has("camera_up")
+  ) {
+    console.log("camera param " + isOptimizedPolarTerrain);
+    var camera_position = Cesium.Cartesian3.unpack(
+      searchParams.get("camera_position").split(",").map(Number)
+    );
+    var camera_direction = Cesium.Cartesian3.unpack(
+      searchParams.get("camera_direction").split(",").map(Number)
+    );
+    var camera_up = Cesium.Cartesian3.unpack(
+      searchParams.get("camera_up").split(",").map(Number)
+    );
+
+    // adjust coordinates based on current terrain
+    camera_position = adjustCartesianCoords(
+      camera_position,
+      isOptimizedPolarTerrain
+    );
+    camera_direction = adjustCartesianCoords(
+      camera_direction,
+      isOptimizedPolarTerrain
+    );
+    camera_up = adjustCartesianCoords(camera_up, isOptimizedPolarTerrain);
+
+    viewer.scene.camera.flyTo({
+      destination: camera_position,
+      orientation: {
+        direction: camera_direction,
+        up: camera_up,
+      },
+    });
+  }
+
   // terrainShadowsCbx.checked = false;
   // var setTerrainShadowsEnabled = setTerrainShadowsEnabledFunction();
   // setTerrainShadowsEnabled(false);
 
-  stateLoaded = true;
+  viewModel.viewModelLoadFinished = true;
 }
 
 //Sandcastle_End
