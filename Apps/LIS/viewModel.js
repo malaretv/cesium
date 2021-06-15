@@ -17,7 +17,10 @@ export var viewModel = {
   _camera_up: new Cartesian3(),
   _UTCtime: "",
   _lightSourceIdx: -1,
+
+  // terrain
   _terrainProviderIdx: -1,
+  _terrainMeshMaxError: 1.0,
   _terrainShadowsEnabled: true,
 
   /**
@@ -82,6 +85,16 @@ export var viewModel = {
 
   set terrainProviderIdx(value) {
     this._terrainProviderIdx = value;
+    saveStateToQueryString();
+  },
+
+  // terrain mesh max error
+  get terrainMeshMaxError() {
+    return this._terrainMeshMaxError;
+  },
+
+  set terrainMeshMaxError(value) {
+    this._terrainMeshMaxError = value;
     saveStateToQueryString();
   },
 
@@ -165,6 +178,9 @@ function saveStateToQueryString() {
   // terrain
   var terrainProviderIdx = viewModel.terrainProviderIdx;
 
+  // terrain mesh max error
+  var terrainMeshMaxError = viewModel.terrainMeshMaxError;
+
   // terrain shadows enabled
   var terrainShadowsEnabled = viewModel.terrainShadowsEnabled;
 
@@ -176,6 +192,7 @@ function saveStateToQueryString() {
     UTCtime,
     lightSourceIdx,
     terrainProviderIdx,
+    terrainMeshMaxError,
     terrainShadowsEnabled,
   });
 }

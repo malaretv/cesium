@@ -22,16 +22,16 @@ Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(1737400, 1737400, 1737400);
 // tiles settings
 // https://lunar-dem-tiles2.quickmap.io/sldem_lola/docs#/default/serve_layer_info_layer_json_get
 
-var defaultTerrainName = "automatic";
+var defaultTerrainName = "automatic terrain";
 var terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/sldem_lola";
 var terrainResampligMethod = "cubic";
 var terrainMeshScale = 3;
 var terrainMeshAlgorithm = "delatin";
-var terrainMeshMaxError = 1.0;
 var requestVertexNormals = true;
 export var isOptimizedPolarTerrain = false;
 var currTerrainName;
 var defaultUTCTime = "2022-12-04T00:00:00.000Z";
+var defaultMeshMaxError = 1;
 
 // for automatic regular/polar terrain switch
 var automaticPolarTerrainTransition = false;
@@ -73,7 +73,7 @@ function buildTerrainUrl() {
     terrainMeshAlgorithm +
     "&" +
     "mesh_max_error=" +
-    terrainMeshMaxError;
+    viewModel.terrainMeshMaxError;
   console.log("terrain url:");
   console.log(terrainUrl);
 
@@ -544,8 +544,8 @@ function setTerrainProvider(terrainProvider, optimizedPolarTerrain) {
 }
 
 var terrainNameList = [
-  "automatic",
-  "automatic" + noNormalsNameSuffix,
+  "automatic terrain",
+  "automatic terrain" + noNormalsNameSuffix,
   "sldem_lola",
   "sldem_lola" + noNormalsNameSuffix,
   "usgs_lola",
@@ -695,12 +695,15 @@ function setCurrTerrainLabelVisible(showLbl) {
 // based on latitude
 function newTerrainNameSelected(terrainName) {
   console.log("terrain name selected: " + terrainName);
-  if (terrainName === "automatic" || terrainName === "automatic - no normals") {
+  if (
+    terrainName === "automatic terrain" ||
+    terrainName === "automatic terrain - no normals"
+  ) {
     console.log("enabling automatic terrain loading...");
     automaticPolarTerrainTransition = true;
     setCurrTerrainLabelVisible(true);
 
-    if (terrainName === "automatic") {
+    if (terrainName === "automatic terrain") {
       regularTerrainName = regularTerrainNameDef;
       polarTerrainName = polarTerrainNameDef;
     } else {
@@ -796,11 +799,11 @@ function maybeUpdateGlobeCartesianPositions(wasOptimizedPolarTerrain) {
 }
 
 function updateTerrainMeshMaxError(err) {
-  if (terrainMeshMaxError == err) {
+  if (viewModel.terrainMeshMaxError == err) {
     return;
   }
 
-  terrainMeshMaxError = err;
+  viewModel.terrainMeshMaxError = err;
   // update terrain provider (only url changed)
   viewer.terrainProvider = createTerrainProvider();
 }
@@ -1025,38 +1028,25 @@ function updateImageryLayersUrl() {
   }
 }
 
-Sandcastle.addToolbarMenu([
-  {
-    text: "mesh surf. max_err: 1m",
-    onselect: function () {
-      updateTerrainMeshMaxError(1);
-    },
-  },
-  {
-    text: "mesh surf. max_err: 0.01m",
-    onselect: function () {
-      updateTerrainMeshMaxError(0.01);
-    },
-  },
-  {
-    text: "mesh surf. max_err: 0.1m",
-    onselect: function () {
-      updateTerrainMeshMaxError(0.1);
-    },
-  },
-  {
-    text: "mesh surf. max_err: 10m",
-    onselect: function () {
-      updateTerrainMeshMaxError(10);
-    },
-  },
-  {
-    text: "mesh surf. max_err: 20m",
-    onselect: function () {
-      updateTerrainMeshMaxError(20);
-    },
-  },
-]);
+function setTerrainMeshMaxErrorFunction(maxErr) {
+  return function () {
+    updateTerrainMeshMaxError(maxErr);
+  };
+}
+
+var maxErrorList = [0.01, 0.1, 1, 10, 20, 50];
+var terrainMaxErrOptions = [];
+for (var i = 0; i < maxErrorList.length; i++) {
+  var maxError = maxErrorList[i];
+  var maxErrorEntryName = "mesh surf. max_err: " + maxError.toString() + "m";
+  terrainMaxErrOptions.push({
+    text: maxErrorEntryName,
+    onselect: setTerrainMeshMaxErrorFunction(maxError),
+  });
+}
+
+Sandcastle.addToolbarMenu(terrainMaxErrOptions);
+var terrainMaxErrMenu = document.getElementById("toolbar").lastChild;
 
 Sandcastle.addToggleButton(
   "Contours @ " + contoursViewModel.contourSpacing.toFixed(0) + "m",
@@ -1609,6 +1599,11 @@ updateEntityVectors();
 // set initial state
 reset();
 setSceneLight(sunLightSPICE);
+updateTerrainMeshMaxError(defaultMeshMaxError);
+var terrainMeshMaxErrorIdx = maxErrorList.indexOf(defaultMeshMaxError);
+if (terrainMeshMaxErrorIdx) {
+  terrainMaxErrMenu.selectedIndex = terrainMeshMaxErrorIdx;
+}
 newTerrainNameSelected(defaultTerrainName);
 initializeTime(defaultUTCTime);
 setLocation(locationsInfo.Tycho);
@@ -1686,6 +1681,18 @@ function loadStateFromQueryString() {
     console.log("lightSourceIdx: " + lightSourceIdx);
     illuminationMenu.selectedIndex = lightSourceIdx;
     illuminationOptions[lightSourceIdx].onselect();
+  }
+
+  // terrain mesh max error
+  if (searchParams.has("terrainMeshMaxError")) {
+    var terrainMeshMaxError = searchParams.get("terrainMeshMaxError");
+    terrainMeshMaxErrorIdx = maxErrorList.indexOf(
+      parseFloat(terrainMeshMaxError)
+    );
+    if (terrainMeshMaxErrorIdx && terrainMeshMaxErrorIdx >= 0) {
+      terrainMaxErrMenu.selectedIndex = terrainMeshMaxErrorIdx;
+      terrainMaxErrOptions[terrainMeshMaxErrorIdx].onselect();
+    }
   }
 
   // terrain provider
