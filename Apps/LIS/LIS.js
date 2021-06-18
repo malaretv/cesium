@@ -115,7 +115,7 @@ globe.baseColor = Cesium.Color.GRAY;
 scene.fog.enabled = false;
 
 var shadowMap = viewer.shadowMap;
-shadowMap.maximumDistance = 100000.0; // m
+var defaultShadowMapMaxDistance = 100000.0; // m
 shadowMap.softShadows = false;
 shadowMap.size = 4096;
 shadowMap.normalOffset = false;
@@ -1122,38 +1122,36 @@ udpateBodiesPosToDummyPolar(!checked);
 );
 */
 
-Sandcastle.addToolbarMenu([
-  {
-    text: "ShadowsMaxDistance (km): 100",
-    onselect: function () {
-      shadowMap.maximumDistance = 100000;
-    },
-  },
-  {
-    text: "ShadowsMaxDistance (km): 1000",
-    onselect: function () {
-      shadowMap.maximumDistance = 1000000;
-    },
-  },
-  {
-    text: "ShadowsMaxDistance (km): 500",
-    onselect: function () {
-      shadowMap.maximumDistance = 500000;
-    },
-  },
-  {
-    text: "ShadowsMaxDistance (km): 200",
-    onselect: function () {
-      shadowMap.maximumDistance = 200000;
-    },
-  },
-  {
-    text: "ShadowsMaxDistance (km): 50",
-    onselect: function () {
-      shadowMap.maximumDistance = 50000;
-    },
-  },
-]);
+function updateShadowsMaxDist(maxDist) {
+  if (viewModel.shadowsMaxDistance == maxDist) {
+    return;
+  }
+
+  var shadowsMaxDistance = maxDist * 1000.0; // m
+  viewModel.shadowsMaxDistance = shadowsMaxDistance;
+  shadowMap.maximumDistance = shadowsMaxDistance;
+}
+
+function setShadowsMaxDistanceFunction(maxDist) {
+  return function () {
+    updateShadowsMaxDist(maxDist);
+  };
+}
+
+var shadowsMaxDistList = [50, 100, 200, 500, 1000]; // km
+var shadowsMaxDistOptions = [];
+for (var i = 0; i < shadowsMaxDistList.length; i++) {
+  var shadowsMaxDist = shadowsMaxDistList[i];
+  var shadowsMaxDistEntryName =
+    "Shadows Max Distance: " + shadowsMaxDist.toString() + "km";
+  shadowsMaxDistOptions.push({
+    text: shadowsMaxDistEntryName,
+    onselect: setShadowsMaxDistanceFunction(shadowsMaxDist),
+  });
+}
+
+Sandcastle.addToolbarMenu(shadowsMaxDistOptions);
+var shadowsMaxDistMenu = document.getElementById("toolbar").lastChild;
 
 Sandcastle.addToggleButton(
   "Atm simu",
@@ -1600,6 +1598,7 @@ updateEntityVectors();
 reset();
 setSceneLight(sunLightSPICE);
 updateTerrainMeshMaxError(defaultMeshMaxError);
+// terrain mesh error
 var terrainMeshMaxErrorIdx = maxErrorList.indexOf(defaultMeshMaxError);
 if (terrainMeshMaxErrorIdx) {
   terrainMaxErrMenu.selectedIndex = terrainMeshMaxErrorIdx;
@@ -1607,6 +1606,14 @@ if (terrainMeshMaxErrorIdx) {
 newTerrainNameSelected(defaultTerrainName);
 initializeTime(defaultUTCTime);
 setLocation(locationsInfo.Tycho);
+// shadows max distance
+var shadowsMaxDistanceIdx = shadowsMaxDistList.indexOf(
+  defaultShadowMapMaxDistance / 1000.0
+);
+if (shadowsMaxDistanceIdx) {
+  shadowsMaxDistMenu.selectedIndex = shadowsMaxDistanceIdx;
+  shadowsMaxDistOptions[shadowsMaxDistanceIdx].onselect();
+}
 
 // CONTOUR
 var contourColor = Cesium.Color.RED.clone();
@@ -1689,7 +1696,7 @@ function loadStateFromQueryString() {
     terrainMeshMaxErrorIdx = maxErrorList.indexOf(
       parseFloat(terrainMeshMaxError)
     );
-    if (terrainMeshMaxErrorIdx && terrainMeshMaxErrorIdx >= 0) {
+    if (terrainMeshMaxErrorIdx >= 0) {
       terrainMaxErrMenu.selectedIndex = terrainMeshMaxErrorIdx;
       terrainMaxErrOptions[terrainMeshMaxErrorIdx].onselect();
     }
@@ -1737,6 +1744,18 @@ function loadStateFromQueryString() {
         up: camera_up,
       },
     });
+
+    // shadows max distance
+    if (searchParams.has("shadowsMaxDistance")) {
+      var shadowsMaxDistance = searchParams.get("shadowsMaxDistance");
+      shadowsMaxDistanceIdx = shadowsMaxDistList.indexOf(
+        parseFloat(shadowsMaxDistance) / 1000.0
+      );
+      if (shadowsMaxDistanceIdx >= 0) {
+        shadowsMaxDistMenu.selectedIndex = shadowsMaxDistanceIdx;
+        shadowsMaxDistOptions[shadowsMaxDistanceIdx].onselect();
+      }
+    }
   }
 
   // terrainShadowsCbx.checked = false;
