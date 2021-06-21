@@ -50,6 +50,8 @@ var regularTerrainName = regularTerrainNameDef;
 var polarTerrainName = polarTerrainNameDef;
 var noNormalsNameSuffix = " - no normals";
 
+var defaultLocationIndex = 0; // First item. Tycho
+
 // The viewModel tracks the state of our mini application.
 var contoursViewModel = {
   enableContour: false,
@@ -506,7 +508,6 @@ var illuminationOptions = [
 ];
 
 function setSceneLight(lightSource) {
-  console.log("setSceneLight");
   scene.light = lightSource;
   updateBodiesPosSPICE();
 
@@ -880,9 +881,9 @@ for (var locationName in locationsInfo) {
   }
 }
 
-var locationName = "custom camera";
+var customCameraLocationName = "custom camera";
 locationToolbarOptions.push({
-  text: locationName,
+  text: customCameraLocationName,
   onselect: setCustomCameraView,
 });
 
@@ -1162,6 +1163,7 @@ Sandcastle.addToggleButton(
 );
 
 Sandcastle.addToolbarMenu(locationToolbarOptions);
+var locationMenu = document.getElementById("toolbar").lastChild;
 
 // SHOW COORDINATES
 var cartesian = new Cesium.Cartesian3();
@@ -1418,6 +1420,11 @@ for (var locationName in locationsInfo) {
 var entitySelected;
 function setSelectedEntity(entity) {
   entitySelected = entity;
+
+  updateEntityVectors(true);
+
+  // update view model
+  viewModel.locationIdx = locationMenu.selectedIndex;
 }
 
 var deltaT = 10;
@@ -1442,8 +1449,6 @@ function setLocation(location) {
       destination: newCameraPos,
       duration: deltaT,
     });
-
-    updateEntityVectors(true);
   }
 }
 
@@ -1480,6 +1485,9 @@ roll : Cesium.Math.toRadians(359.7)
 }
 });
 */
+
+  // update view model
+  viewModel.locationIdx = locationMenu.selectedIndex;
 }
 
 // ENTITY TO SUN/EARTH VECTORS
@@ -1605,7 +1613,11 @@ if (terrainMeshMaxErrorIdx) {
 }
 newTerrainNameSelected(defaultTerrainName);
 initializeTime(defaultUTCTime);
-setLocation(locationsInfo.Tycho);
+
+// set location
+locationMenu.selectedIndex = defaultLocationIndex;
+locationToolbarOptions[defaultLocationIndex].onselect();
+
 // shadows max distance
 var shadowsMaxDistanceIdx = shadowsMaxDistList.indexOf(
   defaultShadowMapMaxDistance / 1000.0
@@ -1685,7 +1697,6 @@ function loadStateFromQueryString() {
   // illumination
   if (searchParams.has("lightSourceIdx")) {
     var lightSourceIdx = searchParams.get("lightSourceIdx");
-    console.log("lightSourceIdx: " + lightSourceIdx);
     illuminationMenu.selectedIndex = lightSourceIdx;
     illuminationOptions[lightSourceIdx].onselect();
   }
@@ -1715,7 +1726,6 @@ function loadStateFromQueryString() {
     searchParams.has("camera_direction") &&
     searchParams.has("camera_up")
   ) {
-    console.log("camera param " + isOptimizedPolarTerrain);
     var camera_position = Cesium.Cartesian3.unpack(
       searchParams.get("camera_position").split(",").map(Number)
     );
@@ -1754,6 +1764,24 @@ function loadStateFromQueryString() {
       if (shadowsMaxDistanceIdx >= 0) {
         shadowsMaxDistMenu.selectedIndex = shadowsMaxDistanceIdx;
         shadowsMaxDistOptions[shadowsMaxDistanceIdx].onselect();
+      }
+    }
+
+    // location
+    if (searchParams.has("locationIdx")) {
+      var locationIdx = searchParams.get("locationIdx");
+      if (locationIdx >= 0) {
+        locationMenu.selectedIndex = locationIdx;
+        var locationName = locationToolbarOptions[locationIdx].text;
+        if (locationName in locationsInfo) {
+          var location = locationsInfo[locationName];
+          setSelectedEntity(location.entity);
+        } else {
+          if (locationIdx >= 0) {
+            // update view model accordingly
+            viewModel.locationIdx = locationIdx;
+          }
+        }
       }
     }
   }

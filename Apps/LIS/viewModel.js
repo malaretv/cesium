@@ -26,6 +26,9 @@ export var viewModel = {
   // shadows
   _shadowsMaxDistance: 100000.0, // m
 
+  // location
+  _locationIdx: -1,
+
   /**
    * true if the state info have been fully loaded
    */
@@ -120,6 +123,16 @@ export var viewModel = {
     this._shadowsMaxDistance = value;
     saveStateToQueryString();
   },
+
+  // locationIdx
+  get locationIdx() {
+    return this._locationIdx;
+  },
+
+  set locationIdx(value) {
+    this._locationIdx = value;
+    saveStateToQueryString();
+  },
 };
 
 var FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL = 1000; // ms
@@ -200,6 +213,9 @@ function saveStateToQueryString() {
   // shadows max distance
   var shadowsMaxDistance = viewModel.shadowsMaxDistance;
 
+  // locationIdx
+  var locationIdx = viewModel.locationIdx;
+
   // updateUrlParams({position, orientation});
   updateUrlParams({
     camera_position,
@@ -211,5 +227,6 @@ function saveStateToQueryString() {
     terrainMeshMaxError,
     terrainShadowsEnabled,
     shadowsMaxDistance,
+    locationIdx,
   });
 }
