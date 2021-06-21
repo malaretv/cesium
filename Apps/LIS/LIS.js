@@ -902,21 +902,37 @@ var polesHiresData = Cesium.GeoJsonDataSource.load(
 
 var dataSource;
 var dataSourceLastIndex = -1;
-Sandcastle.addToggleButton("hires dem regions", false, function (checked) {
-  if (checked) {
-    dataSourceLastIndex = viewer.dataSources.length;
-    viewer.dataSources.add(polesHiresData);
-  } else {
-    if (viewer.dataSources.length > dataSourceLastIndex) {
-      // console.log("removing data source");
-      var res = viewer.dataSources.remove(dataSource, false);
-      if (res) {
-        // console.log("data source removed");
-        dataSourceLastIndex -= 1;
+
+function setHiresDemRegionsEnabledFunction() {
+  return function (checked) {
+    if (checked) {
+      dataSourceLastIndex = viewer.dataSources.length;
+      viewer.dataSources.add(polesHiresData);
+    } else {
+      if (viewer.dataSources.length > dataSourceLastIndex) {
+        // console.log("removing data source");
+        var res = viewer.dataSources.remove(dataSource, false);
+        if (res) {
+          // console.log("data source removed");
+          dataSourceLastIndex -= 1;
+        }
       }
     }
-  }
-});
+
+    // update view model
+    viewModel.hiresDemRegionsEnabled = checked;
+  };
+}
+
+Sandcastle.addToggleButton(
+  "hires dem regions",
+  false,
+  setHiresDemRegionsEnabledFunction()
+);
+// get checkbox input to be able to modify it programmatically
+var enableHiresDemRegionsButton = document.getElementById("toolbar").lastChild;
+var enableHiresDemRegionsCbx =
+  enableHiresDemRegionsButton.firstChild.firstChild; // input
 
 viewer.dataSources.dataSourceAdded.addEventListener(function () {
   // console.log("data source added");
@@ -978,26 +994,37 @@ var layerWACAlbedoPolar = createLayer(
 layerWACAlbedoPolar.show = false;
 viewer.imageryLayers.add(layerWACAlbedoPolar);
 
-Sandcastle.addToggleButton("WAC Mosaic (no shadows)", false, function (
-  checked
-) {
-  if (checked) {
-    if (isOptimizedPolarTerrain) {
-      layerWACAlbedoPolar.show = true;
+function setWACNoShadowsEnabledFunction() {
+  return function (checked) {
+    if (checked) {
+      if (isOptimizedPolarTerrain) {
+        layerWACAlbedoPolar.show = true;
+      } else {
+        layerWACAlbedo.show = true;
+      }
     } else {
-      layerWACAlbedo.show = true;
+      layerWACAlbedo.show = false;
+      layerWACAlbedoPolar.show = false;
     }
-  } else {
-    layerWACAlbedo.show = false;
-    layerWACAlbedoPolar.show = false;
-  }
-});
+
+    // update view model
+    viewModel.WACMosaicNSEnabled = checked;
+  };
+}
+
+Sandcastle.addToggleButton(
+  "WAC Mosaic (no shadows)",
+  false,
+  setWACNoShadowsEnabledFunction()
+);
+// get checkbox input to be able to modify it programmatically
+var enableWACNSButton = document.getElementById("toolbar").lastChild;
+var enableWACNSCbx = enableWACNSButton.firstChild.firstChild; // input
 
 var sunVisibility60mChecked = false;
-Sandcastle.addToggleButton(
-  "Sun Visibility 60m",
-  sunVisibility60mChecked,
-  function (checked) {
+
+function setSunVisibility60mEnabledFunction() {
+  return function (checked) {
     sunVisibility60mChecked = checked;
     if (checked) {
       if (isOptimizedPolarTerrain) {
@@ -1006,8 +1033,21 @@ Sandcastle.addToggleButton(
     } else {
       layerSunVis60mPolar.show = false;
     }
-  }
+
+    // update view model
+    viewModel.sunVisibility60Enabled = checked;
+  };
+}
+
+Sandcastle.addToggleButton(
+  "Sun Visibility 60m",
+  sunVisibility60mChecked,
+  setSunVisibility60mEnabledFunction()
 );
+// get checkbox input to be able to modify it programmatically
+var enableSunVisibility60mButton = document.getElementById("toolbar").lastChild;
+var enableSunVisibility60mCbx =
+  enableSunVisibility60mButton.firstChild.firstChild; // input
 
 function updateImageryLayersUrl() {
   if (isOptimizedPolarTerrain) {
@@ -1049,14 +1089,25 @@ for (var i = 0; i < maxErrorList.length; i++) {
 Sandcastle.addToolbarMenu(terrainMaxErrOptions);
 var terrainMaxErrMenu = document.getElementById("toolbar").lastChild;
 
+function setContourEnabledFunction() {
+  return function (checked) {
+    contoursViewModel.enableContour = checked;
+    updateContours();
+
+    // update view model
+    viewModel.contourEnabled = checked;
+  };
+}
+
 Sandcastle.addToggleButton(
   "Contours @ " + contoursViewModel.contourSpacing.toFixed(0) + "m",
   contoursViewModel.enableContour,
-  function (checked) {
-    contoursViewModel.enableContour = checked;
-    updateContours();
-  }
+  setContourEnabledFunction()
 );
+
+// get checkbox input to be able to modify it programmatically
+var enableContourButton = document.getElementById("toolbar").lastChild;
+var enableContourCbx = enableContourButton.firstChild.firstChild; // input
 
 function setSkirtsEnabledFunction() {
   return function (checked) {
@@ -1180,17 +1231,24 @@ for (var i = 0; i < shadowsMaxDistList.length; i++) {
 Sandcastle.addToolbarMenu(shadowsMaxDistOptions);
 var shadowsMaxDistMenu = document.getElementById("toolbar").lastChild;
 
+function setAtmSimuEnabledFunction() {
+  return function (checked) {
+    scene.globe.showGroundAtmosphere = checked;
+
+    // update view model
+    viewModel.atmSimuEnabled = checked;
+  };
+}
+
 Sandcastle.addToggleButton(
   "Atm simu",
   scene.globe.showGroundAtmosphere,
-  function (checked) {
-    scene.globe.showGroundAtmosphere = checked;
-  }
+  setAtmSimuEnabledFunction()
 );
 // button
-var buttonAtmSim = document.getElementById("toolbar").lastChild;
+var enableAtmSimButton = document.getElementById("toolbar").lastChild;
 // button input (checkbox)
-var buttonAtmSimInput = buttonAtmSim.firstChild.firstChild;
+var enableAtmSimCbx = enableAtmSimButton.firstChild.firstChild;
 
 Sandcastle.addToolbarMenu(locationToolbarOptions);
 var locationMenu = document.getElementById("toolbar").lastChild;
@@ -1785,6 +1843,22 @@ function loadStateFromQueryString() {
       },
     });
 
+    // contour enabled
+    if (searchParams.has("contourEnabled")) {
+      var checked = searchParams.get("contourEnabled") === "true";
+      enableContourCbx.checked = checked;
+      var setContourEnabled = setContourEnabledFunction();
+      setContourEnabled(checked);
+    }
+
+    // shadows fading enabled
+    if (searchParams.has("atmSimuEnabled")) {
+      var checked = searchParams.get("atmSimuEnabled") === "true";
+      enableAtmSimCbx.checked = checked;
+      var setAtmSimuEnabled = setAtmSimuEnabledFunction();
+      setAtmSimuEnabled(checked);
+    }
+
     // shadows max distance
     if (searchParams.has("shadowsMaxDistance")) {
       var shadowsMaxDistance = searchParams.get("shadowsMaxDistance");
@@ -1838,6 +1912,28 @@ function loadStateFromQueryString() {
     enableShadowsFadingCbx.checked = checked;
     var setShadowsFadingEnabled = setShadowsFadingEnabledFunction();
     setShadowsFadingEnabled(checked);
+  }
+
+  // layers
+  if (searchParams.has("hiresDemRegionsEnabled")) {
+    var checked = searchParams.get("hiresDemRegionsEnabled") === "true";
+    enableHiresDemRegionsCbx.checked = checked;
+    var setHiresDemRegionsEnabled = setHiresDemRegionsEnabledFunction();
+    setHiresDemRegionsEnabled(checked);
+  }
+
+  if (searchParams.has("WACMosaicNSEnabled")) {
+    var checked = searchParams.get("WACMosaicNSEnabled") === "true";
+    enableWACNSCbx.checked = checked;
+    var setWACNoShadowsEnabled = setWACNoShadowsEnabledFunction();
+    setWACNoShadowsEnabled(checked);
+  }
+
+  if (searchParams.has("sunVisibility60Enabled")) {
+    var checked = searchParams.get("sunVisibility60Enabled") === "true";
+    enableSunVisibility60mCbx.checked = checked;
+    var setSunVisibility60mEnabled = setSunVisibility60mEnabledFunction();
+    setSunVisibility60mEnabled(checked);
   }
 
   viewModel.viewModelLoadFinished = true;

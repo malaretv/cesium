@@ -22,6 +22,12 @@ export var viewModel = {
   _terrainProviderIdx: -1,
   _terrainMeshMaxError: 1.0,
 
+  // contour
+  _contourEnabled: false,
+
+  // atm simu
+  _atmSimuEnabled: false,
+
   // shadows
   _shadowsMaxDistance: 100000.0, // m
   _skirtsEnabled: true,
@@ -30,6 +36,11 @@ export var viewModel = {
 
   // location
   _locationIdx: -1,
+
+  // layers
+  _hiresDemRegionsEnabled: false,
+  _WACMosaicNSEnabled: false,
+  _sunVisibility60Enabled: false,
 
   /**
    * true if the state info have been fully loaded
@@ -106,6 +117,26 @@ export var viewModel = {
     saveStateToQueryString();
   },
 
+  // contour enabled
+  get contourEnabled() {
+    return this._contourEnabled;
+  },
+
+  set contourEnabled(checked) {
+    this._contourEnabled = checked;
+    saveStateToQueryString();
+  },
+
+  // atm simu enabled
+  get atmSimuEnabled() {
+    return this._atmSimuEnabled;
+  },
+
+  set atmSimuEnabled(checked) {
+    this._atmSimuEnabled = checked;
+    saveStateToQueryString();
+  },
+
   // shadows Max Distance
   get shadowsMaxDistance() {
     return this._shadowsMaxDistance;
@@ -153,6 +184,36 @@ export var viewModel = {
 
   set locationIdx(value) {
     this._locationIdx = value;
+    saveStateToQueryString();
+  },
+
+  // hires DEM Regions enabled
+  get hiresDemRegionsEnabled() {
+    return this._hiresDemRegionsEnabled;
+  },
+
+  set hiresDemRegionsEnabled(checked) {
+    this._hiresDemRegionsEnabled = checked;
+    saveStateToQueryString();
+  },
+
+  // WAC Mosaic (No Shadows) enabled
+  get WACMosaicNSEnabled() {
+    return this._WACMosaicNSEnabled;
+  },
+
+  set WACMosaicNSEnabled(checked) {
+    this._WACMosaicNSEnabled = checked;
+    saveStateToQueryString();
+  },
+
+  // Sun Visibility 60m enabled
+  get sunVisibility60Enabled() {
+    return this._sunVisibility60Enabled;
+  },
+
+  set sunVisibility60Enabled(checked) {
+    this._sunVisibility60Enabled = checked;
     saveStateToQueryString();
   },
 };
@@ -229,6 +290,12 @@ function saveStateToQueryString() {
   // terrain mesh max error
   var terrainMeshMaxError = viewModel.terrainMeshMaxError;
 
+  // contour enabled
+  var contourEnabled = viewModel.contourEnabled;
+
+  // atm simu enabled
+  var atmSimuEnabled = viewModel.atmSimuEnabled;
+
   // shadows max distance
   var shadowsMaxDistance = viewModel.shadowsMaxDistance;
 
@@ -244,6 +311,11 @@ function saveStateToQueryString() {
   // shadows fading enabled
   var shadowsFadingEnabled = viewModel.shadowsFadingEnabled;
 
+  // layers
+  var hiresDemRegionsEnabled = viewModel.hiresDemRegionsEnabled;
+  var WACMosaicNSEnabled = viewModel.WACMosaicNSEnabled;
+  var sunVisibility60Enabled = viewModel.sunVisibility60Enabled;
+
   var urlParams = {
     camera_position,
     camera_direction,
@@ -252,11 +324,16 @@ function saveStateToQueryString() {
     lightSourceIdx,
     terrainProviderIdx,
     terrainMeshMaxError,
+    contourEnabled,
+    atmSimuEnabled,
     shadowsMaxDistance,
     locationIdx,
     skirtsEnabled,
     terrainShadowsEnabled,
     shadowsFadingEnabled,
+    hiresDemRegionsEnabled,
+    WACMosaicNSEnabled,
+    sunVisibility60Enabled,
   };
 
   // update url
