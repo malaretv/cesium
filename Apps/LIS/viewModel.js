@@ -21,10 +21,12 @@ export var viewModel = {
   // terrain
   _terrainProviderIdx: -1,
   _terrainMeshMaxError: 1.0,
-  _terrainShadowsEnabled: true,
 
   // shadows
   _shadowsMaxDistance: 100000.0, // m
+  _skirtsEnabled: true,
+  _shadowsFading: true,
+  _terrainShadowsEnabled: true,
 
   // location
   _locationIdx: -1,
@@ -104,16 +106,6 @@ export var viewModel = {
     saveStateToQueryString();
   },
 
-  // terrainShadowsEnabled
-  get terrainShadowsEnabled() {
-    return this._terrainShadowsEnabled;
-  },
-
-  set terrainShadowsEnabled(value) {
-    this._terrainShadowsEnabled = value;
-    saveStateToQueryString();
-  },
-
   // shadows Max Distance
   get shadowsMaxDistance() {
     return this._shadowsMaxDistance;
@@ -121,6 +113,36 @@ export var viewModel = {
 
   set shadowsMaxDistance(value) {
     this._shadowsMaxDistance = value;
+    saveStateToQueryString();
+  },
+
+  // shadows skirts enabled
+  get skirtsEnabled() {
+    return this._skirtsEnabled;
+  },
+
+  set skirtsEnabled(checked) {
+    this._skirtsEnabled = checked;
+    saveStateToQueryString();
+  },
+
+  // terrain shadows enabled
+  get terrainShadowsEnabled() {
+    return this._terrainShadowsEnabled;
+  },
+
+  set terrainShadowsEnabled(checked) {
+    this._terrainShadowsEnabled = checked;
+    saveStateToQueryString();
+  },
+
+  // shadows fading enabled
+  get shadowsFadingEnabled() {
+    return this._shadowsFading;
+  },
+
+  set shadowsFadingEnabled(checked) {
+    this._shadowsFading = checked;
     saveStateToQueryString();
   },
 
@@ -207,17 +229,22 @@ function saveStateToQueryString() {
   // terrain mesh max error
   var terrainMeshMaxError = viewModel.terrainMeshMaxError;
 
-  // terrain shadows enabled
-  var terrainShadowsEnabled = viewModel.terrainShadowsEnabled;
-
   // shadows max distance
   var shadowsMaxDistance = viewModel.shadowsMaxDistance;
 
   // locationIdx
   var locationIdx = viewModel.locationIdx;
 
-  // updateUrlParams({position, orientation});
-  updateUrlParams({
+  // skirts enabled
+  var skirtsEnabled = viewModel.skirtsEnabled;
+
+  // terrain shadows enabled
+  var terrainShadowsEnabled = viewModel.terrainShadowsEnabled;
+
+  // shadows fading enabled
+  var shadowsFadingEnabled = viewModel.shadowsFadingEnabled;
+
+  var urlParams = {
     camera_position,
     camera_direction,
     camera_up,
@@ -225,8 +252,13 @@ function saveStateToQueryString() {
     lightSourceIdx,
     terrainProviderIdx,
     terrainMeshMaxError,
-    terrainShadowsEnabled,
     shadowsMaxDistance,
     locationIdx,
-  });
+    skirtsEnabled,
+    terrainShadowsEnabled,
+    shadowsFadingEnabled,
+  };
+
+  // update url
+  updateUrlParams(urlParams);
 }

@@ -1058,11 +1058,24 @@ Sandcastle.addToggleButton(
   }
 );
 
-Sandcastle.addToggleButton("Skirts", scene.globe.showSkirts, function (
-  checked
-) {
-  scene.globe.showSkirts = checked;
-});
+function setSkirtsEnabledFunction() {
+  return function (checked) {
+    scene.globe.showSkirts = checked;
+
+    // update view model
+    viewModel.skirtsEnabled = checked;
+  };
+}
+
+Sandcastle.addToggleButton(
+  "Skirts",
+  scene.globe.showSkirts,
+  setSkirtsEnabledFunction()
+);
+
+// get checkbox input to be able to modify it programmatically
+var enableSkirtsButton = document.getElementById("toolbar").lastChild;
+var enableSkirtsCbx = enableSkirtsButton.firstChild.firstChild; // input
 
 function setTerrainShadowsEnabledFunction() {
   return function (checked) {
@@ -1071,7 +1084,7 @@ function setTerrainShadowsEnabledFunction() {
       : Cesium.ShadowMode.DISABLED;
 
     // update view model
-    viewModel.terrainShadowsEnabled = viewer.terrainShadows;
+    viewModel.terrainShadowsEnabled = checked;
   };
 }
 
@@ -1085,11 +1098,24 @@ var terrainShadowsButton = document.getElementById("toolbar").lastChild;
 var terrainShadowsLbl = terrainShadowsButton.lastChild; // label
 var terrainShadowsCbx = terrainShadowsLbl.firstChild; // input
 
-Sandcastle.addToggleButton("Shadows Fading", shadowMap.fadingEnabled, function (
-  checked
-) {
-  shadowMap.fadingEnabled = checked;
-});
+function setShadowsFadingEnabledFunction() {
+  return function (checked) {
+    shadowMap.fadingEnabled = checked;
+
+    // update view model
+    viewModel.shadowsFadingEnabled = checked;
+  };
+}
+
+Sandcastle.addToggleButton(
+  "Shadows Fading",
+  shadowMap.fadingEnabled,
+  setShadowsFadingEnabledFunction()
+);
+
+// get checkbox input to be able to modify it programmatically
+var enableShadowsFadingButton = document.getElementById("toolbar").lastChild;
+var enableShadowsFadingCbx = enableShadowsFadingButton.firstChild.firstChild; // input
 
 /*
 Sandcastle.addToggleButton(
@@ -1161,6 +1187,10 @@ Sandcastle.addToggleButton(
     scene.globe.showGroundAtmosphere = checked;
   }
 );
+// button
+var buttonAtmSim = document.getElementById("toolbar").lastChild;
+// button input (checkbox)
+var buttonAtmSimInput = buttonAtmSim.firstChild.firstChild;
 
 Sandcastle.addToolbarMenu(locationToolbarOptions);
 var locationMenu = document.getElementById("toolbar").lastChild;
@@ -1786,9 +1816,29 @@ function loadStateFromQueryString() {
     }
   }
 
-  // terrainShadowsCbx.checked = false;
-  // var setTerrainShadowsEnabled = setTerrainShadowsEnabledFunction();
-  // setTerrainShadowsEnabled(false);
+  // skirts enabled
+  if (searchParams.has("skirtsEnabled")) {
+    var checked = searchParams.get("skirtsEnabled") === "true";
+    enableSkirtsCbx.checked = checked;
+    var setSkirtsEnabled = setSkirtsEnabledFunction();
+    setSkirtsEnabled(checked);
+  }
+
+  // terrain shadows enabled
+  if (searchParams.has("terrainShadowsEnabled")) {
+    var checked = searchParams.get("terrainShadowsEnabled") === "true";
+    terrainShadowsCbx.checked = checked;
+    var setTerrainShadowsEnabled = setTerrainShadowsEnabledFunction();
+    setTerrainShadowsEnabled(checked);
+  }
+
+  // shadows fading enabled
+  if (searchParams.has("shadowsFadingEnabled")) {
+    var checked = searchParams.get("shadowsFadingEnabled") === "true";
+    enableShadowsFadingCbx.checked = checked;
+    var setShadowsFadingEnabled = setShadowsFadingEnabledFunction();
+    setShadowsFadingEnabled(checked);
+  }
 
   viewModel.viewModelLoadFinished = true;
 }
