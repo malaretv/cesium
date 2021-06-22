@@ -853,6 +853,13 @@ var locationsInfo = {
     color: Cesium.Color.WHITE,
     entity: null,
   },
+  Hill_Top_Near_NP: {
+    longitude: -45.63,
+    latitude: 89.645,
+    height: 500,
+    color: Cesium.Color.WHITE,
+    entity: null,
+  },
   testing2: {
     longitude: -2.146,
     latitude: 0.667,
@@ -910,10 +917,8 @@ function setHiresDemRegionsEnabledFunction() {
       viewer.dataSources.add(polesHiresData);
     } else {
       if (viewer.dataSources.length > dataSourceLastIndex) {
-        // console.log("removing data source");
         var res = viewer.dataSources.remove(dataSource, false);
         if (res) {
-          // console.log("data source removed");
           dataSourceLastIndex -= 1;
         }
       }
