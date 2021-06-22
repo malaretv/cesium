@@ -899,29 +899,50 @@ var illuminationMenu = document.getElementById("toolbar").lastChild;
 Sandcastle.addToolbarMenu(terrainOptions);
 var terrainMenu = document.getElementById("toolbar").lastChild;
 
-var polesHiresData = Cesium.GeoJsonDataSource.load(
-  "https://files.actgate.com/temp/poles_hires.geojson",
+var polesHiresDataPolarUrl =
+  "https://files.actgate.com/temp/poles_hires.geojson";
+var polesHiresDataPolarFilename = polesHiresDataPolarUrl.split("/").pop();
+var polesHiresDataPolar = Cesium.GeoJsonDataSource.load(
+  polesHiresDataPolarUrl,
   {
     fill: Cesium.Color.PINK.withAlpha(0.1),
     clampToGround: true,
   }
 );
+viewer.dataSources.add(polesHiresDataPolar);
 
-var dataSource;
+var polesHiresDataUrl =
+  "https://files.actgate.com/temp/poles_hires_normal.geojson";
+var polesHiresDataFilename = polesHiresDataUrl.split("/").pop();
+var polesHiresData = Cesium.GeoJsonDataSource.load(polesHiresDataUrl, {
+  fill: Cesium.Color.PINK.withAlpha(0.1),
+  clampToGround: true,
+});
+viewer.dataSources.add(polesHiresData);
+
+var polesHiresDataSource;
+var polesHiresDataSourcePolar;
 var dataSourceLastIndex = -1;
 
+var polesHiresDataSourceEnabled = false;
 function setHiresDemRegionsEnabledFunction() {
   return function (checked) {
+    // store here in case the data sources have not been loaded yet
+    polesHiresDataSourceEnabled = checked;
+
+    if (!polesHiresDataSourcePolar || !polesHiresDataSource) {
+      return;
+    }
+
     if (checked) {
-      dataSourceLastIndex = viewer.dataSources.length;
-      viewer.dataSources.add(polesHiresData);
-    } else {
-      if (viewer.dataSources.length > dataSourceLastIndex) {
-        var res = viewer.dataSources.remove(dataSource, false);
-        if (res) {
-          dataSourceLastIndex -= 1;
-        }
+      if (isOptimizedPolarTerrain) {
+        polesHiresDataSourcePolar.show = true;
+      } else {
+        polesHiresDataSource.show = true;
       }
+    } else {
+      polesHiresDataSource.show = false;
+      polesHiresDataSourcePolar.show = false;
     }
 
     // update view model
@@ -940,10 +961,17 @@ var enableHiresDemRegionsCbx =
   enableHiresDemRegionsButton.firstChild.firstChild; // input
 
 viewer.dataSources.dataSourceAdded.addEventListener(function () {
-  // console.log("data source added");
   if (viewer.dataSources.length > dataSourceLastIndex) {
-    dataSource = viewer.dataSources.get(dataSourceLastIndex);
     dataSourceLastIndex = viewer.dataSources.length - 1;
+    var dataSource = viewer.dataSources.get(dataSourceLastIndex);
+    dataSource.show = false;
+    if (dataSource.name === polesHiresDataFilename) {
+      polesHiresDataSource = dataSource;
+      polesHiresDataSource.show = polesHiresDataSourceEnabled;
+    } else {
+      polesHiresDataSourcePolar = dataSource;
+      polesHiresDataSourcePolar.show = polesHiresDataSourceEnabled;
+    }
   }
 });
 
@@ -1063,6 +1091,12 @@ function updateImageryLayersUrl() {
     if (sunVisibility60mChecked) {
       layerSunVis60mPolar.show = true;
     }
+    if (polesHiresDataSourceEnabled) {
+      if (polesHiresDataSourcePolar) {
+        polesHiresDataSourcePolar.show = true;
+        polesHiresDataSource.show = false;
+      }
+    }
   } else {
     if (layerWACAlbedoPolar.show) {
       layerWACAlbedoPolar.show = false;
@@ -1070,6 +1104,12 @@ function updateImageryLayersUrl() {
     }
     if (sunVisibility60mChecked) {
       layerSunVis60mPolar.show = false;
+    }
+    if (polesHiresDataSourceEnabled) {
+      if (polesHiresDataSourcePolar) {
+        polesHiresDataSourcePolar.show = false;
+        polesHiresDataSource.show = true;
+      }
     }
   }
 }
