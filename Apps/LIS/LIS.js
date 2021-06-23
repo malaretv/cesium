@@ -87,6 +87,7 @@ function createTerrainProvider() {
     url: buildTerrainUrl(),
     requestVertexNormals: requestVertexNormals,
   });
+
   return terrainProvider;
 }
 
@@ -542,6 +543,53 @@ function setTerrainProvider(terrainProvider, optimizedPolarTerrain) {
     wasOptimizedPolarTerrain,
     isOptimizedPolarTerrain
   );
+}
+
+globe.tileLoadProgressEvent.addEventListener(terrainTileLoaded);
+
+var terrainShadowsRefreshStarted = false;
+var forceTerrainShadowsRefreshTimeoutId = -1;
+function forceTerrainShadowsRefresh() {
+  // NOTE: trick for fixing bad tiles shadows
+  // when the terrain tiles update finishes, force tiles shadows refresh
+  // changing scene.globe.showGroundAtmosphere state
+
+  // console.log("forcing shadows refresh...");
+
+  // make sure no new force requests are done
+  terrainShadowsRefreshStarted = true;
+  forceTerrainShadowsRefreshTimeoutId = -1;
+
+  // force shadows update
+  scene.globe.showGroundAtmosphere = !scene.globe.showGroundAtmosphere;
+
+  // restore previous state after timeout
+  setTimeout(finishForceTerrainShadowsRefresh, 100);
+}
+
+function finishForceTerrainShadowsRefresh() {
+  // console.log("restoring simu atm state " + enableAtmSimCbx.checked);
+  scene.globe.showGroundAtmosphere = false;
+  terrainShadowsRefreshStarted = false;
+}
+
+function terrainTileLoaded(loadTilesQueueCount) {
+  if (!terrainShadowsRefreshStarted) {
+    // schedule force terrain shadows refresh
+    // it can take time loading all the tiles. Let us force a shadows refresh before load finishes
+    forceTerrainShadowsRefreshTimeoutId = setTimeout(
+      forceTerrainShadowsRefresh,
+      3000
+    );
+    terrainShadowsRefreshStarted = true;
+  }
+
+  if (loadTilesQueueCount === 0) {
+    if (forceTerrainShadowsRefreshTimeoutId >= 0) {
+      clearTimeout(forceTerrainShadowsRefreshTimeoutId);
+    }
+    forceTerrainShadowsRefresh();
+  }
 }
 
 var terrainNameList = [
@@ -1285,6 +1333,7 @@ function setAtmSimuEnabledFunction() {
   };
 }
 
+/*
 Sandcastle.addToggleButton(
   "Atm simu",
   scene.globe.showGroundAtmosphere,
@@ -1294,6 +1343,7 @@ Sandcastle.addToggleButton(
 var enableAtmSimButton = document.getElementById("toolbar").lastChild;
 // button input (checkbox)
 var enableAtmSimCbx = enableAtmSimButton.firstChild.firstChild;
+*/
 
 Sandcastle.addToolbarMenu(locationToolbarOptions);
 var locationMenu = document.getElementById("toolbar").lastChild;
@@ -1896,6 +1946,7 @@ function loadStateFromQueryString() {
       setContourEnabled(checked);
     }
 
+    /*
     // shadows fading enabled
     if (searchParams.has("atmSimuEnabled")) {
       var checked = searchParams.get("atmSimuEnabled") === "true";
@@ -1903,6 +1954,7 @@ function loadStateFromQueryString() {
       var setAtmSimuEnabled = setAtmSimuEnabledFunction();
       setAtmSimuEnabled(checked);
     }
+    */
 
     // shadows max distance
     if (searchParams.has("shadowsMaxDistance")) {

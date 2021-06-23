@@ -233,7 +233,6 @@ export function resetStateUpdateTimer() {
 // this is needed in order to avoid to many history.push requests (there is a limit on Safari browser)
 export function maybeUpdateStateUrl() {
   if (lastUrlStateUpdateTime !== viewModel.UTCtime) {
-    console.log("Updating time... " + viewModel.UTCtime);
     lastUrlStateUpdateTime = viewModel.UTCtime;
     if (updateStateTimerId >= 0) {
       // reset the timer
@@ -252,7 +251,7 @@ export function maybeUpdateStateUrl() {
  * Get current base state and saves to querystring
  */
 function saveStateToQueryString() {
-  console.log("updating state url...");
+  // console.log("updating state url...");
   if (!viewModel.viewModelLoadFinished) {
     // wait the state has been loaded before updating it
     return;
@@ -294,7 +293,7 @@ function saveStateToQueryString() {
   var contourEnabled = viewModel.contourEnabled;
 
   // atm simu enabled
-  var atmSimuEnabled = viewModel.atmSimuEnabled;
+  // var atmSimuEnabled = viewModel.atmSimuEnabled;
 
   // shadows max distance
   var shadowsMaxDistance = viewModel.shadowsMaxDistance;
@@ -325,7 +324,7 @@ function saveStateToQueryString() {
     terrainProviderIdx,
     terrainMeshMaxError,
     contourEnabled,
-    atmSimuEnabled,
+    //    atmSimuEnabled,
     shadowsMaxDistance,
     locationIdx,
     skirtsEnabled,
