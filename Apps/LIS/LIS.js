@@ -2,11 +2,7 @@ window.CESIUM_BASE_URL = "../../Source/";
 
 import * as Cesium from "../../Source/Cesium.js";
 
-import {
-  maybeUpdateStateUrl,
-  resetStateUpdateTimer,
-  viewModel,
-} from "./viewModel.js";
+import { resetStateUpdateTimer, viewModel } from "./viewModel.js";
 
 import {
   cartesianToDummyPolar,
@@ -14,6 +10,9 @@ import {
   adjustCartesianCoords,
   invAdjustCartesianCoords,
 } from "./adjustCartesian.js";
+
+import { addGoToButton } from "./UIcontrols.js";
+
 //Sandcastle_Begin
 // LIS changelog
 // https://docs.google.com/document/d/197lf-E9bC4HIPmyUZ1Qidc0TZOWlY58k3O5qJ24wb0o/edit?usp=sharing
@@ -91,7 +90,7 @@ function createTerrainProvider() {
   return terrainProvider;
 }
 
-var viewer = new Cesium.Viewer("cesiumContainer", {
+export var viewer = new Cesium.Viewer("cesiumContainer", {
   //  terrainProvider: createTerrainProvider(),
   infoBox: false,
   selectionIndicator: false,
@@ -1481,108 +1480,8 @@ setHeightKm(500);
 });
 */
 
-////////////////////////////////////////////////
-////////////////// goto ////////////////////////
-////////////////////////////////////////////////
-
-var recenterButtonDiv = document.createElement("div");
-var recenterButton = document.createElement("input");
-var recenterButtonSrc = "./images/recenter_white_16x16.png";
-var recenterButtonSelectedSrc = "./images/recenter_16x16.png";
-recenterButton.src = recenterButtonSrc;
-recenterButton.type = "image";
-var recenterButtonBgColor = "rgba(42, 42, 42, 0.7)";
-var recenterButtonBgSelectedColor = "rgba(255, 255, 255, 0.7)";
-recenterButton.style.backgroundColor = recenterButtonBgColor;
-recenterButtonDiv.appendChild(recenterButton);
-document.getElementById("toolbar").appendChild(recenterButtonDiv);
-
-recenterButton.onclick = function () {
-  if (gotoForm.hasAttribute("hidden")) {
-    // show / selecte button
-    recenterButton.style.backgroundColor = recenterButtonBgSelectedColor;
-    recenterButton.src = recenterButtonSelectedSrc;
-    gotoForm.removeAttribute("hidden");
-  } else {
-    // hide
-    recenterButton.style.backgroundColor = recenterButtonBgColor;
-    recenterButton.src = recenterButtonSrc;
-    gotoForm.setAttribute("hidden", "");
-    hideFormError();
-    // clear input string
-    gotoInput.value = "";
-  }
-};
-
-var goto = document.createElement("div");
-var gotoformHTML =
-  "<form id='goto-form' hidden> \
-        <p id='goto-error' hidden>Please fill out all fields.</p> \
-        <input type='text' id='goto-input' placeholder='lon,lat[,ele (km)]' required /> \
-        <button type='submit'>Go to</button> \
-</form>";
-goto.innerHTML = gotoformHTML;
-
-document.getElementById("toolbar").appendChild(goto);
-
-const gotoForm = document.getElementById("goto-form");
-const gotoInput = document.getElementById("goto-input");
-const gotoError = document.getElementById("goto-error");
-
-gotoInput.oninvalid = invalid;
-gotoForm.onsubmit = submit;
-
-function invalid(event) {
-  gotoError.innerHTML = "Must enter value";
-  gotoError.removeAttribute("hidden");
-}
-
-function hideFormError() {
-  gotoError.setAttribute("hidden", "");
-}
-function showFormError(msg) {
-  gotoError.innerHTML = msg;
-  gotoError.removeAttribute("hidden");
-}
-function submit(event) {
-  hideFormError();
-
-  const value = gotoInput.value;
-  // splits string into array off of ',' and converts every item in array to number
-  const coords = value.split(",").map((x) => +x);
-  // check if valid coordinate pair
-  if (
-    (coords.length === 2 || coords.length === 3) &&
-    coords.every((x) => isFinite(x))
-  ) {
-    if (coords.length === 2) {
-      // default elevation
-      coords.push(20);
-    }
-    const [lon, lat, ele] = coords;
-    console.log(`lon: ${lon} lat: ${lat} ele: ${ele}`);
-    var newCameraPos = adjustCartesianCoords(
-      Cesium.Cartesian3.fromDegrees(
-        lon,
-        lat,
-        ele * 1000.0, // m
-        ellipsoid
-      ),
-      isOptimizedPolarTerrain
-    );
-
-    scene.camera.flyTo({
-      destination: newCameraPos,
-      duration: deltaT,
-    });
-  } else {
-    showFormError("Invalid coordinates");
-  }
-  // For this example, don't actually submit the form
-  event.preventDefault();
-}
-
-//////////////////////////////////////////////////
+// add go to button
+addGoToButton();
 
 if (window.LIS_MODE === "development") {
   viewer.extend(Cesium.viewerCesiumInspectorMixin);
