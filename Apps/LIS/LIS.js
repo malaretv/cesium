@@ -11,7 +11,7 @@ import {
   invAdjustCartesianCoords,
 } from "./adjustCartesian.js";
 
-import { addGoToButton } from "./UIcontrols.js";
+import { addGoToButton, addTimeButton } from "./UIcontrols.js";
 
 //Sandcastle_Begin
 // LIS changelog
@@ -49,7 +49,7 @@ var regularTerrainName = regularTerrainNameDef;
 var polarTerrainName = polarTerrainNameDef;
 var noNormalsNameSuffix = " - no normals";
 
-var defaultLocationIndex = 0; // First item. Tycho
+var defaultLocationName = "Tycho";
 
 // The viewModel tracks the state of our mini application.
 var contoursViewModel = {
@@ -857,8 +857,9 @@ function updateTerrainMeshMaxError(err) {
 }
 
 // LOCATIONS
-var locationsInfo = {
+export var locationsInfo = {
   Tycho: {
+    name: "Tycho",
     longitude: -11.34246,
     latitude: -43.33986,
     height: -1000,
@@ -866,6 +867,7 @@ var locationsInfo = {
     entity: null,
   },
   Haworth_1: {
+    name: "Haworth_1",
     longitude: -17.665,
     latitude: -86.744,
     height: 1300,
@@ -873,6 +875,7 @@ var locationsInfo = {
     entity: null,
   },
   Haworth_2: {
+    name: "Haworth_2",
     longitude: -19.023,
     latitude: -86.516,
     height: 1300,
@@ -880,6 +883,7 @@ var locationsInfo = {
     entity: null,
   },
   PSR0: {
+    name: "PSR0",
     longitude: 135.36409,
     latitude: -81.87225,
     height: -4100,
@@ -887,6 +891,7 @@ var locationsInfo = {
     entity: null,
   },
   PSR1: {
+    name: "PSR1",
     longitude: -11.77213,
     latitude: -85.61268,
     height: 2500,
@@ -894,6 +899,7 @@ var locationsInfo = {
     entity: null,
   },
   Hill_Top_Near_SP: {
+    name: "Hill_Top_Near_SP",
     longitude: 222,
     latitude: -89.44,
     height: 2000,
@@ -901,6 +907,7 @@ var locationsInfo = {
     entity: null,
   },
   Hill_Top_Near_NP: {
+    name: "Hill_Top_Near_NP",
     longitude: -45.63,
     latitude: 89.645,
     height: 500,
@@ -908,6 +915,7 @@ var locationsInfo = {
     entity: null,
   },
   testing2: {
+    name: "testing2",
     longitude: -2.146,
     latitude: 0.667,
     height: -900,
@@ -922,6 +930,7 @@ function setLocationFunction(location) {
   };
 }
 
+/*
 var locationToolbarOptions = [];
 var i = 0;
 for (var locationName in locationsInfo) {
@@ -934,12 +943,7 @@ for (var locationName in locationsInfo) {
     i += 1;
   }
 }
-
-var customCameraLocationName = "custom camera";
-locationToolbarOptions.push({
-  text: customCameraLocationName,
-  onselect: setCustomCameraView,
-});
+*/
 
 Sandcastle.addToolbarMenu(illuminationOptions);
 var illuminationMenu = document.getElementById("toolbar").lastChild;
@@ -1344,8 +1348,10 @@ var enableAtmSimButton = document.getElementById("toolbar").lastChild;
 var enableAtmSimCbx = enableAtmSimButton.firstChild.firstChild;
 */
 
+/*
 Sandcastle.addToolbarMenu(locationToolbarOptions);
 var locationMenu = document.getElementById("toolbar").lastChild;
+*/
 
 // SHOW COORDINATES
 var cartesian = new Cesium.Cartesian3();
@@ -1482,6 +1488,8 @@ setHeightKm(500);
 
 // add go to button
 addGoToButton();
+// add set time button
+// addTimeButton();
 
 if (window.LIS_MODE === "development") {
   viewer.extend(Cesium.viewerCesiumInspectorMixin);
@@ -1604,20 +1612,20 @@ for (var locationName in locationsInfo) {
 }
 
 var entitySelected;
-function setSelectedEntity(entity) {
-  entitySelected = entity;
+function setSelectedEntity(location) {
+  entitySelected = location.entity;
 
   updateEntityVectors(true);
 
   // update view model
-  viewModel.locationIdx = locationMenu.selectedIndex;
+  viewModel.selectedLocationName = location.name;
 }
 
-var deltaT = 10;
+const deltaT = 10;
 var entities = viewer.entities.values;
-function setLocation(location) {
+export function setLocation(location) {
   if (location.entity) {
-    setSelectedEntity(location.entity);
+    setSelectedEntity(location);
     //   viewer.zoomTo(entity, new Cesium.HeadingPitchRange(0.5,-0.2,20000));
     //    viewer.zoomTo(entitySelected, new Cesium.HeadingPitchRange(0,-3.14,20000));
 
@@ -1671,9 +1679,6 @@ roll : Cesium.Math.toRadians(359.7)
 }
 });
 */
-
-  // update view model
-  viewModel.locationIdx = locationMenu.selectedIndex;
 }
 
 // ENTITY TO SUN/EARTH VECTORS
@@ -1801,8 +1806,14 @@ newTerrainNameSelected(defaultTerrainName);
 initializeTime(defaultUTCTime);
 
 // set location
+/*
 locationMenu.selectedIndex = defaultLocationIndex;
 locationToolbarOptions[defaultLocationIndex].onselect();
+*/
+var defaultLocation = locationsInfo[defaultLocationName];
+if (defaultLocation) {
+  setLocation(defaultLocation);
+}
 
 // shadows max distance
 var shadowsMaxDistanceIdx = shadowsMaxDistList.indexOf(
@@ -1972,21 +1983,18 @@ function loadStateFromQueryString() {
     }
 
     // location
-    if (searchParams.has("locationIdx")) {
-      var locationIdx = searchParams.get("locationIdx");
+    if (searchParams.has("selectedLocationName")) {
+      var locationName = searchParams.get("selectedLocationName");
+      if (locationName in locationsInfo) {
+        setSelectedEntity(locationsInfo[locationName]);
+      }
+      /*
+      var locationNamesList = Object.keys(locationsInfo);
+      var locationIdx = locationNamesList.indexOf(locationName);
       if (locationIdx >= 0) {
         locationMenu.selectedIndex = locationIdx;
-        var locationName = locationToolbarOptions[locationIdx].text;
-        if (locationName in locationsInfo) {
-          var location = locationsInfo[locationName];
-          setSelectedEntity(location.entity);
-        } else {
-          if (locationIdx >= 0) {
-            // update view model accordingly
-            viewModel.locationIdx = locationIdx;
-          }
-        }
       }
+      */
     }
   }
 
