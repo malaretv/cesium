@@ -34,8 +34,8 @@ export var viewModel = {
   _shadowsFading: true,
   _terrainShadowsEnabled: true,
 
-  // location
-  _locationIdx: -1,
+  // selected location
+  _selectedLocationName: undefined,
 
   // layers
   _hiresDemRegionsEnabled: false,
@@ -177,13 +177,13 @@ export var viewModel = {
     saveStateToQueryString();
   },
 
-  // locationIdx
-  get locationIdx() {
-    return this._locationIdx;
+  // selected location name
+  get selectedLocationName() {
+    return this._selectedLocationName;
   },
 
-  set locationIdx(value) {
-    this._locationIdx = value;
+  set selectedLocationName(value) {
+    this._selectedLocationName = value;
     saveStateToQueryString();
   },
 
@@ -298,8 +298,8 @@ function saveStateToQueryString() {
   // shadows max distance
   var shadowsMaxDistance = viewModel.shadowsMaxDistance;
 
-  // locationIdx
-  var locationIdx = viewModel.locationIdx;
+  // selected location name
+  var selectedLocationName = viewModel.selectedLocationName;
 
   // skirts enabled
   var skirtsEnabled = viewModel.skirtsEnabled;
@@ -326,7 +326,7 @@ function saveStateToQueryString() {
     contourEnabled,
     //    atmSimuEnabled,
     shadowsMaxDistance,
-    locationIdx,
+    selectedLocationName,
     skirtsEnabled,
     terrainShadowsEnabled,
     shadowsFadingEnabled,
