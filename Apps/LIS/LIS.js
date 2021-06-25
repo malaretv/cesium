@@ -97,6 +97,7 @@ export var viewer = new Cesium.Viewer("cesiumContainer", {
   skyAtmosphere: false,
   shadows: true,
   terrainShadows: Cesium.ShadowMode.ENABLED,
+  scene3DOnly: true,
 });
 
 var usgsLolaProvider = new Cesium.CesiumTerrainProvider({
