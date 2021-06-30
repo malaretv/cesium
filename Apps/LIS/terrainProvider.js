@@ -383,9 +383,9 @@ automaticTerrainNoNormalsModel.terrainName = "automatic terrain - no normals";
 
 // SLDEM LOLA
 const SldemLolaModel = new Cesium.ProviderViewModel({
-  name: "Sldem Lola",
+  name: "SLDEM LOLA",
   iconUrl: "./images/TerrainProviders/terrain.png",
-  tooltip: "Sldem Lola",
+  tooltip: "SLDEM LOLA",
   creationFunction: function () {
     return newTerrainNameSelected("sldem_lola");
   },
@@ -395,9 +395,9 @@ SldemLolaModel.terrainName = "sldem_lola";
 
 // SLDEM LOLA - NO NORMALS
 const SldemLolaNoNormalsModel = new Cesium.ProviderViewModel({
-  name: "Sldem Lola - No Normals",
+  name: "SLDEM LOLA - No Normals",
   iconUrl: "./images/TerrainProviders/terrain_no_normals.png",
-  tooltip: "Sldem Lola - No Normals",
+  tooltip: "SLDEM LOLA - No Normals",
   creationFunction: function () {
     return newTerrainNameSelected("sldem_lola - no normals");
   },
@@ -407,9 +407,9 @@ SldemLolaNoNormalsModel.terrainName = "sldem_lola - no normals";
 
 // GOTM (HI RES)
 const GOTMHRModel = new Cesium.ProviderViewModel({
-  name: "GOTM",
+  name: "Polar Optimized",
   iconUrl: "./images/TerrainProviders/gotm.png",
-  tooltip: "GOTM (Optimized Polar DEM)",
+  tooltip: "Polar Optimized",
   creationFunction: function () {
     return newTerrainNameSelected("GOTM");
   },
@@ -419,9 +419,9 @@ GOTMHRModel.terrainName = "GOTM";
 
 // GOTM (HI RES) - No Normals
 const GOTMHRNoNormalsModel = new Cesium.ProviderViewModel({
-  name: "GOTM - No Normals",
+  name: "Polar Optimized - No Normals",
   iconUrl: "./images/TerrainProviders/terrain_no_normals.png",
-  tooltip: "GOTM - No Normals (Optimized Polar DEM)",
+  tooltip: "Polar Optimized - No Normals",
   creationFunction: function () {
     return newTerrainNameSelected("GOTM - no normals");
   },
