@@ -42,8 +42,6 @@ var defaultUTCTime = "2022-12-04T00:00:00.000Z";
 var defaultMeshMaxError = 1;
 var defaultTerrainName = "automatic terrain";
 
-var noNormalsNameSuffix = " - no normals";
-
 var defaultLocationName = "Tycho";
 
 // The viewModel tracks the state of our mini application.
@@ -538,7 +536,7 @@ export function setCurrTerrainLabelVisible(showLbl) {
 //////////////////////////////////////////////////
 //////////// TERRAIN /////////////////////////////
 //////////////////////////////////////////////////
-
+/*
 var terrainNameList = [
   "automatic terrain",
   "automatic terrain" + noNormalsNameSuffix,
@@ -560,6 +558,7 @@ function setTerrainFunction(terrainName) {
   };
 }
 
+
 var terrainOptions = [];
 for (var i = 0; i < terrainNameList.length; i++) {
   var terrainName = terrainNameList[i];
@@ -568,6 +567,7 @@ for (var i = 0; i < terrainNameList.length; i++) {
     onselect: setTerrainFunction(terrainName),
   });
 }
+*/
 
 // LOCATIONS
 export var locationsInfo = {
@@ -660,8 +660,10 @@ for (var locationName in locationsInfo) {
 
 Sandcastle.addToolbarMenu(illuminationOptions);
 var illuminationMenu = document.getElementById("toolbar").lastChild;
+/*
 Sandcastle.addToolbarMenu(terrainOptions);
 export var terrainMenu = document.getElementById("toolbar").lastChild;
+*/
 
 var polesHiresDataPolarUrl =
   "https://files.actgate.com/temp/poles_hires.geojson";
@@ -1617,7 +1619,7 @@ var terrainMeshMaxErrorIdx = maxErrorList.indexOf(defaultMeshMaxError);
 if (terrainMeshMaxErrorIdx) {
   terrainMaxErrMenu.selectedIndex = terrainMeshMaxErrorIdx;
 }
-newTerrainNameSelected(defaultTerrainName);
+newTerrainNameSelected(defaultTerrainName, true);
 initializeTime(defaultUTCTime);
 
 // set location
@@ -1726,10 +1728,11 @@ function loadStateFromQueryString() {
   }
 
   // terrain provider
-  if (searchParams.has("terrainProviderIdx")) {
-    var terrainProviderIdx = searchParams.get("terrainProviderIdx");
-    terrainMenu.selectedIndex = terrainProviderIdx;
-    terrainOptions[terrainProviderIdx].onselect();
+  if (searchParams.has("terrainProviderName")) {
+    var terrainProviderName = searchParams.get("terrainProviderName");
+    // terrainMenu.selectedIndex = terrainProviderIdx;
+    // terrainOptions[terrainProviderIdx].onselect();
+    newTerrainNameSelected(terrainProviderName, true);
   }
 
   // camera position and orientation

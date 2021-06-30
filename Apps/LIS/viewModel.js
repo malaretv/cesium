@@ -19,7 +19,7 @@ export var viewModel = {
   _lightSourceIdx: -1,
 
   // terrain
-  _terrainProviderIdx: -1,
+  _terrainProviderName: undefined,
   _terrainMeshMaxError: 1.0,
 
   // contour
@@ -97,13 +97,13 @@ export var viewModel = {
     saveStateToQueryString();
   },
 
-  // terrainProviderIdx
-  get terrainProviderIdx() {
-    return this._terrainProviderIdx;
+  // terrainProviderName
+  get terrainProviderName() {
+    return this._terrainProviderName;
   },
 
-  set terrainProviderIdx(value) {
-    this._terrainProviderIdx = value;
+  set terrainProviderName(value) {
+    this._terrainProviderName = value;
     saveStateToQueryString();
   },
 
@@ -284,7 +284,7 @@ function saveStateToQueryString() {
   var lightSourceIdx = viewModel.lightSourceIdx;
 
   // terrain
-  var terrainProviderIdx = viewModel.terrainProviderIdx;
+  var terrainProviderName = viewModel.terrainProviderName;
 
   // terrain mesh max error
   var terrainMeshMaxError = viewModel.terrainMeshMaxError;
@@ -321,7 +321,7 @@ function saveStateToQueryString() {
     camera_up,
     UTCtime,
     lightSourceIdx,
-    terrainProviderIdx,
+    terrainProviderName,
     terrainMeshMaxError,
     contourEnabled,
     //    atmSimuEnabled,

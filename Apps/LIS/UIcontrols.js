@@ -11,7 +11,10 @@ import {
 
 import { adjustCartesianCoords } from "./adjustCartesian.js";
 
-import { isOptimizedPolarTerrain } from "./terrainProvider.js";
+import {
+  initializeTerrainPicker,
+  isOptimizedPolarTerrain,
+} from "./terrainProvider.js";
 
 var buttonBgColor = "rgba(42, 42, 42, 0.7)";
 var buttonBgSelectedColor = "rgba(255, 255, 255, 0.7)";
@@ -313,6 +316,8 @@ export function initializeBaseLayerPicker() {
   sunVisibilty60mModelIdx = providerViewModels.length - 1;
   viewer.baseLayerPicker.viewModel.imageryProviderViewModels = providerViewModels;
   viewer.baseLayerPicker.viewModel.selectedImagery = NullModel;
+
+  initializeTerrainPicker();
 }
 
 export function updateBaseLayerPickerImageryLayers() {

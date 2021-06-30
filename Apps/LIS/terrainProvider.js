@@ -3,7 +3,6 @@ import * as Cesium from "../../Source/Cesium.js";
 import {
   cartographicCamera,
   setCurrTerrainLabelVisible,
-  terrainMenu,
   updateGlobeCartesianPositions,
   updateTerrainDisplay,
   viewer,
@@ -13,6 +12,7 @@ import { viewModel } from "./viewModel.js";
 
 import { invAdjustCartesianCoords } from "./adjustCartesian.js";
 
+var noNormalsNameSuffix = " - no normals";
 var terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/sldem_lola";
 var terrainResampligMethod = "cubic";
 var terrainMeshScale = 3;
@@ -111,6 +111,8 @@ function updateTerrainProvider(
     wasOptimizedPolarTerrain,
     isOptimizedPolarTerrain
   );
+
+  return viewer.terrainProvider;
 }
 
 function setTerrainProvider(terrainProvider, optimizedPolarTerrain) {
@@ -129,7 +131,7 @@ function setTerrainProvider(terrainProvider, optimizedPolarTerrain) {
 function setTerrain(terrainName) {
   if (terrainName === currTerrainName) {
     // nothing to do
-    return;
+    return viewer.terrainProvider;
   }
 
   console.log("setting terrain " + terrainName);
@@ -143,60 +145,56 @@ function setTerrain(terrainName) {
     terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/sldem_lola";
     requestVertexNormals = true;
     optimizedPolarTerrain = false;
-    updateTerrainProvider(
+    return updateTerrainProvider(
       terrainBaseUrl,
       optimizedPolarTerrain,
       requestVertexNormals
     );
-    return;
   }
 
   if (terrainName === "sldem_lola - no normals") {
     terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/sldem_lola";
     requestVertexNormals = false;
     optimizedPolarTerrain = false;
-    updateTerrainProvider(
+    return updateTerrainProvider(
       terrainBaseUrl,
       optimizedPolarTerrain,
       requestVertexNormals
     );
-    return;
   }
 
   if (terrainName === "usgs_lola") {
     optimizedPolarTerrain = false;
     setTerrainProvider(usgsLolaProvider, optimizedPolarTerrain);
-    return;
+    return viewer.terrainProvider;
   }
 
   if (terrainName === "NASA JPL - no normals") {
     optimizedPolarTerrain = false;
     setTerrainProvider(JPLProvider, optimizedPolarTerrain);
-    return;
+    return viewer.terrainProvider;
   }
 
   if (terrainName === "Optimized PolarDEM") {
     terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/dummy_poles2";
     requestVertexNormals = true;
     optimizedPolarTerrain = true;
-    updateTerrainProvider(
+    return updateTerrainProvider(
       terrainBaseUrl,
       optimizedPolarTerrain,
       requestVertexNormals
     );
-    return;
   }
 
   if (terrainName === "Optimized PolarDEM - no normals") {
     terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/dummy_poles2";
     requestVertexNormals = false;
     optimizedPolarTerrain = true;
-    updateTerrainProvider(
+    return updateTerrainProvider(
       terrainBaseUrl,
       optimizedPolarTerrain,
       requestVertexNormals
     );
-    return;
   }
 
   /*
@@ -204,24 +202,22 @@ function setTerrain(terrainName) {
       terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles";
       requestVertexNormals = true;
       optimizedPolarTerrain = true;
-      updateTerrainProvider(
+      return updateTerrainProvider(
         terrainBaseUrl,
         optimizedPolarTerrain,
         requestVertexNormals
       );
-      return;
     }
   
     if (terrainName === "GOTM - no normals") {
       terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles";
       requestVertexNormals = false;
       optimizedPolarTerrain = true;
-      updateTerrainProvider(
+      return updateTerrainProvider(
         terrainBaseUrl,
         optimizedPolarTerrain,
         requestVertexNormals
       );
-      return;
     }
     */
 
@@ -229,33 +225,39 @@ function setTerrain(terrainName) {
     terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles_hires";
     requestVertexNormals = true;
     optimizedPolarTerrain = true;
-    updateTerrainProvider(
+    return updateTerrainProvider(
       terrainBaseUrl,
       optimizedPolarTerrain,
       requestVertexNormals
     );
-    return;
   }
 
   if (terrainName === "GOTM - no normals") {
     terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles_hires";
     requestVertexNormals = false;
     optimizedPolarTerrain = true;
-    updateTerrainProvider(
+    return updateTerrainProvider(
       terrainBaseUrl,
       optimizedPolarTerrain,
       requestVertexNormals
     );
-    return;
   }
 
   console.log("TERRAIN NOT FOUND!!!");
+  return viewer.terrainProvider;
 }
 
 // change terrain provider based on terrain name
 // support "automatic" terrain for automatically switching between regular/polar terrain
 // based on latitude
-export function newTerrainNameSelected(terrainName) {
+export function newTerrainNameSelected(terrainName, updateSelected) {
+  // note: if this is called after imagery layerAdded event, then the selected entry on the picker
+  // had not been updated yet, so call this with updateSelected set to false in order to avoid bad behavior
+  if (updateSelected === undefined) {
+    updateSelected = false;
+  }
+
+  var terrainProvider;
   console.log("terrain name selected: " + terrainName);
   if (
     terrainName === "automatic terrain" ||
@@ -272,17 +274,33 @@ export function newTerrainNameSelected(terrainName) {
       regularTerrainName = regularTerrainNameDef + noNormalsNameSuffix;
       polarTerrainName = polarTerrainNameDef + noNormalsNameSuffix;
     }
-    maybeUpdateTerrainProvider();
+    terrainProvider = maybeUpdateTerrainProvider();
   } else {
     if (automaticPolarTerrainTransition) {
       setCurrTerrainLabelVisible(false);
     }
     automaticPolarTerrainTransition = false;
-    setTerrain(terrainName);
+    terrainProvider = setTerrain(terrainName);
   }
 
   // update view model
-  viewModel.terrainProviderIdx = terrainMenu.selectedIndex;
+  viewModel.terrainProviderName = terrainName;
+
+  if (updateSelected) {
+    var selectedModelList = viewer.baseLayerPicker.viewModel.terrainProviderViewModels.filter(
+      (obj) => {
+        return obj.terrainName === terrainName;
+      }
+    );
+    if (selectedModelList.length) {
+      var selectedModel = selectedModelList[0];
+      if (viewer.baseLayerPicker.viewModel.selectedTerrain !== selectedModel) {
+        viewer.baseLayerPicker.viewModel.selectedTerrain = selectedModel;
+      }
+    }
+  }
+
+  return terrainProvider;
 }
 
 function getBestLatTerrainName(lat, height) {
@@ -302,7 +320,7 @@ function getBestLatTerrainName(lat, height) {
 export function maybeUpdateTerrainProvider(lat, height) {
   if (!automaticPolarTerrainTransition) {
     // nothing to do
-    return;
+    return viewer.terrainProvider;
   }
 
   if (!lat || !height) {
@@ -321,13 +339,13 @@ export function maybeUpdateTerrainProvider(lat, height) {
   if (height > autoDemTransitionEnabledAlt) {
     // high elevation
     // nothing to do
-    return;
+    return viewer.terrainProvider;
   }
 
   // best terrain based on camera location
   var bestTerrainName = getBestLatTerrainName(lat, height);
   // console.log("best terrain (" + lat.toFixed(3) + "): " + bestTerrainName);
-  setTerrain(bestTerrainName);
+  return setTerrain(bestTerrainName);
 }
 
 var usgsLolaProvider = new Cesium.CesiumTerrainProvider({
@@ -340,27 +358,87 @@ var JPLProvider = new Cesium.CesiumTerrainProvider({
   requestVertexNormals: false,
 });
 
+// Automatic
+const automaticTerrainModel = new Cesium.ProviderViewModel({
+  name: "Automatic Terrain",
+  iconUrl: "./images/TerrainProviders/terrain_auto.png",
+  tooltip: "Automatic Terrain Selection based on latitude",
+  creationFunction: function () {
+    return newTerrainNameSelected("automatic terrain");
+  },
+});
+automaticTerrainModel.terrainName = "automatic terrain";
+
+// Automatic - No Normals
+const automaticTerrainNoNormalsModel = new Cesium.ProviderViewModel({
+  name: "Automatic Terrain - No Normals",
+  iconUrl: "./images/TerrainProviders/terrain_no_normals_auto.png",
+  tooltip: "Automatic Terrain Selection based on latitude",
+  creationFunction: function () {
+    return newTerrainNameSelected("automatic terrain - no normals");
+  },
+});
+// add attribute
+automaticTerrainNoNormalsModel.terrainName = "automatic terrain - no normals";
+
+// SLDEM LOLA
 const SldemLolaModel = new Cesium.ProviderViewModel({
-  name: "sldem lola",
+  name: "Sldem Lola",
   iconUrl: "./images/TerrainProviders/terrain.png",
   tooltip: "Sldem Lola",
   creationFunction: function () {
-    terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/sldem_lola";
-    requestVertexNormals = true;
-    optimizedPolarTerrain = false;
-    updateTerrainProvider(
-      terrainBaseUrl,
-      optimizedPolarTerrain,
-      requestVertexNormals
-    );
-    return WACMosaicNSImageryProvider;
+    return newTerrainNameSelected("sldem_lola");
   },
 });
+// add attribute
+SldemLolaModel.terrainName = "sldem_lola";
+
+// SLDEM LOLA - NO NORMALS
+const SldemLolaNoNormalsModel = new Cesium.ProviderViewModel({
+  name: "Sldem Lola - No Normals",
+  iconUrl: "./images/TerrainProviders/terrain_no_normals.png",
+  tooltip: "Sldem Lola - No Normals",
+  creationFunction: function () {
+    return newTerrainNameSelected("sldem_lola - no normals");
+  },
+});
+// add attribute
+SldemLolaNoNormalsModel.terrainName = "sldem_lola - no normals";
+
+// GOTM (HI RES)
+const GOTMHRModel = new Cesium.ProviderViewModel({
+  name: "GOTM",
+  iconUrl: "./images/TerrainProviders/gotm.png",
+  tooltip: "GOTM (Optimized Polar DEM)",
+  creationFunction: function () {
+    return newTerrainNameSelected("GOTM");
+  },
+});
+// add attribute
+GOTMHRModel.terrainName = "GOTM";
+
+// GOTM (HI RES) - No Normals
+const GOTMHRNoNormalsModel = new Cesium.ProviderViewModel({
+  name: "GOTM - No Normals",
+  iconUrl: "./images/TerrainProviders/terrain_no_normals.png",
+  tooltip: "GOTM - No Normals (Optimized Polar DEM)",
+  creationFunction: function () {
+    return newTerrainNameSelected("GOTM - no normals");
+  },
+});
+// add attribute
+GOTMHRNoNormalsModel.terrainName = "GOTM - no normals";
 
 export function initializeTerrainPicker() {
   viewer.baseLayerPicker.viewModel.terrainProviderViewModels.removeAll();
 
   var providerTerrainModels = [];
+  providerTerrainModels.push(automaticTerrainModel);
+  providerTerrainModels.push(automaticTerrainNoNormalsModel);
   providerTerrainModels.push(SldemLolaModel);
+  providerTerrainModels.push(SldemLolaNoNormalsModel);
+  providerTerrainModels.push(GOTMHRModel);
+  providerTerrainModels.push(GOTMHRNoNormalsModel);
   viewer.baseLayerPicker.viewModel.terrainProviderViewModels = providerTerrainModels;
+  // viewer.baseLayerPicker.viewModel.selectedTerrain = automaticTerrainModel;
 }
