@@ -4,13 +4,14 @@ import { Cartesian3 } from "../../Source/Cesium.js";
 
 import {
   viewer,
-  isOptimizedPolarTerrain,
   locationsInfo,
   setLocation,
   createLayerImageryProvider,
 } from "./LIS.js";
 
 import { adjustCartesianCoords } from "./adjustCartesian.js";
+
+import { isOptimizedPolarTerrain } from "./terrainProvider.js";
 
 var buttonBgColor = "rgba(42, 42, 42, 0.7)";
 var buttonBgSelectedColor = "rgba(255, 255, 255, 0.7)";
@@ -214,6 +215,10 @@ export function addTimeButton() {
   timeForm.onsubmit = submit;
 }
 
+//////////////////////////////////////////////
+////////////// BASE LAYER PICKER /////////////
+//////////////////////////////////////////////
+
 function createEmptyImageryProvider() {
   /* NOTE: use out of range scaling values for returning empty tiles*/
   var layerUrl =
@@ -292,17 +297,13 @@ const sunVisibilty60mModel = new Cesium.ProviderViewModel({
   },
 });
 
-//////////////////////////////////////////////
-////////////// BASE LAYER PICKER /////////////
-//////////////////////////////////////////////
-
 export var NoneModelIdx;
 export var WACMosaicNSModelIdx;
 export var sunVisibilty60mModelIdx;
 
 export function initializeBaseLayerPicker() {
   viewer.baseLayerPicker.viewModel.imageryProviderViewModels.removeAll();
-  viewer.baseLayerPicker.viewModel.terrainProviderViewModels.removeAll();
+  // viewer.baseLayerPicker.viewModel.terrainProviderViewModels.removeAll();
   var providerViewModels = [];
   providerViewModels.push(NullModel);
   NoneModelIdx = providerViewModels.length - 1;

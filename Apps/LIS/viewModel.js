@@ -1,7 +1,7 @@
 import { Cartesian3 } from "../../Source/Cesium.js";
 import { JulianDate } from "../../Source/Cesium.js";
 
-import { isOptimizedPolarTerrain } from "./LIS.js";
+import { isOptimizedPolarTerrain } from "./terrainProvider.js";
 
 import { invAdjustCartesianCoords } from "./adjustCartesian.js";
 

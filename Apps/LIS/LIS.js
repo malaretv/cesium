@@ -5,6 +5,14 @@ import * as Cesium from "../../Source/Cesium.js";
 import { resetStateUpdateTimer, viewModel } from "./viewModel.js";
 
 import {
+  isOptimizedPolarTerrain,
+  maybeUpdateTerrainProvider,
+  newTerrainNameSelected,
+  resetTerrain,
+  updateTerrainMeshMaxError,
+} from "./terrainProvider.js";
+
+import {
   cartesianToDummyPolar,
   dummyPolarToCartesian,
   adjustCartesianCoords,
@@ -30,32 +38,10 @@ Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(1737400, 1737400, 1737400);
 // tiles settings
 // https://lunar-dem-tiles2.quickmap.io/sldem_lola/docs#/default/serve_layer_info_layer_json_get
 
-var defaultTerrainName = "automatic terrain";
-var terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/sldem_lola";
-var terrainResampligMethod = "cubic";
-var terrainMeshScale = 3;
-var terrainMeshAlgorithm = "delatin";
-var requestVertexNormals = true;
-export var isOptimizedPolarTerrain = false;
-var currTerrainName;
 var defaultUTCTime = "2022-12-04T00:00:00.000Z";
 var defaultMeshMaxError = 1;
+var defaultTerrainName = "automatic terrain";
 
-// for automatic regular/polar terrain switch
-var automaticPolarTerrainTransition = false;
-// switch to polar dem when abs(lat) > polarDemLatTh
-var polarDemLatTh = 70; // deg
-// lat tolerance for switching terrain
-// the switch is happening if abs(lat) > (polarDemLatTh + autoDemTransitionLatTol)
-// or abs(lat) < (polarDemLatTh - autoDemTransitionLatTol)
-// note when the camera height > 1000 km then autoDemTransitionLatTol is increased by a factor of 2
-var autoDemTransitionLatTol = 5; // deg
-// km. Enable automatic terrain switch when camera altitude is lower than this param
-var autoDemTransitionEnabledAlt = 2000;
-var regularTerrainNameDef = "sldem_lola";
-var polarTerrainNameDef = "GOTM";
-var regularTerrainName = regularTerrainNameDef;
-var polarTerrainName = polarTerrainNameDef;
 var noNormalsNameSuffix = " - no normals";
 
 var defaultLocationName = "Tycho";
@@ -68,36 +54,6 @@ var contoursViewModel = {
 };
 
 var showContourAlt = 200; // km
-
-function buildTerrainUrl() {
-  var terrainUrl =
-    terrainBaseUrl +
-    "?" +
-    "resampling_method=" +
-    terrainResampligMethod +
-    "&" +
-    "mesh_scale=" +
-    terrainMeshScale +
-    "&" +
-    "mesh_algorithm=" +
-    terrainMeshAlgorithm +
-    "&" +
-    "mesh_max_error=" +
-    viewModel.terrainMeshMaxError;
-  console.log("terrain url:");
-  console.log(terrainUrl);
-
-  return terrainUrl;
-}
-
-function createTerrainProvider() {
-  var terrainProvider = new Cesium.CesiumTerrainProvider({
-    url: buildTerrainUrl(),
-    requestVertexNormals: requestVertexNormals,
-  });
-
-  return terrainProvider;
-}
 
 export var viewer = new Cesium.Viewer("cesiumContainer", {
   //  terrainProvider: createTerrainProvider(),
@@ -116,16 +72,6 @@ geocoder.searchText = "Vienna";
 geocoder.flightDuration = 0.0;
 geocoder.search();
 */
-
-var usgsLolaProvider = new Cesium.CesiumTerrainProvider({
-  url: "https://lunar-dem-tiles2.quickmap.io/usgs_lola/",
-  requestVertexNormals: true,
-});
-
-var JPLProvider = new Cesium.CesiumTerrainProvider({
-  url: "https://marshub.s3.amazonaws.com/moon_v14",
-  requestVertexNormals: false,
-});
 
 var scene = viewer.scene;
 var globe = scene.globe;
@@ -279,7 +225,7 @@ function updateEntitiesPos() {
   }
 }
 
-function updateGlobeCartesianPositions() {
+export function updateGlobeCartesianPositions() {
   var trackedEntity = viewer.trackedEntity;
   var trackedEntityViewFrom;
   if (trackedEntity) {
@@ -489,7 +435,7 @@ function updateCameraCoordsDisplay(msg) {
 }
 
 var terrainDisplay = document.createElement("div");
-function updateTerrainDisplay(msg) {
+export function updateTerrainDisplay(msg) {
   terrainDisplay.innerHTML = msg;
 }
 
@@ -532,35 +478,6 @@ function setSceneLight(lightSource) {
 
   // update model
   viewModel.lightSourceIdx = illuminationMenu.selectedIndex;
-}
-
-function updateTerrainProvider(
-  terrainBaseUrl,
-  optimizedPolarTerrain,
-  requestVertexNormals
-) {
-  // update terrain provider
-  viewer.terrainProvider = createTerrainProvider();
-  // check if reference system changed
-  var wasOptimizedPolarTerrain = isOptimizedPolarTerrain;
-  isOptimizedPolarTerrain = optimizedPolarTerrain;
-
-  maybeUpdateGlobeCartesianPositions(
-    wasOptimizedPolarTerrain,
-    isOptimizedPolarTerrain
-  );
-}
-
-function setTerrainProvider(terrainProvider, optimizedPolarTerrain) {
-  // update terrain provider
-  viewer.terrainProvider = terrainProvider;
-  // check if reference system changed
-  var wasOptimizedPolarTerrain = isOptimizedPolarTerrain;
-  isOptimizedPolarTerrain = optimizedPolarTerrain;
-  maybeUpdateGlobeCartesianPositions(
-    wasOptimizedPolarTerrain,
-    isOptimizedPolarTerrain
-  );
 }
 
 globe.tileLoadProgressEvent.addEventListener(terrainTileLoaded);
@@ -610,146 +527,7 @@ function terrainTileLoaded(loadTilesQueueCount) {
   }
 }
 
-var terrainNameList = [
-  "automatic terrain",
-  "automatic terrain" + noNormalsNameSuffix,
-  "sldem_lola",
-  "sldem_lola" + noNormalsNameSuffix,
-  "usgs_lola",
-  "NASA JPL - no normals",
-  //        "Optimized PolarDEM",
-  //        "Optimized PolarDEM" + noNormalsNameSuffix,
-  "GOTM",
-  "GOTM" + noNormalsNameSuffix,
-  "GOTM (High Res)",
-  "GOTM (High Res)" + noNormalsNameSuffix,
-];
-
-// change terrain provider based on terrain name
-function setTerrain(terrainName) {
-  if (terrainName === currTerrainName) {
-    // nothing to do
-    return;
-  }
-
-  console.log("setting terrain " + terrainName);
-  var optimizedPolarTerrain;
-
-  currTerrainName = terrainName;
-  updateTerrainDisplay("Terrain: " + currTerrainName);
-
-  if (terrainName === "sldem_lola") {
-    terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/sldem_lola";
-    requestVertexNormals = true;
-    optimizedPolarTerrain = false;
-    updateTerrainProvider(
-      terrainBaseUrl,
-      optimizedPolarTerrain,
-      requestVertexNormals
-    );
-    return;
-  }
-
-  if (terrainName === "sldem_lola - no normals") {
-    terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/sldem_lola";
-    requestVertexNormals = false;
-    optimizedPolarTerrain = false;
-    updateTerrainProvider(
-      terrainBaseUrl,
-      optimizedPolarTerrain,
-      requestVertexNormals
-    );
-    return;
-  }
-
-  if (terrainName === "usgs_lola") {
-    optimizedPolarTerrain = false;
-    setTerrainProvider(usgsLolaProvider, optimizedPolarTerrain);
-    return;
-  }
-
-  if (terrainName === "NASA JPL - no normals") {
-    optimizedPolarTerrain = false;
-    setTerrainProvider(JPLProvider, optimizedPolarTerrain);
-    return;
-  }
-
-  if (terrainName === "Optimized PolarDEM") {
-    terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/dummy_poles2";
-    requestVertexNormals = true;
-    optimizedPolarTerrain = true;
-    updateTerrainProvider(
-      terrainBaseUrl,
-      optimizedPolarTerrain,
-      requestVertexNormals
-    );
-    return;
-  }
-
-  if (terrainName === "Optimized PolarDEM - no normals") {
-    terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/dummy_poles2";
-    requestVertexNormals = false;
-    optimizedPolarTerrain = true;
-    updateTerrainProvider(
-      terrainBaseUrl,
-      optimizedPolarTerrain,
-      requestVertexNormals
-    );
-    return;
-  }
-
-  if (terrainName === "GOTM") {
-    terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles";
-    requestVertexNormals = true;
-    optimizedPolarTerrain = true;
-    updateTerrainProvider(
-      terrainBaseUrl,
-      optimizedPolarTerrain,
-      requestVertexNormals
-    );
-    return;
-  }
-
-  if (terrainName === "GOTM - no normals") {
-    terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles";
-    requestVertexNormals = false;
-    optimizedPolarTerrain = true;
-    updateTerrainProvider(
-      terrainBaseUrl,
-      optimizedPolarTerrain,
-      requestVertexNormals
-    );
-    return;
-  }
-
-  if (terrainName === "GOTM (High Res)") {
-    terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles_hires";
-    requestVertexNormals = true;
-    optimizedPolarTerrain = true;
-    updateTerrainProvider(
-      terrainBaseUrl,
-      optimizedPolarTerrain,
-      requestVertexNormals
-    );
-    return;
-  }
-
-  if (terrainName === "GOTM (High Res) - no normals") {
-    terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles_hires";
-    requestVertexNormals = false;
-    optimizedPolarTerrain = true;
-    updateTerrainProvider(
-      terrainBaseUrl,
-      optimizedPolarTerrain,
-      requestVertexNormals
-    );
-    return;
-  }
-
-  console.log("TERRAIN NOT FOUND!!!");
-}
-
-function setCurrTerrainLabelVisible(showLbl) {
+export function setCurrTerrainLabelVisible(showLbl) {
   if (showLbl) {
     terrainDisplay.removeAttribute("hidden");
   } else {
@@ -757,38 +535,24 @@ function setCurrTerrainLabelVisible(showLbl) {
   }
 }
 
-// change terrain provider based on terrain name
-// support "automatic" terrain for automatically switching between regular/polar terrain
-// based on latitude
-function newTerrainNameSelected(terrainName) {
-  console.log("terrain name selected: " + terrainName);
-  if (
-    terrainName === "automatic terrain" ||
-    terrainName === "automatic terrain - no normals"
-  ) {
-    console.log("enabling automatic terrain loading...");
-    automaticPolarTerrainTransition = true;
-    setCurrTerrainLabelVisible(true);
+//////////////////////////////////////////////////
+//////////// TERRAIN /////////////////////////////
+//////////////////////////////////////////////////
 
-    if (terrainName === "automatic terrain") {
-      regularTerrainName = regularTerrainNameDef;
-      polarTerrainName = polarTerrainNameDef;
-    } else {
-      regularTerrainName = regularTerrainNameDef + noNormalsNameSuffix;
-      polarTerrainName = polarTerrainNameDef + noNormalsNameSuffix;
-    }
-    maybeUpdateTerrainProvider();
-  } else {
-    if (automaticPolarTerrainTransition) {
-      setCurrTerrainLabelVisible(false);
-    }
-    automaticPolarTerrainTransition = false;
-    setTerrain(terrainName);
-  }
-
-  // update view model
-  viewModel.terrainProviderIdx = terrainMenu.selectedIndex;
-}
+var terrainNameList = [
+  "automatic terrain",
+  "automatic terrain" + noNormalsNameSuffix,
+  "sldem_lola",
+  "sldem_lola" + noNormalsNameSuffix,
+  "usgs_lola",
+  // "NASA JPL - no normals",
+  // "Optimized PolarDEM",
+  // "Optimized PolarDEM" + noNormalsNameSuffix,
+  "GOTM",
+  "GOTM" + noNormalsNameSuffix,
+  // "GOTM (High Res)",
+  // "GOTM (High Res)" + noNormalsNameSuffix,
+];
 
 function setTerrainFunction(terrainName) {
   return function () {
@@ -803,76 +567,6 @@ for (var i = 0; i < terrainNameList.length; i++) {
     text: terrainName,
     onselect: setTerrainFunction(terrainName),
   });
-}
-
-function getBestLatTerrainName(lat, height) {
-  // adapt lat tolerance based on elevation
-  // increase when looking from higher elevation
-  var autoDemTransLatTolAdapted =
-    height < 1000 ? autoDemTransitionLatTol : 2 * autoDemTransitionLatTol;
-  if (Math.abs(lat) > polarDemLatTh + autoDemTransLatTolAdapted) {
-    return polarTerrainName;
-  } else if (Math.abs(lat) < polarDemLatTh - autoDemTransLatTolAdapted) {
-    return regularTerrainName;
-  } else {
-    return currTerrainName;
-  }
-}
-
-function maybeUpdateTerrainProvider(lat, height) {
-  if (!automaticPolarTerrainTransition) {
-    // nothing to do
-    return;
-  }
-
-  if (!lat || !height) {
-    // get current camera lat
-    ellipsoid.cartesianToCartographic(
-      invAdjustCartesianCoords(camera.positionWC, isOptimizedPolarTerrain),
-      cartographicCamera
-    );
-    lat = Cesium.Math.toDegrees(cartographicCamera.latitude);
-    height = cartographicCamera.height * 0.001; // km
-  }
-
-  if (height > autoDemTransitionEnabledAlt) {
-    // high elevation
-    // nothing to do
-    return;
-  }
-
-  // best terrain based on camera location
-  var bestTerrainName = getBestLatTerrainName(lat, height);
-  // console.log("best terrain (" + lat.toFixed(3) + "): " + bestTerrainName);
-  setTerrain(bestTerrainName);
-}
-
-function resetTerrain() {
-  if (!automaticPolarTerrainTransition) {
-    // nothing to do
-    return;
-  }
-
-  setTerrain(regularTerrainName);
-}
-
-function maybeUpdateGlobeCartesianPositions(wasOptimizedPolarTerrain) {
-  if (wasOptimizedPolarTerrain == isOptimizedPolarTerrain) {
-    // no changed
-    return;
-  }
-
-  updateGlobeCartesianPositions();
-}
-
-function updateTerrainMeshMaxError(err) {
-  if (viewModel.terrainMeshMaxError == err) {
-    return;
-  }
-
-  viewModel.terrainMeshMaxError = err;
-  // update terrain provider (only url changed)
-  viewer.terrainProvider = createTerrainProvider();
 }
 
 // LOCATIONS
@@ -967,7 +661,7 @@ for (var locationName in locationsInfo) {
 Sandcastle.addToolbarMenu(illuminationOptions);
 var illuminationMenu = document.getElementById("toolbar").lastChild;
 Sandcastle.addToolbarMenu(terrainOptions);
-var terrainMenu = document.getElementById("toolbar").lastChild;
+export var terrainMenu = document.getElementById("toolbar").lastChild;
 
 var polesHiresDataPolarUrl =
   "https://files.actgate.com/temp/poles_hires.geojson";
@@ -1475,7 +1169,7 @@ var locationMenu = document.getElementById("toolbar").lastChild;
 // SHOW COORDINATES
 var cartesian = new Cesium.Cartesian3();
 var cartesianCamera = new Cesium.Cartesian3();
-var cartographicCamera = new Cesium.Cartographic();
+export var cartographicCamera = new Cesium.Cartographic();
 var cartographic = new Cesium.Cartographic();
 var camera = viewer.scene.camera;
 var ellipsoid = viewer.scene.globe.ellipsoid;
