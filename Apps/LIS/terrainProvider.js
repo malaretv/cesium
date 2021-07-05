@@ -441,4 +441,12 @@ export function initializeTerrainPicker() {
   providerTerrainModels.push(GOTMHRNoNormalsModel);
   viewer.baseLayerPicker.viewModel.terrainProviderViewModels = providerTerrainModels;
   // viewer.baseLayerPicker.viewModel.selectedTerrain = automaticTerrainModel;
+
+  // change Imager Title
+  var dropPanel = viewer.baseLayerPicker._dropPanel;
+  var dropPanelSections = dropPanel.getElementsByClassName(
+    "cesium-baseLayerPicker-sectionTitle"
+  );
+  var imageryTitle = dropPanelSections[1];
+  imageryTitle.innerHTML = "Terrain Source";
 }

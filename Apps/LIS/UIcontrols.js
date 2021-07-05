@@ -317,6 +317,14 @@ export function initializeBaseLayerPicker() {
   viewer.baseLayerPicker.viewModel.imageryProviderViewModels = providerViewModels;
   viewer.baseLayerPicker.viewModel.selectedImagery = NullModel;
 
+  // change Imager Title
+  var dropPanel = viewer.baseLayerPicker._dropPanel;
+  var dropPanelSections = dropPanel.getElementsByClassName(
+    "cesium-baseLayerPicker-sectionTitle"
+  );
+  var imageryTitle = dropPanelSections[0];
+  imageryTitle.innerHTML = "BaseMap Image";
+
   initializeTerrainPicker();
 }
 
