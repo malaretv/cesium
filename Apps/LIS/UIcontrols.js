@@ -66,7 +66,16 @@ export function addGoToButton() {
 
   gotoForm = document.getElementById("goto-form");
   gotoInput = document.getElementById("goto-input");
-  // gotoInput.className = "cesium-button";
+  var is_chrome = navigator.userAgent.indexOf("Chrome") > -1;
+  var is_safari = navigator.userAgent.indexOf("Safari") > -1;
+  if (is_chrome && is_safari) {
+    is_safari = false;
+  }
+  if (!is_safari) {
+    // not Safari.
+    // Does not work on Safari.
+    gotoInput.className = "cesium-button";
+  }
   gotoError = document.getElementById("goto-error");
   document.getElementById("locationsList").innerHTML = locationsOptionList;
 
