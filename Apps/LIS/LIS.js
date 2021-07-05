@@ -717,7 +717,7 @@ function setHiresDemRegionsEnabledFunction() {
 }
 
 Sandcastle.addToggleButton(
-  "hires dem regions",
+  "5m DEM regions",
   false,
   setHiresDemRegionsEnabledFunction()
 );
