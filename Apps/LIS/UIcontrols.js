@@ -51,7 +51,7 @@ export function addGoToButton() {
   var gotoformHTML =
     "<form id='goto-form' hidden> \
             <p id='goto-error' hidden>Please fill out all fields.</p> \
-            <input list='locationsList' id='goto-input' placeholder='lon,lat[,ele (km)]' required /> \
+            <input list='locationsList' type='text' id='goto-input' placeholder='lon,lat[,ele (km)]' required /> \
             <datalist id='locationsList'></datalist> \
             <button type='submit'>Go</button> \
     </form>";
@@ -66,7 +66,7 @@ export function addGoToButton() {
 
   gotoForm = document.getElementById("goto-form");
   gotoInput = document.getElementById("goto-input");
-  gotoInput.className = "cesium-button";
+  // gotoInput.className = "cesium-button";
   gotoError = document.getElementById("goto-error");
   document.getElementById("locationsList").innerHTML = locationsOptionList;
 
