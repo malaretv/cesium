@@ -225,7 +225,6 @@ function updateEntitiesPos() {
 
 export function updateGlobeCartesianPositions() {
   var trackedEntity = viewer.trackedEntity;
-  var trackedEntityViewFrom;
   if (trackedEntity) {
     // untrack the current entity in order to properly rotate around the globe center
     viewer.trackedEntity = undefined;
@@ -240,7 +239,6 @@ export function updateGlobeCartesianPositions() {
   var newCameraPos;
   var newCameraDir;
   var newCameraUp;
-  var newTrackedEntityViewFrom;
   if (isOptimizedPolarTerrain) {
     newCameraPos = cartesianToDummyPolar(camera.position);
     newCameraDir = cartesianToDummyPolar(camera.direction);
@@ -363,13 +361,26 @@ function timeUpdated() {
   viewModel.UTCtime = viewer.clock.currentTime;
 }
 
-function initializeTime(iso8601) {
-  var currentTime = Cesium.JulianDate.fromIso8601(iso8601);
-  var endTime = Cesium.JulianDate.addDays(
-    currentTime,
-    29 * 2,
-    new Cesium.JulianDate()
-  );
+function initializeTime(currentTimeIso8601, startTimeIso8601, stopTimeIso8601) {
+  var currentTime = Cesium.JulianDate.fromIso8601(currentTimeIso8601);
+  var stopTime;
+  if (stopTimeIso8601 === undefined) {
+    stopTime = Cesium.JulianDate.addDays(
+      currentTime,
+      29 * 2,
+      new Cesium.JulianDate()
+    );
+  } else {
+    stopTime = Cesium.JulianDate.fromIso8601(stopTimeIso8601);
+  }
+
+  var startTime;
+  if (startTimeIso8601 === undefined) {
+    startTime = currentTime;
+  } else {
+    startTime = Cesium.JulianDate.fromIso8601(startTimeIso8601);
+  }
+
   /*
   // lunar day: 29 days, 12 hr, 44 min, 3 sec
   var endTime = Cesium.JulianDate.addDays(
@@ -395,11 +406,15 @@ function initializeTime(iso8601) {
   */
 
   viewer.clock.currentTime = currentTime;
-  viewer.timeline.zoomTo(currentTime, endTime);
+  viewer.clock.startTime = startTime;
+  viewer.clock.stopTime = stopTime;
+  viewer.timeline.zoomTo(startTime, stopTime);
 
-  viewer.clock.startTime = currentTime;
-  viewer.clock.stopTime = endTime;
   viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+
+  viewModel.startUTCtime = startTime;
+  viewModel.stopUTCtime = stopTime;
+  viewModel.UTCtime = currentTime;
 }
 
 function setTime(iso8601) {
@@ -1251,7 +1266,7 @@ viewer.camera.moveEnd.addEventListener(function () {
   maybeUpdateContours(camH);
 
   // update view model
-  viewModel.camera_position = camera.positionWC;
+  viewModel.camera_position = camera.position;
   viewModel.camera_direction = camera.direction;
   viewModel.camera_up = camera.up;
 });
@@ -1703,9 +1718,26 @@ function loadStateFromQueryString() {
   var searchParams = new URL(window.location).searchParams;
 
   // time
+  var startUTCtime;
+  if (searchParams.has("startUTCtime")) {
+    startUTCtime = searchParams.get("startUTCtime");
+  }
+
+  var stopUTCtime;
+  if (searchParams.has("stopUTCtime")) {
+    stopUTCtime = searchParams.get("stopUTCtime");
+  }
+
+  var currTime;
   if (searchParams.has("UTCtime")) {
-    var UTCtime = searchParams.get("UTCtime");
-    setTime(UTCtime);
+    currTime = searchParams.get("UTCtime");
+    setTime(currTime);
+  } else {
+    currTime = viewModel.UTCtime;
+  }
+
+  if (startUTCtime !== undefined || stopUTCtime !== undefined) {
+    initializeTime(currTime, startUTCtime, stopUTCtime);
   }
 
   // illumination

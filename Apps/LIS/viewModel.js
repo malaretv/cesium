@@ -1,11 +1,15 @@
-import { Cartesian3 } from "../../Source/Cesium.js";
+import { Cartesian3, defined } from "../../Source/Cesium.js";
 import { JulianDate } from "../../Source/Cesium.js";
+
+import Matrix4 from "../../Source/Core/Matrix4.js";
 
 import { isOptimizedPolarTerrain } from "./terrainProvider.js";
 
 import { invAdjustCartesianCoords } from "./adjustCartesian.js";
 
 import { updateUrlParams } from "./utils.js";
+
+import { viewer } from "./LIS.js";
 
 // The viewModel tracks the state of the application.
 // Decouple the state from the interface specific vars.
@@ -15,8 +19,12 @@ export var viewModel = {
   _camera_position: new Cartesian3(),
   _camera_direction: new Cartesian3(),
   _camera_up: new Cartesian3(),
-  _UTCtime: "",
   _lightSourceIdx: -1,
+
+  // time
+  _UTCtime: "",
+  _startUTCtime: "",
+  _stopUTCtime: "",
 
   // terrain
   _terrainProviderName: undefined,
@@ -85,6 +93,26 @@ export var viewModel = {
   set UTCtime(value) {
     this._UTCtime = JulianDate.toIso8601(value, 3);
     maybeUpdateStateUrl();
+  },
+
+  // start UTCtime
+  get startUTCtime() {
+    return this._startUTCtime;
+  },
+
+  set startUTCtime(value) {
+    this._startUTCtime = JulianDate.toIso8601(value, 3);
+    saveStateToQueryString();
+  },
+
+  // stop UTCtime
+  get stopUTCtime() {
+    return this._stopUTCtime;
+  },
+
+  set stopUTCtime(value) {
+    this._stopUTCtime = JulianDate.toIso8601(value, 3);
+    saveStateToQueryString();
   },
 
   // lightSourceIdx
@@ -259,26 +287,59 @@ function saveStateToQueryString() {
 
   resetStateUpdateTimer();
 
+  // var transform = viewer.camera.inverseTransform;
+  var transform = viewer.camera.transform;
+
   // store pos and orientation. Note: use regular terrain coords (not accounting for polar view rotation)
-  var camera_position = Cartesian3.pack(
-    invAdjustCartesianCoords(
-      viewModel.camera_position,
-      isOptimizedPolarTerrain
-    ),
+  var camera_position = new Cartesian3();
+  var camera_direction = new Cartesian3();
+  var camera_up = new Cartesian3();
+
+  // use the globe center as reference frame (it might change if there is an entity selected)
+  camera_position = Matrix4.multiplyByPoint(
+    transform,
+    viewModel.camera_position,
+    camera_position
+  );
+  camera_position = Cartesian3.pack(
+    invAdjustCartesianCoords(camera_position, isOptimizedPolarTerrain),
     []
   );
-  var camera_direction = Cartesian3.pack(
-    invAdjustCartesianCoords(
-      viewModel.camera_direction,
-      isOptimizedPolarTerrain
-    ),
+
+  // use the globe center as reference frame (it might change if there is an entity selected)
+  camera_direction = Matrix4.multiplyByPointAsVector(
+    transform,
+    viewModel.camera_direction,
+    camera_direction
+  );
+  if (Cartesian3.magnitude(camera_direction) > 0) {
+    // normalize
+    Cartesian3.normalize(camera_direction, camera_direction);
+  }
+  camera_direction = Cartesian3.pack(
+    invAdjustCartesianCoords(camera_direction, isOptimizedPolarTerrain),
     []
   );
-  var camera_up = Cartesian3.pack(
-    invAdjustCartesianCoords(viewModel.camera_up, isOptimizedPolarTerrain),
+
+  // use the globe center as reference frame (it might change if there is an entity selected)
+  camera_up = Matrix4.multiplyByPointAsVector(
+    transform,
+    viewModel.camera_up,
+    camera_up
+  );
+  if (Cartesian3.magnitude(camera_up) > 0) {
+    // normalize
+    Cartesian3.normalize(camera_up, camera_up);
+  }
+  camera_up = Cartesian3.pack(
+    invAdjustCartesianCoords(camera_up, isOptimizedPolarTerrain),
     []
   );
+
+  // time
   var UTCtime = JulianDate.fromIso8601(viewModel.UTCtime);
+  var startUTCTime = JulianDate.fromIso8601(viewModel.startUTCtime);
+  var stopUTCTime = JulianDate.fromIso8601(viewModel.stopUTCtime);
 
   // illumination
   var lightSourceIdx = viewModel.lightSourceIdx;
@@ -320,6 +381,8 @@ function saveStateToQueryString() {
     camera_direction,
     camera_up,
     UTCtime,
+    startUTCTime,
+    stopUTCTime,
     lightSourceIdx,
     terrainProviderName,
     terrainMeshMaxError,
