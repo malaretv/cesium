@@ -100,8 +100,10 @@ async function updateBodiesPosSPICE() {
   // build url to get the source light direction
   var startUTCTime = viewer.clock.startTime;
   var endUTCTime = viewer.clock.stopTime;
-  var stepSec = 3600 * 2; // 1 hr
-  //  var stepSec = 86400; // 1 day
+  var nSecs = Cesium.JulianDate.secondsDifference(endUTCTime, startUTCTime);
+  // Server limit is max 1000 times returned. Do not pass that limit
+  var stepSec = nSecs / 700; //
+  // var stepSec = 3600 * 2; // 1 hr
   var act_bodies_pos_moon_url =
     "https://mare3.actgate.com/fcgi-bin/fprovweb.exe?_xtype=text/plain&version=0&start_utc_time=" +
     startUTCTime +
@@ -358,7 +360,7 @@ viewer.clock.onTick.addEventListener(timeUpdated);
 
 function timeUpdated() {
   // update view model
-  viewModel.UTCtime = viewer.clock.currentTime;
+  viewModel.UTCTime = viewer.clock.currentTime;
 }
 
 function initializeTime(currentTimeIso8601, startTimeIso8601, stopTimeIso8601) {
@@ -405,6 +407,14 @@ function initializeTime(currentTimeIso8601, startTimeIso8601, stopTimeIso8601) {
   );
   */
 
+  var isTimeRangeChanged = false;
+  if (
+    viewer.clock.startTime !== startTime ||
+    viewer.clock.stopTime !== stopTime
+  ) {
+    isTimeRangeChanged = true;
+  }
+
   viewer.clock.currentTime = currentTime;
   viewer.clock.startTime = startTime;
   viewer.clock.stopTime = stopTime;
@@ -412,9 +422,13 @@ function initializeTime(currentTimeIso8601, startTimeIso8601, stopTimeIso8601) {
 
   viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
 
-  viewModel.startUTCtime = startTime;
-  viewModel.stopUTCtime = stopTime;
-  viewModel.UTCtime = currentTime;
+  viewModel.startUTCTime = startTime;
+  viewModel.stopUTCTime = stopTime;
+  viewModel.UTCTime = currentTime;
+
+  if (isTimeRangeChanged) {
+    updateBodiesPosSPICE();
+  }
 }
 
 function setTime(iso8601) {
@@ -487,7 +501,6 @@ var illuminationOptions = [
 
 function setSceneLight(lightSource) {
   scene.light = lightSource;
-  updateBodiesPosSPICE();
 
   // update model
   viewModel.lightSourceIdx = illuminationMenu.selectedIndex;
@@ -1718,26 +1731,26 @@ function loadStateFromQueryString() {
   var searchParams = new URL(window.location).searchParams;
 
   // time
-  var startUTCtime;
-  if (searchParams.has("startUTCtime")) {
-    startUTCtime = searchParams.get("startUTCtime");
+  var startUTCTime;
+  if (searchParams.has("startUTCTime")) {
+    startUTCTime = searchParams.get("startUTCTime");
   }
 
-  var stopUTCtime;
-  if (searchParams.has("stopUTCtime")) {
-    stopUTCtime = searchParams.get("stopUTCtime");
+  var stopUTCTime;
+  if (searchParams.has("stopUTCTime")) {
+    stopUTCTime = searchParams.get("stopUTCTime");
   }
 
   var currTime;
-  if (searchParams.has("UTCtime")) {
-    currTime = searchParams.get("UTCtime");
+  if (searchParams.has("UTCTime")) {
+    currTime = searchParams.get("UTCTime");
     setTime(currTime);
   } else {
-    currTime = viewModel.UTCtime;
+    currTime = viewModel.UTCTime;
   }
 
-  if (startUTCtime !== undefined || stopUTCtime !== undefined) {
-    initializeTime(currTime, startUTCtime, stopUTCtime);
+  if (startUTCTime !== undefined || stopUTCTime !== undefined) {
+    initializeTime(currTime, startUTCTime, stopUTCTime);
   }
 
   // illumination

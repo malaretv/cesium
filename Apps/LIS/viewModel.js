@@ -22,9 +22,9 @@ export var viewModel = {
   _lightSourceIdx: -1,
 
   // time
-  _UTCtime: "",
-  _startUTCtime: "",
-  _stopUTCtime: "",
+  _UTCTime: "",
+  _startUTCTime: "",
+  _stopUTCTime: "",
 
   // terrain
   _terrainProviderName: undefined,
@@ -85,33 +85,33 @@ export var viewModel = {
     saveStateToQueryString();
   },
 
-  // UTCtime
-  get UTCtime() {
-    return this._UTCtime;
+  // UTCTime
+  get UTCTime() {
+    return this._UTCTime;
   },
 
-  set UTCtime(value) {
-    this._UTCtime = JulianDate.toIso8601(value, 3);
+  set UTCTime(value) {
+    this._UTCTime = JulianDate.toIso8601(value, 3);
     maybeUpdateStateUrl();
   },
 
-  // start UTCtime
-  get startUTCtime() {
-    return this._startUTCtime;
+  // start UTCTime
+  get startUTCTime() {
+    return this._startUTCTime;
   },
 
-  set startUTCtime(value) {
-    this._startUTCtime = JulianDate.toIso8601(value, 3);
+  set startUTCTime(value) {
+    this._startUTCTime = JulianDate.toIso8601(value, 3);
     saveStateToQueryString();
   },
 
-  // stop UTCtime
-  get stopUTCtime() {
-    return this._stopUTCtime;
+  // stop UTCTime
+  get stopUTCTime() {
+    return this._stopUTCTime;
   },
 
-  set stopUTCtime(value) {
-    this._stopUTCtime = JulianDate.toIso8601(value, 3);
+  set stopUTCTime(value) {
+    this._stopUTCTime = JulianDate.toIso8601(value, 3);
     saveStateToQueryString();
   },
 
@@ -260,8 +260,8 @@ export function resetStateUpdateTimer() {
 // wait FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL since last time update before updating the url
 // this is needed in order to avoid to many history.push requests (there is a limit on Safari browser)
 export function maybeUpdateStateUrl() {
-  if (lastUrlStateUpdateTime !== viewModel.UTCtime) {
-    lastUrlStateUpdateTime = viewModel.UTCtime;
+  if (lastUrlStateUpdateTime !== viewModel.UTCTime) {
+    lastUrlStateUpdateTime = viewModel.UTCTime;
     if (updateStateTimerId >= 0) {
       // reset the timer
       resetStateUpdateTimer();
@@ -337,9 +337,9 @@ function saveStateToQueryString() {
   );
 
   // time
-  var UTCtime = JulianDate.fromIso8601(viewModel.UTCtime);
-  var startUTCTime = JulianDate.fromIso8601(viewModel.startUTCtime);
-  var stopUTCTime = JulianDate.fromIso8601(viewModel.stopUTCtime);
+  var UTCTime = JulianDate.fromIso8601(viewModel.UTCTime);
+  var startUTCTime = JulianDate.fromIso8601(viewModel.startUTCTime);
+  var stopUTCTime = JulianDate.fromIso8601(viewModel.stopUTCTime);
 
   // illumination
   var lightSourceIdx = viewModel.lightSourceIdx;
@@ -380,7 +380,7 @@ function saveStateToQueryString() {
     camera_position,
     camera_direction,
     camera_up,
-    UTCtime,
+    UTCTime,
     startUTCTime,
     stopUTCTime,
     lightSourceIdx,
