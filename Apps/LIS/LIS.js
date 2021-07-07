@@ -1814,51 +1814,96 @@ function loadStateFromQueryString() {
         up: camera_up,
       },
     });
+  } else if (
+    searchParams.has("ul") &&
+    searchParams.has("ur") &&
+    searchParams.has("lr") &&
+    searchParams.has("ll")
+  ) {
+    var ul = Cesium.Cartesian3.unpack(
+      searchParams.get("ul").split(",").map(Number)
+    );
+    var ur = Cesium.Cartesian3.unpack(
+      searchParams.get("ur").split(",").map(Number)
+    );
+    var lr = Cesium.Cartesian3.unpack(
+      searchParams.get("lr").split(",").map(Number)
+    );
+    var ll = Cesium.Cartesian3.unpack(
+      searchParams.get("ll").split(",").map(Number)
+    );
 
-    // contour enabled
-    if (searchParams.has("contourEnabled")) {
-      var checked = searchParams.get("contourEnabled") === "true";
-      enableContourCbx.checked = checked;
-      var setContourEnabled = setContourEnabledFunction();
-      setContourEnabled(checked);
+    // var ul = new Cesium.Cartesian3.fromDegrees(0, 88);
+    // var ur = new Cesium.Cartesian3.fromDegrees(90, 88);
+    // var lr = new Cesium.Cartesian3.fromDegrees(180, 88);
+    // var ll = new Cesium.Cartesian3.fromDegrees(270, 88);
+
+    var rrCartesianCoords = [ul, ur, lr, ll];
+    var rectangle = Cesium.Rectangle.fromCartesianArray(rrCartesianCoords);
+
+    var redRectangle = viewer.entities.add({
+      rectangle: {
+        coordinates: rectangle,
+        material: Cesium.Color.WHITE.withAlpha(0.1),
+        outline: true,
+        outlineColor: Cesium.Color.WHITE,
+        //             clampToGround: true,
+      },
+    });
+
+    viewer.scene.camera.flyTo({
+      destination: rectangle,
+      orientation: {
+        heading: Cesium.Math.toRadians(0.0),
+        pitch: Cesium.Math.toRadians(-90.0),
+        roll: Cesium.Math.toRadians(0.0),
+      },
+    });
+  }
+
+  // contour enabled
+  if (searchParams.has("contourEnabled")) {
+    var checked = searchParams.get("contourEnabled") === "true";
+    enableContourCbx.checked = checked;
+    var setContourEnabled = setContourEnabledFunction();
+    setContourEnabled(checked);
+  }
+
+  /*
+  // shadows fading enabled
+  if (searchParams.has("atmSimuEnabled")) {
+    var checked = searchParams.get("atmSimuEnabled") === "true";
+    enableAtmSimCbx.checked = checked;
+    var setAtmSimuEnabled = setAtmSimuEnabledFunction();
+    setAtmSimuEnabled(checked);
+  }
+  */
+
+  // shadows max distance
+  if (searchParams.has("shadowsMaxDistance")) {
+    var shadowsMaxDistance = searchParams.get("shadowsMaxDistance");
+    shadowsMaxDistanceIdx = shadowsMaxDistList.indexOf(
+      parseFloat(shadowsMaxDistance) / 1000.0
+    );
+    if (shadowsMaxDistanceIdx >= 0) {
+      shadowsMaxDistMenu.selectedIndex = shadowsMaxDistanceIdx;
+      shadowsMaxDistOptions[shadowsMaxDistanceIdx].onselect();
     }
+  }
 
+  // location
+  if (searchParams.has("selectedLocationName")) {
+    var locationName = searchParams.get("selectedLocationName");
+    if (locationName in locationsInfo) {
+      setSelectedEntity(locationsInfo[locationName]);
+    }
     /*
-    // shadows fading enabled
-    if (searchParams.has("atmSimuEnabled")) {
-      var checked = searchParams.get("atmSimuEnabled") === "true";
-      enableAtmSimCbx.checked = checked;
-      var setAtmSimuEnabled = setAtmSimuEnabledFunction();
-      setAtmSimuEnabled(checked);
+    var locationNamesList = Object.keys(locationsInfo);
+    var locationIdx = locationNamesList.indexOf(locationName);
+    if (locationIdx >= 0) {
+      locationMenu.selectedIndex = locationIdx;
     }
     */
-
-    // shadows max distance
-    if (searchParams.has("shadowsMaxDistance")) {
-      var shadowsMaxDistance = searchParams.get("shadowsMaxDistance");
-      shadowsMaxDistanceIdx = shadowsMaxDistList.indexOf(
-        parseFloat(shadowsMaxDistance) / 1000.0
-      );
-      if (shadowsMaxDistanceIdx >= 0) {
-        shadowsMaxDistMenu.selectedIndex = shadowsMaxDistanceIdx;
-        shadowsMaxDistOptions[shadowsMaxDistanceIdx].onselect();
-      }
-    }
-
-    // location
-    if (searchParams.has("selectedLocationName")) {
-      var locationName = searchParams.get("selectedLocationName");
-      if (locationName in locationsInfo) {
-        setSelectedEntity(locationsInfo[locationName]);
-      }
-      /*
-      var locationNamesList = Object.keys(locationsInfo);
-      var locationIdx = locationNamesList.indexOf(locationName);
-      if (locationIdx >= 0) {
-        locationMenu.selectedIndex = locationIdx;
-      }
-      */
-    }
   }
 
   // skirts enabled
