@@ -1841,9 +1841,7 @@ function loadStateFromQueryString() {
     var redRectangle = viewer.entities.add({
       rectangle: {
         coordinates: rectangle,
-        material: Cesium.Color.WHITE.withAlpha(0.1),
-        outline: true,
-        outlineColor: Cesium.Color.WHITE,
+        material: Cesium.Color.RED.withAlpha(0.5),
         clampToGround: true,
       },
     });
