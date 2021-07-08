@@ -30,9 +30,6 @@ import {
   getImageryLayerIdx,
 } from "./UIcontrols.js";
 
-//Sandcastle_Begin
-// LIS changelog
-// https://docs.google.com/document/d/197lf-E9bC4HIPmyUZ1Qidc0TZOWlY58k3O5qJ24wb0o/edit?usp=sharing
 Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(1737400, 1737400, 1737400);
 
 // tiles settings
@@ -1847,7 +1844,7 @@ function loadStateFromQueryString() {
         material: Cesium.Color.WHITE.withAlpha(0.1),
         outline: true,
         outlineColor: Cesium.Color.WHITE,
-        //             clampToGround: true,
+        clampToGround: true,
       },
     });
 
@@ -1856,7 +1853,7 @@ function loadStateFromQueryString() {
       orientation: {
         heading: Cesium.Math.toRadians(0.0),
         pitch: Cesium.Math.toRadians(-90.0),
-        roll: Cesium.Math.toRadians(0.0),
+        roll: Cesium.Math.toRadians(-180.0),
       },
     });
   }
