@@ -1746,9 +1746,9 @@ function loadStateFromQueryString() {
     currTime = viewModel.UTCTime;
   }
 
-  if (startUTCTime !== undefined || stopUTCTime !== undefined) {
-    initializeTime(currTime, startUTCTime, stopUTCTime);
-  }
+  // if (startUTCTime !== undefined || stopUTCTime !== undefined) {
+  initializeTime(currTime, startUTCTime, stopUTCTime);
+  // }
 
   // illumination
   if (searchParams.has("lightSourceIdx")) {
@@ -1838,13 +1838,13 @@ function loadStateFromQueryString() {
     var rrCartesianCoords = [ul, ur, lr, ll];
     var rectangle = Cesium.Rectangle.fromCartesianArray(rrCartesianCoords);
 
-    var redRectangle = viewer.entities.add({
-      rectangle: {
-        coordinates: rectangle,
-        material: Cesium.Color.RED.withAlpha(0.5),
-        clampToGround: true,
-      },
-    });
+    // var redRectangle = viewer.entities.add({
+    //   rectangle: {
+    //     coordinates: rectangle,
+    //     material: Cesium.Color.RED.withAlpha(0.5),
+    //     clampToGround: true,
+    //   },
+    // });
 
     viewer.scene.camera.flyTo({
       destination: rectangle,
