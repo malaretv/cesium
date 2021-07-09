@@ -1266,7 +1266,7 @@ viewer.camera.moveEnd.addEventListener(function () {
     camLat.toFixed(3) +
     ",&nbsp;" +
     camH.toFixed(1) +
-    "<br>" +
+    " - " +
     "(R,P,Y)=" +
     rad2deg(camera.roll).toFixed(1) +
     ",&nbsp;" +
