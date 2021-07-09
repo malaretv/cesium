@@ -13,6 +13,14 @@ import {
 } from "./terrainProvider.js";
 
 import {
+  updateBaseLayerPickerImageryLayers,
+  NoneModelIdx,
+  WACMosaicNSModelIdx,
+  sunVisibilty60mModelIdx,
+  getImageryLayerIdx,
+} from "./imageryProvider.js";
+
+import {
   cartesianToDummyPolar,
   dummyPolarToCartesian,
   adjustCartesianCoords,
@@ -20,14 +28,9 @@ import {
 } from "./adjustCartesian.js";
 
 import {
+  initializeBaseLayerPicker,
   addGoToButton,
   addTimeButton,
-  initializeBaseLayerPicker,
-  updateBaseLayerPickerImageryLayers,
-  NoneModelIdx,
-  WACMosaicNSModelIdx,
-  sunVisibilty60mModelIdx,
-  getImageryLayerIdx,
 } from "./UIcontrols.js";
 
 Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(1737400, 1737400, 1737400);
