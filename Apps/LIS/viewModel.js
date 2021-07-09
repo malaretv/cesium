@@ -47,8 +47,6 @@ export var viewModel = {
 
   // layers
   _hiresDemRegionsEnabled: false,
-  _WACMosaicNSEnabled: false,
-  _sunVisibility60Enabled: false,
 
   /**
    * true if the state info have been fully loaded
@@ -224,26 +222,6 @@ export var viewModel = {
     this._hiresDemRegionsEnabled = checked;
     saveStateToQueryString();
   },
-
-  // WAC Mosaic (No Shadows) enabled
-  get WACMosaicNSEnabled() {
-    return this._WACMosaicNSEnabled;
-  },
-
-  set WACMosaicNSEnabled(checked) {
-    this._WACMosaicNSEnabled = checked;
-    saveStateToQueryString();
-  },
-
-  // Sun Visibility 60m enabled
-  get sunVisibility60Enabled() {
-    return this._sunVisibility60Enabled;
-  },
-
-  set sunVisibility60Enabled(checked) {
-    this._sunVisibility60Enabled = checked;
-    saveStateToQueryString();
-  },
 };
 
 var FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL = 1000; // ms
@@ -278,7 +256,7 @@ export function maybeUpdateStateUrl() {
 /**
  * Get current base state and saves to querystring
  */
-function saveStateToQueryString() {
+export function saveStateToQueryString() {
   // console.log("updating state url...");
   if (!viewModel.viewModelLoadFinished) {
     // wait the state has been loaded before updating it
@@ -373,8 +351,9 @@ function saveStateToQueryString() {
 
   // layers
   var hiresDemRegionsEnabled = viewModel.hiresDemRegionsEnabled;
-  var WACMosaicNSEnabled = viewModel.WACMosaicNSEnabled;
-  var sunVisibility60Enabled = viewModel.sunVisibility60Enabled;
+
+  //  var WACMosaicNSEnabled = viewModel.WACMosaicNSEnabled;
+  //  var sunVisibility60Enabled = viewModel.sunVisibility60Enabled;
 
   var urlParams = {
     camera_position,
@@ -394,9 +373,17 @@ function saveStateToQueryString() {
     terrainShadowsEnabled,
     shadowsFadingEnabled,
     hiresDemRegionsEnabled,
-    WACMosaicNSEnabled,
-    sunVisibility60Enabled,
+    //    WACMosaicNSEnabled,
+    //    sunVisibility60Enabled,
   };
+
+  if (
+    viewer._baseLayerPicker.viewModel.selectedImagery.layerObj !== undefined
+  ) {
+    urlParams[
+      viewer._baseLayerPicker.viewModel.selectedImagery.layerObj + "Enabled"
+    ] = true;
+  }
 
   // update url
   updateUrlParams(urlParams);

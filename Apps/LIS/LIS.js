@@ -14,10 +14,8 @@ import {
 
 import {
   updateBaseLayerPickerImageryLayers,
-  NoneModelIdx,
-  WACMosaicNSModelIdx,
-  sunVisibilty60mModelIdx,
-  getImageryLayerIdx,
+  layersInfo,
+  setLayerImageryEnabled,
 } from "./imageryProvider.js";
 
 import {
@@ -234,7 +232,6 @@ export function updateGlobeCartesianPositions() {
   updateBodiesPosToDummyPolar();
   updateEntitiesPos();
   updateEntityVectors(true);
-  updateImageryLayersUrl();
   updateBaseLayerPickerImageryLayers();
 
   // preserve camera position/orientation
@@ -768,245 +765,6 @@ viewer.dataSources.dataSourceAdded.addEventListener(function () {
     }
   }
 });
-
-export function createLayerImageryProvider(layerName, bodyView, format) {
-  const layer_url_template =
-    "https://act-test.lroc.asu.edu/fcgi-bin/fprovweb.exe?_xtype=dynamic&z={zPlusOne}&x={x}&y={y}&format=__FORMAT__&layer=__LAYER__&bodyview=__BODY_VIEW__&cmd_script=get_tile.msh";
-
-  var layerUrl = layer_url_template.replace("__LAYER__", layerName);
-  var layerUrl = layerUrl.replace("__FORMAT__", format);
-  if (!bodyView) {
-    bodyView = isOptimizedPolarTerrain
-      ? "lunar-polarshifted-eqc"
-      : "lunar-fulleqc";
-  }
-  layerUrl = layerUrl.replace("__BODY_VIEW__", bodyView);
-  const layerImageryProvider = new Cesium.UrlTemplateImageryProvider({
-    url: layerUrl,
-    tilingScheme: new Cesium.GeographicTilingScheme({
-      ellipsoid,
-      numberOfLevelZeroTilesX: 2,
-      numberOfLevelZeroTilesY: 1,
-    }),
-    tileWidth: 512,
-    tileHeight: 512,
-    customTags: {
-      zPlusOne: function (imageryProvider, x, y, z) {
-        return z + 1;
-      },
-    },
-  });
-  return layerImageryProvider;
-}
-
-function createLayer(layerName, bodyView, format) {
-  return new Cesium.ImageryLayer(
-    createLayerImageryProvider(layerName, bodyView, format)
-  );
-}
-
-// polar optimized Sun Visibility 60m layer
-export var layerSunVis60mPolar = createLayer(
-  "lavgvis_s_60m",
-  "lunar-polarshifted-eqc",
-  "png"
-);
-layerSunVis60mPolar.show = false;
-// viewer.imageryLayers.add(layerSunVis60mPolar);
-
-viewer.imageryLayers.layerAdded.addEventListener(function (layer) {
-  if (layer.show === true) {
-    var imageryLayerIdx = getImageryLayerIdx(layer.imageryProvider);
-    if (imageryLayerIdx === WACMosaicNSModelIdx) {
-      var setWACNoShadowsEnabled = setWACNoShadowsEnabledFunction();
-      // NOTE: do not update the selected item on the picker in order to avoid bad behavior
-      setWACNoShadowsEnabled(true, false);
-    } else if (imageryLayerIdx === sunVisibilty60mModelIdx) {
-      var setSunVisibility60mEnabled = setSunVisibility60mEnabledFunction();
-      // NOTE: do not update the selected item on the picker in order to avoid bad behavior
-      setSunVisibility60mEnabled(true, false);
-    }
-  }
-});
-
-viewer.imageryLayers.layerRemoved.addEventListener(function (layer) {
-  if (layer.show === true) {
-    var imageryLayerIdx = getImageryLayerIdx(layer.imageryProvider);
-    if (imageryLayerIdx === WACMosaicNSModelIdx) {
-      var setWACNoShadowsEnabled = setWACNoShadowsEnabledFunction();
-      // NOTE: do not update the selected item on the picker in order to avoid bad behavior
-      setWACNoShadowsEnabled(false, false);
-    } else if (imageryLayerIdx === sunVisibilty60mModelIdx) {
-      var setSunVisibility60mEnabled = setSunVisibility60mEnabledFunction();
-      // NOTE: do not update the selected item on the picker in order to avoid bad behavior
-      setSunVisibility60mEnabled(false, false);
-    }
-  }
-});
-
-// regular WAC no shadows layer
-var layerWACAlbedo = createLayer("wac_albedo", "lunar-fulleqc", "jpg");
-layerWACAlbedo.show = false;
-// viewer.imageryLayers.add(layerWACAlbedo);
-
-// polar optimized WAC no shadows layer
-var layerWACAlbedoPolar = createLayer(
-  "wac_albedo",
-  "lunar-polarshifted-eqc",
-  "jpg"
-);
-layerWACAlbedoPolar.show = false;
-// viewer.imageryLayers.add(layerWACAlbedoPolar);
-
-function setWACNoShadowsEnabledFunction() {
-  return function (checked, updateSelected) {
-    // note: if this is called after imagery layerAdded event, then the selected entry on the picker
-    // had not been updated yet, so call this with updateSelected set to false in order to avoid bad behavior
-    if (updateSelected === undefined) {
-      updateSelected = false;
-    }
-
-    if (checked) {
-      if (isOptimizedPolarTerrain) {
-        layerWACAlbedoPolar.show = true;
-      } else {
-        layerWACAlbedo.show = true;
-      }
-      if (
-        updateSelected &&
-        viewer.baseLayerPicker.viewModel.selectedImagery !==
-          viewer.baseLayerPicker.viewModel.imageryProviderViewModels[
-            WACMosaicNSModelIdx
-          ]
-      ) {
-        viewer.baseLayerPicker.viewModel.selectedImagery =
-          viewer.baseLayerPicker.viewModel.imageryProviderViewModels[
-            WACMosaicNSModelIdx
-          ];
-      }
-    } else {
-      layerWACAlbedo.show = false;
-      layerWACAlbedoPolar.show = false;
-      if (
-        updateSelected &&
-        viewer.baseLayerPicker.viewModel.selectedImagery ===
-          viewer.baseLayerPicker.viewModel.imageryProviderViewModels[
-            WACMosaicNSModelIdx
-          ]
-      ) {
-        viewer.baseLayerPicker.viewModel.selectedImagery =
-          viewer.baseLayerPicker.viewModel.imageryProviderViewModels[
-            NoneModelIdx
-          ];
-      }
-    }
-
-    // update view model
-    viewModel.WACMosaicNSEnabled = checked;
-  };
-}
-/*
-Sandcastle.addToggleButton(
-  "WAC Mosaic (no shadows)",
-  false,
-  setWACNoShadowsEnabledFunction()
-);
-// get checkbox input to be able to modify it programmatically
-var enableWACNSButton = document.getElementById("toolbar").lastChild;
-var enableWACNSCbx = enableWACNSButton.firstChild.firstChild; // input
-*/
-
-var sunVisibility60mChecked = false;
-
-function setSunVisibility60mEnabledFunction() {
-  return function (checked, updateSelected) {
-    sunVisibility60mChecked = checked;
-
-    // note: if this is called after imagery layerAdded event, then the selected entry on the picker
-    // had not been updated yet, so call this with updateSelected set to false in order to avoid bad behavior
-    if (updateSelected === undefined) {
-      updateSelected = false;
-    }
-
-    if (checked) {
-      if (isOptimizedPolarTerrain) {
-        layerSunVis60mPolar.show = true;
-      }
-      if (
-        updateSelected &&
-        viewer.baseLayerPicker.viewModel.selectedImagery !==
-          viewer.baseLayerPicker.viewModel.imageryProviderViewModels[
-            sunVisibilty60mModelIdx
-          ]
-      ) {
-        viewer.baseLayerPicker.viewModel.selectedImagery =
-          viewer.baseLayerPicker.viewModel.imageryProviderViewModels[
-            sunVisibilty60mModelIdx
-          ];
-      }
-    } else {
-      layerSunVis60mPolar.show = false;
-      if (
-        updateSelected &&
-        viewer.baseLayerPicker.viewModel.selectedImagery ===
-          viewer.baseLayerPicker.viewModel.imageryProviderViewModels[
-            sunVisibilty60mModelIdx
-          ]
-      ) {
-        viewer.baseLayerPicker.viewModel.selectedImagery =
-          viewer.baseLayerPicker.viewModel.imageryProviderViewModels[
-            NoneModelIdx
-          ];
-      }
-    }
-
-    // update view model
-    viewModel.sunVisibility60Enabled = checked;
-  };
-}
-/*
-Sandcastle.addToggleButton(
-  "Sun Visibility 60m",
-  sunVisibility60mChecked,
-  setSunVisibility60mEnabledFunction()
-);
-// get checkbox input to be able to modify it programmatically
-var enableSunVisibility60mButton = document.getElementById("toolbar").lastChild;
-var enableSunVisibility60mCbx =
-  enableSunVisibility60mButton.firstChild.firstChild; // input
-*/
-
-function updateImageryLayersUrl() {
-  if (isOptimizedPolarTerrain) {
-    if (layerWACAlbedo.show) {
-      layerWACAlbedo.show = false;
-      layerWACAlbedoPolar.show = true;
-    }
-    if (sunVisibility60mChecked) {
-      layerSunVis60mPolar.show = true;
-    }
-    if (polesHiresDataSourceEnabled) {
-      if (polesHiresDataSourcePolar) {
-        polesHiresDataSourcePolar.show = true;
-        polesHiresDataSource.show = false;
-      }
-    }
-  } else {
-    if (layerWACAlbedoPolar.show) {
-      layerWACAlbedoPolar.show = false;
-      layerWACAlbedo.show = true;
-    }
-    if (sunVisibility60mChecked) {
-      layerSunVis60mPolar.show = false;
-    }
-    if (polesHiresDataSourceEnabled) {
-      if (polesHiresDataSourcePolar) {
-        polesHiresDataSourcePolar.show = false;
-        polesHiresDataSource.show = true;
-      }
-    }
-  }
-}
 
 function setTerrainMeshMaxErrorFunction(maxErr) {
   return function () {
@@ -1948,6 +1706,13 @@ function loadStateFromQueryString() {
     // enableSunVisibility60mCbx.checked = checked;
     var setSunVisibility60mEnabled = setSunVisibility60mEnabledFunction();
     setSunVisibility60mEnabled(checked, true);
+  }
+
+  // find layers enabled
+  for (var layerObj in layersInfo) {
+    if (searchParams.has(layerObj + "Enabled")) {
+      setLayerImageryEnabled(layerObj);
+    }
   }
 
   viewModel.viewModelLoadFinished = true;

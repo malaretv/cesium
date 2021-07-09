@@ -1,8 +1,10 @@
 import * as Cesium from "../../Source/Cesium.js";
 
-import { createLayerImageryProvider, viewer } from "./LIS.js";
+import { viewer } from "./LIS.js";
 
 import { isOptimizedPolarTerrain } from "./terrainProvider.js";
+
+import { saveStateToQueryString } from "./viewModel.js";
 
 function createEmptyImageryProvider() {
   /* NOTE: use out of range scaling values for returning empty tiles*/
@@ -37,50 +39,82 @@ const NullModel = new Cesium.ProviderViewModel({
   },
 });
 
-const WACMosaicNSImageryProvider = createLayerImageryProvider(
-  "wac_albedo",
-  "lunar-fulleqc",
-  "jpg"
-);
-
-const WACMosaicNSModel = new Cesium.ProviderViewModel({
-  name: "WAC Mosaic (No Shadows)",
-  iconUrl: "./images/ImageryProviders/wac_no_shadows.png",
-  tooltip: "WAC Mosaic (No Shadows)",
-  creationFunction: function () {
-    return WACMosaicNSImageryProvider;
+export var layersInfo = {
+  WACNoShadows: {
+    name: "WAC Mosaic (No Shadows)",
+    iconUrl: "./images/ImageryProviders/wac_no_shadows.png",
+    tooltip: "WAC Mosaic (No Shadows)",
+    layerName: "wac_albedo",
+    layerFormat: "jpg",
   },
-});
-
-const WACMosaicNSPolarImageryProvider = createLayerImageryProvider(
-  "wac_albedo",
-  "lunar-polarshifted-eqc",
-  "jpg"
-);
-
-const WACMosaicNSPolarModel = new Cesium.ProviderViewModel({
-  name: "WAC Mosaic (No Shadows)",
-  iconUrl: "./images/ImageryProviders/wac_no_shadows.png",
-  tooltip: "WAC Mosaic (No Shadows)",
-  creationFunction: function () {
-    return WACMosaicNSPolarImageryProvider;
+  sunVisibilty60m: {
+    name: "Sun Visibility 60m",
+    iconUrl: "./images/ImageryProviders/sun_visibility_60m.png",
+    tooltip: "Sun Visibility 60m",
+    layerName: "lavgvis_s_60m",
+    layerFormat: "png",
   },
-});
-
-const sunVisibilty60mImageryProvider = createLayerImageryProvider(
-  "lavgvis_s_60m",
-  "lunar-polarshifted-eqc",
-  "png"
-);
-
-const sunVisibilty60mModel = new Cesium.ProviderViewModel({
-  name: "Sun Visibility 60m",
-  iconUrl: "./images/ImageryProviders/sun_visibility_60m.png",
-  tooltip: "Sun Visibility 60m",
-  creationFunction: function () {
-    return sunVisibilty60mImageryProvider;
+  NACPolarMosaics: {
+    name: "NAC Polar Mosaics",
+    iconUrl: "./images/ImageryProviders/nac_polar_mosaics.png",
+    tooltip: "NAC Polar Mosaics",
+    layerName: "lnpole",
+    layerFormat: "png",
   },
-});
+};
+
+function createLayerImageryProvider(layerName, bodyView, format) {
+  const layer_url_template =
+    "https://act-test.lroc.asu.edu/fcgi-bin/fprovweb.exe?_xtype=dynamic&z={zPlusOne}&x={x}&y={y}&format=__FORMAT__&layer=__LAYER__&bodyview=__BODY_VIEW__&cmd_script=get_tile.msh";
+
+  var layerUrl = layer_url_template.replace("__LAYER__", layerName);
+  var layerUrl = layerUrl.replace("__FORMAT__", format);
+  if (!bodyView) {
+    bodyView = isOptimizedPolarTerrain
+      ? "lunar-polarshifted-eqc"
+      : "lunar-fulleqc";
+  }
+  layerUrl = layerUrl.replace("__BODY_VIEW__", bodyView);
+  const layerImageryProvider = new Cesium.UrlTemplateImageryProvider({
+    url: layerUrl,
+    tilingScheme: new Cesium.GeographicTilingScheme({
+      ellipsoid: viewer.scene.globe.ellipsoid,
+      numberOfLevelZeroTilesX: 2,
+      numberOfLevelZeroTilesY: 1,
+    }),
+    tileWidth: 512,
+    tileHeight: 512,
+    customTags: {
+      zPlusOne: function (imageryProvider, x, y, z) {
+        return z + 1;
+      },
+    },
+  });
+  return layerImageryProvider;
+}
+
+function createLayerImageModel(layerObj) {
+  var layerInfo = layersInfo[layerObj];
+  var layerImageryModel = new Cesium.ProviderViewModel({
+    name: layerInfo.name,
+    iconUrl: layerInfo.iconUrl,
+    tooltip: layerInfo.tooltip,
+    creationFunction: function () {
+      var layerProjection = isOptimizedPolarTerrain
+        ? "lunar-polarshifted-eqc"
+        : "lunar-fulleqc";
+      var layerImageryProvider = createLayerImageryProvider(
+        layerInfo.layerName,
+        layerProjection,
+        layerInfo.layerFormat
+      );
+      return layerImageryProvider;
+    },
+  });
+  layerImageryModel.layerObj = layerObj;
+
+  return layerImageryModel;
+}
 
 export var NoneModelIdx;
 export var WACMosaicNSModelIdx;
@@ -92,10 +126,12 @@ export function initializeImageryPicker() {
   var providerViewModels = [];
   providerViewModels.push(NullModel);
   NoneModelIdx = providerViewModels.length - 1;
-  providerViewModels.push(WACMosaicNSModel);
-  WACMosaicNSModelIdx = providerViewModels.length - 1;
-  providerViewModels.push(sunVisibilty60mModel);
-  sunVisibilty60mModelIdx = providerViewModels.length - 1;
+
+  for (var layerObj in layersInfo) {
+    var layerImageryModel = createLayerImageModel(layerObj);
+    providerViewModels.push(layerImageryModel);
+  }
+
   viewer.baseLayerPicker.viewModel.imageryProviderViewModels = providerViewModels;
   viewer.baseLayerPicker.viewModel.selectedImagery = NullModel;
 
@@ -106,43 +142,50 @@ export function initializeImageryPicker() {
   );
   var imageryTitle = dropPanelSections[0];
   imageryTitle.innerHTML = "BaseMap Image";
+
+  // update query string when the current layer provider changes
+  viewer.imageryLayers.layerAdded.addEventListener(function (layer) {
+    if (layer.show === true) {
+      // call after a delay to be sure the selected layer has been updated
+      setTimeout(saveStateToQueryString, 300);
+    }
+  });
 }
 
 export function updateBaseLayerPickerImageryLayers() {
-  var providerViewModels =
-    viewer.baseLayerPicker.viewModel.imageryProviderViewModels;
+  // get selected model
+  if (viewer.baseLayerPicker.viewModel.selectedImagery.layerObj !== undefined) {
+    var providerViewModels =
+      viewer.baseLayerPicker.viewModel.imageryProviderViewModels;
 
-  if (isOptimizedPolarTerrain) {
-    providerViewModels[WACMosaicNSModelIdx] = WACMosaicNSPolarModel;
-    if (viewer.baseLayerPicker.viewModel.selectedImagery === WACMosaicNSModel) {
-      viewer.baseLayerPicker.viewModel.selectedImagery = WACMosaicNSPolarModel;
-    }
-  } else {
-    providerViewModels[WACMosaicNSModelIdx] = WACMosaicNSModel;
-    if (
-      viewer.baseLayerPicker.viewModel.selectedImagery === WACMosaicNSPolarModel
-    ) {
-      viewer.baseLayerPicker.viewModel.selectedImagery = WACMosaicNSModel;
-    }
+    var idx = providerViewModels.indexOf(
+      viewer.baseLayerPicker.viewModel.selectedImagery
+    );
+    // force model update
+    var layerImageModel = createLayerImageModel(
+      viewer.baseLayerPicker.viewModel.selectedImagery.layerObj
+    );
+    providerViewModels[idx] = layerImageModel;
+    viewer.baseLayerPicker.viewModel.selectedImagery = layerImageModel;
+
+    viewer.baseLayerPicker.viewModel.imageryProviderViewModels = providerViewModels;
   }
-
-  viewer.baseLayerPicker.viewModel.imageryProviderViewModels = providerViewModels;
 }
 
-export function getImageryLayerIdx(imageryLayerProvider) {
-  var pickerImageryProvider;
-  var imageryProviderCreationFunction;
-
-  for (var i in viewer.baseLayerPicker.viewModel.imageryProviderViewModels) {
-    imageryProviderCreationFunction =
-      viewer.baseLayerPicker.viewModel.imageryProviderViewModels[i]
-        ._creationCommand;
-    if (imageryProviderCreationFunction !== undefined) {
-      pickerImageryProvider = imageryProviderCreationFunction();
-      if (imageryLayerProvider === pickerImageryProvider) return parseInt(i);
+export function setLayerImageryEnabled(layerObj) {
+  for (var layerViewModelObj in viewer.baseLayerPicker.viewModel
+    .imageryProviderViewModels) {
+    var layerViewModel =
+      viewer.baseLayerPicker.viewModel.imageryProviderViewModels[
+        layerViewModelObj
+      ];
+    if (
+      layerViewModel.layerObj !== undefined &&
+      layerViewModel.layerObj === layerObj
+    ) {
+      if (viewer.baseLayerPicker.viewModel.selectedImagery !== layerViewModel) {
+        viewer.baseLayerPicker.viewModel.selectedImagery = layerViewModel;
+      }
     }
   }
-
-  // not found
-  return -1;
 }
