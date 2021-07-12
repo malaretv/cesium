@@ -48,6 +48,10 @@ export var viewModel = {
   // layers
   _hiresDemRegionsEnabled: false,
 
+  // NAC IMAGE ID
+  _NACImageID: undefined,
+  _NACImageEnabled: false,
+
   /**
    * true if the state info have been fully loaded
    */
@@ -222,6 +226,25 @@ export var viewModel = {
     this._hiresDemRegionsEnabled = checked;
     saveStateToQueryString();
   },
+
+  // NAC IMAGE ID
+  get NACImageID() {
+    return this._NACImageID;
+  },
+
+  set NACImageID(id) {
+    this._NACImageID = id;
+    saveStateToQueryString();
+  },
+
+  get NACImageEnabled() {
+    return this._NACImageEnabled;
+  },
+
+  set NACImageEnabled(checked) {
+    this._NACImageEnabled = checked;
+    saveStateToQueryString();
+  },
 };
 
 var FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL = 1000; // ms
@@ -383,6 +406,14 @@ export function saveStateToQueryString() {
     urlParams[
       viewer._baseLayerPicker.viewModel.selectedImagery.layerObj + "Enabled"
     ] = true;
+  }
+
+  var NACImageID = viewModel.NACImageID;
+
+  if (NACImageID !== undefined) {
+    var NACImageEnabled = viewModel.NACImageEnabled;
+    urlParams["NACImageID"] = NACImageID;
+    urlParams["NACImageEnabled"] = NACImageEnabled;
   }
 
   // update url

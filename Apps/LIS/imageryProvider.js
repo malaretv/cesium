@@ -63,9 +63,9 @@ export var layersInfo = {
   },
 };
 
-function createLayerImageryProvider(layerName, bodyView, format) {
+function createLayerImageryProvider(layerName, bodyView, format, optURLParam) {
   const layer_url_template =
-    "https://act-test.lroc.asu.edu/fcgi-bin/fprovweb.exe?_xtype=dynamic&z={zPlusOne}&x={x}&y={y}&format=__FORMAT__&layer=__LAYER__&bodyview=__BODY_VIEW__&cmd_script=get_tile.msh";
+    "https://act-test.lroc.asu.edu/fcgi-bin/fprovweb.exe?_xtype=dynamic&z={zPlusOne}&x={x}&y={y}&format=__FORMAT__&layer=__LAYER__&bodyview=__BODY_VIEW____OPT__&cmd_script=get_tile.msh";
 
   var layerUrl = layer_url_template.replace("__LAYER__", layerName);
   var layerUrl = layerUrl.replace("__FORMAT__", format);
@@ -75,6 +75,10 @@ function createLayerImageryProvider(layerName, bodyView, format) {
       : "lunar-fulleqc";
   }
   layerUrl = layerUrl.replace("__BODY_VIEW__", bodyView);
+  if (optURLParam === undefined) {
+    optURLParam = "";
+  }
+  layerUrl = layerUrl.replace("__OPT__", optURLParam);
   const layerImageryProvider = new Cesium.UrlTemplateImageryProvider({
     url: layerUrl,
     tilingScheme: new Cesium.GeographicTilingScheme({
@@ -116,16 +120,11 @@ function createLayerImageModel(layerObj) {
   return layerImageryModel;
 }
 
-export var NoneModelIdx;
-export var WACMosaicNSModelIdx;
-export var sunVisibilty60mModelIdx;
-
 export function initializeImageryPicker() {
   viewer.baseLayerPicker.viewModel.imageryProviderViewModels.removeAll();
   // viewer.baseLayerPicker.viewModel.terrainProviderViewModels.removeAll();
   var providerViewModels = [];
   providerViewModels.push(NullModel);
-  NoneModelIdx = providerViewModels.length - 1;
 
   for (var layerObj in layersInfo) {
     var layerImageryModel = createLayerImageModel(layerObj);
@@ -188,4 +187,22 @@ export function setLayerImageryEnabled(layerObj) {
       }
     }
   }
+}
+
+// NAC Image
+
+// regular WAC no shadows layer
+export function createLayerNACImageProvider(NACImageId) {
+  var optURLParam = "&oid=" + NACImageId;
+  var layerProjection = isOptimizedPolarTerrain
+    ? "lunar-polarshifted-eqc"
+    : "lunar-fulleqc";
+  // var layerProjection = "lunar-polarshifted-eqc";
+  var layerNACImage = createLayerImageryProvider(
+    "lrocnac",
+    layerProjection,
+    "png",
+    optURLParam
+  );
+  return layerNACImage;
 }

@@ -13,9 +13,10 @@ import {
 } from "./terrainProvider.js";
 
 import {
-  updateBaseLayerPickerImageryLayers,
+  createLayerNACImageProvider,
   layersInfo,
   setLayerImageryEnabled,
+  updateBaseLayerPickerImageryLayers,
 } from "./imageryProvider.js";
 
 import {
@@ -233,6 +234,7 @@ export function updateGlobeCartesianPositions() {
   updateEntitiesPos();
   updateEntityVectors(true);
   updateBaseLayerPickerImageryLayers();
+  updateNACImage();
 
   // preserve camera position/orientation
   var newCameraPos;
@@ -953,6 +955,74 @@ var enableAtmSimCbx = enableAtmSimButton.firstChild.firstChild;
 Sandcastle.addToolbarMenu(locationToolbarOptions);
 var locationMenu = document.getElementById("toolbar").lastChild;
 */
+
+function setNACImageEnabledFunction() {
+  return function (checked) {
+    viewModel.NACImageEnabled = checked;
+    enableNACCbx.checked = viewModel.NACImageEnabled;
+
+    if (NACImageLayer === undefined) {
+      console.log("Warning: no NAC Image available");
+      return;
+    }
+
+    if (checked) {
+      NACImageLayer.show = true;
+    } else {
+      NACImageLayer.show = false;
+    }
+  };
+}
+
+// NAC IMAGE
+Sandcastle.addToggleButton("NAC Image", false, setNACImageEnabledFunction());
+// get checkbox input to be able to modify it programmatically
+var enableNACButton = document.getElementById("toolbar").lastChild;
+var enableNACCbx = enableNACButton.firstChild.firstChild; // input
+var enableNACLbl = enableNACButton.firstChild.lastChild; // label
+setNACButtonVisible(false);
+
+function setNACButtonVisible(yes) {
+  if (!yes) {
+    document.getElementById("toolbar").removeChild(enableNACButton);
+  } else {
+    document
+      .getElementById("toolbar")
+      .insertBefore(enableNACButton, coordsDisplay);
+  }
+}
+
+function setNACImageID(NACImageID) {
+  enableNACLbl.nodeValue = "NAC Image: " + NACImageID;
+
+  viewModel.NACImageID = NACImageID;
+}
+
+var NACImageLayer;
+function addNACImage(NACImageID) {
+  if (NACImageLayer !== undefined) {
+    viewer.imageryLayers.remove(NACImageLayer);
+  }
+  NACImageLayer = new Cesium.ImageryLayer(
+    createLayerNACImageProvider(NACImageID)
+  );
+  viewer.imageryLayers.add(NACImageLayer);
+
+  setNACImageID(NACImageID);
+  setNACButtonVisible(true);
+  var setNACImageEnabled = setNACImageEnabledFunction();
+  setNACImageEnabled(viewModel.NACImageEnabled);
+}
+
+function updateNACImage() {
+  if (NACImageLayer !== undefined) {
+    viewer.imageryLayers.remove(NACImageLayer);
+  }
+  NACImageLayer = undefined;
+
+  // force NAC Image refresh
+  addNACImage(viewModel.NACImageID);
+}
 
 // SHOW COORDINATES
 var cartesian = new Cesium.Cartesian3();
@@ -1713,6 +1783,18 @@ function loadStateFromQueryString() {
     if (searchParams.has(layerObj + "Enabled")) {
       setLayerImageryEnabled(layerObj);
     }
+  }
+
+  // nac image
+  if (searchParams.has("NACImageID")) {
+    var NACImageID = searchParams.get("NACImageID");
+    addNACImage(NACImageID);
+    var checked = true;
+    if (searchParams.has("NACImageEnabled")) {
+      checked = searchParams.get("NACImageEnabled") === "true";
+    }
+    var setNACImageEnabled = setNACImageEnabledFunction();
+    setNACImageEnabled(checked);
   }
 
   viewModel.viewModelLoadFinished = true;
