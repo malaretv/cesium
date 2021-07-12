@@ -988,7 +988,7 @@ function setNACButtonVisible(yes) {
   } else {
     document
       .getElementById("toolbar")
-      .insertBefore(enableNACButton, coordsDisplay);
+      .insertBefore(enableNACButton, cameraCoordsDisplay);
   }
 }
 
