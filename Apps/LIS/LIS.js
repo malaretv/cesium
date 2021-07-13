@@ -1559,6 +1559,12 @@ function updateContours(height) {
 
 maybeUpdateContours();
 
+var scratchFlyToDestination = new Cesium.Cartesian3();
+var centerRectCarto = new Cesium.Cartographic();
+var centerRectCartesian = new Cesium.Cartesian3();
+var cameraDirNorm = new Cesium.Cartesian3();
+var cameraDir = new Cesium.Cartesian3();
+
 function loadStateFromQueryString() {
   var searchParams = new URL(window.location).searchParams;
 
@@ -1665,11 +1671,6 @@ function loadStateFromQueryString() {
       searchParams.get("ll").split(",").map(Number)
     );
 
-    // var ul = new Cesium.Cartesian3.fromDegrees(0, 88);
-    // var ur = new Cesium.Cartesian3.fromDegrees(90, 88);
-    // var lr = new Cesium.Cartesian3.fromDegrees(180, 88);
-    // var ll = new Cesium.Cartesian3.fromDegrees(270, 88);
-
     var rrCartesianCoords = [ul, ur, lr, ll];
     var rectangle = Cesium.Rectangle.fromCartesianArray(rrCartesianCoords);
 
@@ -1681,14 +1682,54 @@ function loadStateFromQueryString() {
     //   },
     // });
 
-    viewer.scene.camera.flyTo({
-      destination: rectangle,
-      orientation: {
-        heading: 0.0,
-        pitch: -Cesium.Math.PI_OVER_TWO,
-        roll: 0.0,
-      },
-    });
+    centerRectCarto = Cesium.Rectangle.center(rectangle, centerRectCarto);
+    var centerLat = Cesium.Math.toDegrees(centerRectCarto.latitude);
+    var up;
+    if (centerLat < -65) {
+      // south pole. Emulate south polar sterographic => lon 0 up
+      up = new Cesium.Cartesian3(1, 0, 0);
+    } else if (centerLat > 65) {
+      // north pole. Emulate north polar sterographic => lon 180 up
+      up = new Cesium.Cartesian3(-1, 0, 0);
+    }
+    if (Cesium.defined(up)) {
+      // console.log("center lon " + Cesium.Math.toDegrees(centerRectCarto.longitude).toFixed(3));
+      // console.log("center lat " + Cesium.Math.toDegrees(centerRectCarto.latitude).toFixed(3));
+      // camera direction straight down to the point of interest
+      centerRectCartesian = Cesium.Cartographic.toCartesian(
+        centerRectCarto,
+        ellipsoid,
+        centerRectCartesian
+      );
+      cameraDirNorm = Cesium.Cartesian3.normalize(
+        centerRectCartesian,
+        cameraDirNorm
+      );
+      cameraDir = Cesium.Cartesian3.negate(cameraDirNorm, cameraDir);
+
+      // find camera position as the flyTo is giving an error if rectangle is used together with camera direction/up
+      var destination = camera.getRectangleCameraCoordinates(
+        rectangle,
+        scratchFlyToDestination
+      );
+
+      viewer.scene.camera.flyTo({
+        destination: destination,
+        orientation: {
+          direction: cameraDir,
+          up: up,
+        },
+      });
+    } else {
+      viewer.scene.camera.flyTo({
+        destination: rectangle,
+        orientation: {
+          heading: 0.0,
+          pitch: -Cesium.Math.PI_OVER_TWO,
+          roll: 0.0,
+        },
+      });
+    }
   }
 
   // contour enabled
