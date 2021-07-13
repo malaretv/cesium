@@ -1110,6 +1110,10 @@ viewer.camera.moveEnd.addEventListener(function () {
   viewModel.camera_position = camera.position;
   viewModel.camera_direction = camera.direction;
   viewModel.camera_up = camera.up;
+
+  // console.log("camera position: " + camera.position);
+  // console.log("camera direction: " + camera.direction);
+  // console.log("camera up: " + camera.up);
 });
 
 function setHeightKm(heightInKilometers) {
@@ -1680,9 +1684,9 @@ function loadStateFromQueryString() {
     viewer.scene.camera.flyTo({
       destination: rectangle,
       orientation: {
-        heading: Cesium.Math.toRadians(0.0),
-        pitch: Cesium.Math.toRadians(-90.0),
-        roll: Cesium.Math.toRadians(-180.0),
+        heading: 0.0,
+        pitch: -Cesium.Math.PI_OVER_TWO,
+        roll: 0.0,
       },
     });
   }
