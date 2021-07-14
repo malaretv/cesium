@@ -32,6 +32,8 @@ import {
   addTimeButton,
 } from "./UIcontrols.js";
 
+import { cameraFlyToLookDownNorthUp } from "./utils.js";
+
 Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(1737400, 1737400, 1737400);
 
 // tiles settings
@@ -1306,20 +1308,14 @@ export function setLocation(location) {
     //   viewer.zoomTo(entity, new Cesium.HeadingPitchRange(0.5,-0.2,20000));
     //    viewer.zoomTo(entitySelected, new Cesium.HeadingPitchRange(0,-3.14,20000));
 
-    var newCameraPos = adjustCartesianCoords(
-      Cesium.Cartesian3.fromDegrees(
-        location.longitude,
-        location.latitude,
-        location.height + 20000,
-        ellipsoid
-      ),
-      isOptimizedPolarTerrain
+    var newCameraPos = Cesium.Cartesian3.fromDegrees(
+      location.longitude,
+      location.latitude,
+      location.height + 20000,
+      ellipsoid
     );
 
-    scene.camera.flyTo({
-      destination: newCameraPos,
-      duration: deltaT,
-    });
+    cameraFlyToLookDownNorthUp(scene.camera, newCameraPos, ellipsoid, deltaT);
   }
 }
 
@@ -1559,12 +1555,6 @@ function updateContours(height) {
 
 maybeUpdateContours();
 
-var scratchFlyToDestination = new Cesium.Cartesian3();
-var centerRectCarto = new Cesium.Cartographic();
-var centerRectCartesian = new Cesium.Cartesian3();
-var cameraDirNorm = new Cesium.Cartesian3();
-var cameraDir = new Cesium.Cartesian3();
-
 function loadStateFromQueryString() {
   var searchParams = new URL(window.location).searchParams;
 
@@ -1682,54 +1672,7 @@ function loadStateFromQueryString() {
     //   },
     // });
 
-    centerRectCarto = Cesium.Rectangle.center(rectangle, centerRectCarto);
-    var centerLat = Cesium.Math.toDegrees(centerRectCarto.latitude);
-    var up;
-    if (centerLat < -65) {
-      // south pole. Emulate south polar sterographic => lon 0 up
-      up = new Cesium.Cartesian3(1, 0, 0);
-    } else if (centerLat > 65) {
-      // north pole. Emulate north polar sterographic => lon 180 up
-      up = new Cesium.Cartesian3(-1, 0, 0);
-    }
-    if (Cesium.defined(up)) {
-      // console.log("center lon " + Cesium.Math.toDegrees(centerRectCarto.longitude).toFixed(3));
-      // console.log("center lat " + Cesium.Math.toDegrees(centerRectCarto.latitude).toFixed(3));
-      // camera direction straight down to the point of interest
-      centerRectCartesian = Cesium.Cartographic.toCartesian(
-        centerRectCarto,
-        ellipsoid,
-        centerRectCartesian
-      );
-      cameraDirNorm = Cesium.Cartesian3.normalize(
-        centerRectCartesian,
-        cameraDirNorm
-      );
-      cameraDir = Cesium.Cartesian3.negate(cameraDirNorm, cameraDir);
-
-      // find camera position as the flyTo is giving an error if rectangle is used together with camera direction/up
-      var destination = camera.getRectangleCameraCoordinates(
-        rectangle,
-        scratchFlyToDestination
-      );
-
-      viewer.scene.camera.flyTo({
-        destination: destination,
-        orientation: {
-          direction: cameraDir,
-          up: up,
-        },
-      });
-    } else {
-      viewer.scene.camera.flyTo({
-        destination: rectangle,
-        orientation: {
-          heading: 0.0,
-          pitch: -Cesium.Math.PI_OVER_TWO,
-          roll: 0.0,
-        },
-      });
-    }
+    cameraFlyToLookDownNorthUp(viewer.scene.camera, rectangle, ellipsoid);
   }
 
   // contour enabled

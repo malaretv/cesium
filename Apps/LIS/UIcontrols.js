@@ -11,6 +11,8 @@ import {
 
 import { initializeImageryPicker } from "./imageryProvider.js";
 
+import { cameraFlyToLookDownNorthUp } from "./utils.js";
+
 var buttonBgColor = "rgba(42, 42, 42, 0.7)";
 var buttonBgSelectedColor = "rgba(255, 255, 255, 0.7)";
 
@@ -140,20 +142,35 @@ function submit(event) {
       }
       const [lon, lat, ele] = coords;
       console.log(`lon: ${lon} lat: ${lat} ele: ${ele}`);
-      var newCameraPos = adjustCartesianCoords(
-        Cartesian3.fromDegrees(
-          lon,
-          lat,
-          ele * 1000.0, // m
-          viewer.scene.globe.ellipsoid
-        ),
-        isOptimizedPolarTerrain
+
+      // var newCameraPos = adjustCartesianCoords(
+      //   Cartesian3.fromDegrees(
+      //     lon,
+      //     lat,
+      //     ele * 1000.0, // m
+      //     viewer.scene.globe.ellipsoid
+      //   ),
+      //   isOptimizedPolarTerrain
+      // );
+
+      // viewer.scene.camera.flyTo({
+      //   destination: newCameraPos,
+      //   duration: deltaT,
+      // });
+
+      var newCameraPos = Cartesian3.fromDegrees(
+        lon,
+        lat,
+        ele * 1000.0, // m
+        viewer.scene.globe.ellipsoid
       );
 
-      viewer.scene.camera.flyTo({
-        destination: newCameraPos,
-        duration: deltaT,
-      });
+      cameraFlyToLookDownNorthUp(
+        viewer.scene.camera,
+        newCameraPos,
+        viewer.scene.globe.ellipsoid,
+        deltaT
+      );
     } else {
       showFormError("Invalid coordinates");
     }
