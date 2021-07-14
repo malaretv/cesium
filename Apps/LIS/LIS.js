@@ -1017,6 +1017,10 @@ function addNACImage(NACImageID) {
 }
 
 function updateNACImage() {
+  if (!Cesium.defined(viewModel.NACImageID)) {
+    return;
+  }
+
   if (NACImageLayer !== undefined) {
     viewer.imageryLayers.remove(NACImageLayer);
   }
