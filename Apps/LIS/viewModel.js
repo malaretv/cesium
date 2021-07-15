@@ -1,4 +1,4 @@
-import { Cartesian3, defined } from "../../Source/Cesium.js";
+import { Cartesian3, defined, Math } from "../../Source/Cesium.js";
 import { JulianDate } from "../../Source/Cesium.js";
 
 import Matrix4 from "../../Source/Core/Matrix4.js";
@@ -245,6 +245,24 @@ export var viewModel = {
     this._NACImageEnabled = checked;
     saveStateToQueryString();
   },
+};
+
+viewModel.setCameraPandO = function (
+  camera_position,
+  camera_direction,
+  camera_up
+) {
+  var diff1 = Cartesian3.distance(this._camera_position, camera_position);
+  var diff2 = Cartesian3.distance(this._camera_direction, camera_direction);
+  var diff3 = Cartesian3.distance(this._camera_up, camera_up);
+  if (diff1 > Math.EPSILON8 || diff2 > Math.EPSILON8 || diff3 > Math.EPSILON8) {
+    // ignore if the difference is too small.
+    this._camera_position = Cartesian3.clone(camera_position);
+    this._camera_direction = Cartesian3.clone(camera_direction);
+    this._camera_up = Cartesian3.clone(camera_up);
+
+    saveStateToQueryString();
+  }
 };
 
 var FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL = 1000; // ms

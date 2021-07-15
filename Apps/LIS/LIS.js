@@ -1113,13 +1113,11 @@ viewer.camera.moveEnd.addEventListener(function () {
   maybeUpdateContours(camH);
 
   // update view model
-  viewModel.camera_position = camera.position;
-  viewModel.camera_direction = camera.direction;
-  viewModel.camera_up = camera.up;
+  // viewModel.camera_position = camera.position;
+  // viewModel.camera_direction = camera.direction;
+  // viewModel.camera_up = camera.up;
 
-  // console.log("camera position: " + camera.position);
-  // console.log("camera direction: " + camera.direction);
-  // console.log("camera up: " + camera.up);
+  viewModel.setCameraPandO(camera.position, camera.direction, camera.up);
 });
 
 function setHeightKm(heightInKilometers) {
