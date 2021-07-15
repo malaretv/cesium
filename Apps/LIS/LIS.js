@@ -1754,19 +1754,19 @@ function loadStateFromQueryString() {
     setHiresDemRegionsEnabled(checked);
   }
 
-  if (searchParams.has("WACMosaicNSEnabled")) {
-    var checked = searchParams.get("WACMosaicNSEnabled") === "true";
-    // enableWACNSCbx.checked = checked;
-    var setWACNoShadowsEnabled = setWACNoShadowsEnabledFunction();
-    setWACNoShadowsEnabled(checked, true);
-  }
+  // if (searchParams.has("WACMosaicNSEnabled")) {
+  //   var checked = searchParams.get("WACMosaicNSEnabled") === "true";
+  //   // enableWACNSCbx.checked = checked;
+  //   var setWACNoShadowsEnabled = setWACNoShadowsEnabledFunction();
+  //   setWACNoShadowsEnabled(checked, true);
+  // }
 
-  if (searchParams.has("sunVisibility60Enabled")) {
-    var checked = searchParams.get("sunVisibility60Enabled") === "true";
-    // enableSunVisibility60mCbx.checked = checked;
-    var setSunVisibility60mEnabled = setSunVisibility60mEnabledFunction();
-    setSunVisibility60mEnabled(checked, true);
-  }
+  // if (searchParams.has("sunVisibility60Enabled")) {
+  //   var checked = searchParams.get("sunVisibility60Enabled") === "true";
+  //   // enableSunVisibility60mCbx.checked = checked;
+  //   var setSunVisibility60mEnabled = setSunVisibility60mEnabledFunction();
+  //   setSunVisibility60mEnabled(checked, true);
+  // }
 
   // find layers enabled
   for (var layerObj in layersInfo) {
