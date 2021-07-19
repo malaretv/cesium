@@ -40,7 +40,7 @@ Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(1737400, 1737400, 1737400);
 // https://lunar-dem-tiles2.quickmap.io/sldem_lola/docs#/default/serve_layer_info_layer_json_get
 
 var defaultUTCTime = "2022-12-04T00:00:00.000Z";
-var defaultMeshMaxError = 1;
+var defaultMeshMaxError = 10;
 var defaultTerrainName = "automatic terrain";
 
 var defaultLocationName = "Tycho";
