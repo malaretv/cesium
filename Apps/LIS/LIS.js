@@ -776,7 +776,7 @@ function setTerrainMeshMaxErrorFunction(maxErr) {
   };
 }
 
-var maxErrorList = [0.01, 0.1, 1, 10, 20, 50];
+var maxErrorList = [/*0.01, 0.1, */ 1, 10, 20, 50];
 var terrainMaxErrOptions = [];
 for (var i = 0; i < maxErrorList.length; i++) {
   var maxError = maxErrorList[i];
@@ -917,7 +917,7 @@ function setShadowsMaxDistanceFunction(maxDist) {
   };
 }
 
-var shadowsMaxDistList = [50, 100, 200, 500, 1000]; // km
+var shadowsMaxDistList = [50, 100, 200 /*, 500, 1000*/]; // km
 var shadowsMaxDistOptions = [];
 for (var i = 0; i < shadowsMaxDistList.length; i++) {
   var shadowsMaxDist = shadowsMaxDistList[i];
@@ -1669,7 +1669,10 @@ function loadStateFromQueryString() {
     // var redRectangle = viewer.entities.add({
     //   rectangle: {
     //     coordinates: rectangle,
-    //     material: Cesium.Color.RED.withAlpha(0.5),
+    //     material: Cesium.Color.BLUE.withAlpha(0.5),
+    //     // outline: true,
+    //     // outlineColor: Cesium.Color.RED,
+    //     // height: 2000,
     //     clampToGround: true,
     //   },
     // });
