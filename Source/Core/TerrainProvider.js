@@ -287,7 +287,83 @@ TerrainProvider.addSkirtIndices = function (
     offset
   );
   vertexIndex += eastIndicesNorthToSouth.length;
-  addSkirtIndices(northIndicesWestToEast, vertexIndex, indices, offset);
+  offset = addSkirtIndices(
+    northIndicesWestToEast,
+    vertexIndex,
+    indices,
+    offset
+  );
+  return offset;
+};
+
+TerrainProvider.addAdditionalSkirtIndices = function (
+  westIndicesSouthToNorth,
+  southIndicesEastToWest,
+  eastIndicesNorthToSouth,
+  northIndicesWestToEast,
+  vertexCount,
+  indices,
+  offset
+) {
+  var vertexIndex = vertexCount;
+  var skirtVertexCount =
+    westIndicesSouthToNorth.length +
+    southIndicesEastToWest.length +
+    eastIndicesNorthToSouth.length +
+    northIndicesWestToEast.length;
+  var addSkirtIndex = vertexCount + skirtVertexCount;
+  offset = addAdditionalSkirtIndices(
+    westIndicesSouthToNorth,
+    vertexIndex,
+    addSkirtIndex,
+    indices,
+    offset
+  );
+  vertexIndex += westIndicesSouthToNorth.length;
+  addSkirtIndex += 2;
+  offset = addAdditionalSkirtIndices(
+    southIndicesEastToWest,
+    vertexIndex,
+    addSkirtIndex,
+    indices,
+    offset
+  );
+  vertexIndex += southIndicesEastToWest.length;
+  addSkirtIndex += 2;
+  offset = addAdditionalSkirtIndices(
+    eastIndicesNorthToSouth,
+    vertexIndex,
+    addSkirtIndex,
+    indices,
+    offset
+  );
+  vertexIndex += eastIndicesNorthToSouth.length;
+  addSkirtIndex += 2;
+  addAdditionalSkirtIndices(
+    northIndicesWestToEast,
+    vertexIndex,
+    addSkirtIndex,
+    indices,
+    offset
+  );
+};
+
+TerrainProvider.addSkirtsBottomPlane = function (
+  WSVertexIndex,
+  WNVertexIndex,
+  ENVertexIndex,
+  ESVertexIndex,
+  indices,
+  offset
+) {
+  // add triangles for additional skirt
+  indices[offset++] = WSVertexIndex;
+  indices[offset++] = WNVertexIndex;
+  indices[offset++] = ENVertexIndex;
+
+  indices[offset++] = WSVertexIndex;
+  indices[offset++] = ENVertexIndex;
+  indices[offset++] = ESVertexIndex;
 };
 
 function getEdgeIndices(width, height) {
@@ -355,6 +431,27 @@ function addSkirtIndices(edgeIndices, vertexIndex, indices, offset) {
     previousIndex = index;
     ++vertexIndex;
   }
+  return offset;
+}
+
+function addAdditionalSkirtIndices(
+  edgeIndices,
+  vertexIndex,
+  addSkirtVertexIndex,
+  indices,
+  offset
+) {
+  var firstSkirtVertexIndex = vertexIndex;
+  var lastSkirtVertexIndex = vertexIndex + edgeIndices.length - 1;
+
+  // add triangles for additional skirt
+  indices[offset++] = firstSkirtVertexIndex;
+  indices[offset++] = lastSkirtVertexIndex;
+  indices[offset++] = addSkirtVertexIndex;
+
+  indices[offset++] = addSkirtVertexIndex;
+  indices[offset++] = lastSkirtVertexIndex;
+  indices[offset++] = addSkirtVertexIndex + 1;
 
   return offset;
 }

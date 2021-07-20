@@ -202,7 +202,7 @@ gulp.task("build-ts", function () {
 });
 
 gulp.task("buildApps", function () {
-  return Promise.join(buildCesiumViewer(), buildSandcastle());
+  return Promise.join(buildLIS(), buildCesiumViewer(), buildSandcastle());
 });
 
 gulp.task("build-specs", function buildSpecs() {
@@ -1811,6 +1811,88 @@ function buildSandcastle() {
   return streamToPromise(mergeStream(appStream, imageStream, standaloneStream));
 }
 
+function buildLIS() {
+  const LISOutputDirectory = "Build/Apps/CesiumViewer";
+  mkdirp.sync(LISOutputDirectory);
+
+  let promise = Promise.join(
+    rollup
+      .rollup({
+        input: "Apps/LIS/LIS.js",
+        treeshake: {
+          moduleSideEffects: false,
+        },
+        plugins: [
+          rollupPluginStripPragma({
+            pragmas: ["debug"],
+          }),
+          rollupPluginUglify.uglify(),
+        ],
+        onwarn: rollupWarning,
+      })
+      .then(function (bundle) {
+        return bundle.write({
+          file: "Build/Apps/LIS/LIS.js",
+          format: "iife",
+        });
+      })
+  );
+
+  promise = promise.then(function () {
+    const LISOutputDirectory = "Build/Apps/LIS";
+
+    const stream = mergeStream(
+      gulp
+        .src("Build/Apps/LIS/LIS.js")
+        .pipe(gulpReplace("../../Source", "."))
+        .pipe(gulp.dest(LISOutputDirectory)),
+
+      gulp
+        .src("Apps/LIS/LIS.css")
+        .pipe(cleanCSS())
+        .pipe(gulpReplace("../../Source", "."))
+        .pipe(gulp.dest(LISOutputDirectory)),
+
+      gulp
+        .src("Apps/LIS/index.html")
+        .pipe(gulpReplace('type="module"', ""))
+        .pipe(gulpReplace("LIS (dev)", "LIS"))
+        .pipe(gulpReplace('"development"', '"production"'))
+        .pipe(gulp.dest(LISOutputDirectory)),
+
+      gulp.src([
+        "Apps/LIS/**",
+        "!Apps/LIS/index.html",
+        "!Apps/LIS/**/*.js",
+        "!Apps/LIS/**/*.css",
+      ]),
+
+      gulp.src(
+        [
+          "Build/Cesium/Assets/**",
+          "Build/Cesium/Workers/**",
+          "Build/Cesium/ThirdParty/**",
+          "Build/Cesium/Widgets/**",
+          "!Build/Cesium/Widgets/**/*.css",
+        ],
+        {
+          base: "Build/Cesium",
+          nodir: true,
+        }
+      ),
+
+      gulp.src(["Build/Cesium/Widgets/InfoBox/InfoBoxDescription.css"], {
+        base: "Build/Cesium",
+      }),
+
+      gulp.src(["web.config"])
+    );
+
+    return streamToPromise(stream.pipe(gulp.dest(LISOutputDirectory)));
+  });
+
+  return promise;
+}
 function buildCesiumViewer() {
   const cesiumViewerOutputDirectory = "Build/Apps/CesiumViewer";
   mkdirp.sync(cesiumViewerOutputDirectory);

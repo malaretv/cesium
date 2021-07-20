@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
+    />
+    <title>LIS (dev)</title>
+    <link rel="stylesheet" href="LIS.css" media="screen" />
+
+    <script
+      type="text/javascript"
+      src="../Sandcastle/Sandcastle-header.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="../Sandcastle/Sandcastle-helpers.js"
+    ></script>
+    <script>
+      window.LIS_MODE = "development";
+    </script>
+  </head>
+  <body
+    class="sandcastle-loading"
+    data-sandcastle-bucket="bucket-requirejs.html"
+  >
+    <div id="cesiumContainer" class="fullSize"></div>
+    <div id="loadingOverlay"><h1>Loading...</h1></div>
+    <div id="toolbar"></div>
+    <script type="module" src="LIS.js"></script>
+  </body>
+</html>

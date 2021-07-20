@@ -1,7 +1,9 @@
 import when from "../ThirdParty/when.js";
 import AttributeCompression from "./AttributeCompression.js";
 import BoundingSphere from "./BoundingSphere.js";
+import Cartesian2 from "./Cartesian2.js";
 import Cartesian3 from "./Cartesian3.js";
+import Cartographic from "./Cartographic.js";
 import Credit from "./Credit.js";
 import defaultValue from "./defaultValue.js";
 import defined from "./defined.js";
@@ -255,6 +257,7 @@ function CesiumTerrainProvider(options) {
       that._heightmapWidth,
       that._tilingScheme.getNumberOfXTilesAtLevel(0)
     );
+
     if (!data.scheme || data.scheme === "tms" || data.scheme === "slippyMap") {
       that._scheme = data.scheme;
     } else {
@@ -756,6 +759,32 @@ function createQuantizedMeshTerrainData(provider, buffer, level, x, y, layer) {
   }
 
   var skirtHeight = provider.getLevelMaximumGeometricError(level) * 5.0;
+  // // skirtHeight = 100000;
+
+  // var cartoTile = provider._tilingScheme.positionToTileXY(
+  //   Cartographic.ZERO,
+  //   level
+  // );
+  // var rectTile = provider._tilingScheme.tileXYToRectangle(
+  //   cartoTile.x,
+  //   cartoTile.y,
+  //   level
+  // );
+  // //console.log("tile0 rect: " + rectTile.west + ", " + rectTile.east + ", " + rectTile.north + ", " + rectTile.south);
+  // var tileXSize =
+  //   Math.abs(rectTile.east - rectTile.west) *
+  //   provider._tilingScheme.ellipsoid.maximumRadius;
+  // // var tileYSize = Math.abs(rectTile.north - rectTile.south) * provider._tilingScheme.ellipsoid.maximumRadius;
+
+  // skirtHeight = tileXSize;
+  // console.log("skirt height " + skirtHeight + " (lev " + level + ")");
+
+  // // console.log("tileXSize: " + tileXSize);
+  // // console.log("tileYSize: " + tileYSize);
+  // // var xres = tileXSize / 512;
+  // // var yres = tileYSize / 512;
+  // // console.log("xres: " + xres);
+  // // console.log("yres: " + yres);
 
   // The skirt is not included in the OBB computation. If this ever
   // causes any rendering artifacts (cracks), they are expected to be
