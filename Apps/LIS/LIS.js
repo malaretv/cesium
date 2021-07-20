@@ -824,18 +824,16 @@ function setSkirtsEnabledFunction() {
   };
 }
 
-Sandcastle.addToggleButton(
-  "Skirts",
-  scene.globe.showSkirts,
-  setSkirtsEnabledFunction()
-);
+if (window.LIS_MODE === "development") {
+  Sandcastle.addToggleButton(
+    "Skirts",
+    scene.globe.showSkirts,
+    setSkirtsEnabledFunction()
+  );
 
-// get checkbox input to be able to modify it programmatically
-var enableSkirtsButton = document.getElementById("toolbar").lastChild;
-var enableSkirtsCbx = enableSkirtsButton.firstChild.firstChild; // input
-
-if (window.LIS_MODE !== "development") {
-  enableSkirtsButton.setAttribute("hidden", "");
+  // get checkbox input to be able to modify it programmatically
+  var enableSkirtsButton = document.getElementById("toolbar").lastChild;
+  var enableSkirtsCbx = enableSkirtsButton.firstChild.firstChild; // input
 }
 
 function setTerrainShadowsEnabledFunction() {
@@ -1755,7 +1753,9 @@ function loadStateFromQueryString() {
   // skirts enabled
   if (searchParams.has("skirtsEnabled")) {
     var checked = searchParams.get("skirtsEnabled") === "true";
-    enableSkirtsCbx.checked = checked;
+    if (Cesium.defined(enableSkirtsCbx)) {
+      enableSkirtsCbx.checked = checked;
+    }
     var setSkirtsEnabled = setSkirtsEnabledFunction();
     setSkirtsEnabled(checked);
   }
