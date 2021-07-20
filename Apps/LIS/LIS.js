@@ -462,6 +462,11 @@ function updateCameraCoordsDisplay(msg) {
   cameraCoordsDisplay.innerHTML = msg;
 }
 
+var camera2CursorDistance = document.createElement("div");
+function setCamera2CursorDistanceLabel(msg) {
+  camera2CursorDistance.innerHTML = msg;
+}
+
 var terrainDisplay = document.createElement("div");
 export function updateTerrainDisplay(msg) {
   terrainDisplay.innerHTML = msg;
@@ -746,7 +751,7 @@ function setHiresDemRegionsEnabledFunction() {
 }
 
 Sandcastle.addToggleButton(
-  "5m DEM regions",
+  "Highlight 5m DEM regions",
   false,
   setHiresDemRegionsEnabledFunction()
 );
@@ -828,6 +833,10 @@ Sandcastle.addToggleButton(
 // get checkbox input to be able to modify it programmatically
 var enableSkirtsButton = document.getElementById("toolbar").lastChild;
 var enableSkirtsCbx = enableSkirtsButton.firstChild.firstChild; // input
+
+if (window.LIS_MODE !== "development") {
+  enableSkirtsButton.setAttribute("hidden", "");
+}
 
 function setTerrainShadowsEnabledFunction() {
   return function (checked) {
@@ -917,7 +926,7 @@ function setShadowsMaxDistanceFunction(maxDist) {
   };
 }
 
-var shadowsMaxDistList = [50, 100, 200 /*, 500, 1000*/]; // km
+var shadowsMaxDistList = [25, 50, 100, 200 /*, 500, 1000*/]; // km
 var shadowsMaxDistOptions = [];
 for (var i = 0; i < shadowsMaxDistList.length; i++) {
   var shadowsMaxDist = shadowsMaxDistList[i];
@@ -1069,6 +1078,19 @@ viewer.scene.canvas.addEventListener("mousemove", function (e) {
           ",&nbsp;" +
           (height * 0.001).toFixed(1);
         updateCoordsDisplay(lbl);
+
+        var c2cDistance = Cesium.Cartesian3.distance(
+          cartesian,
+          camera.position
+        );
+        var c2cDistanceS;
+        if (c2cDistance < 1000.0) {
+          c2cDistanceS = c2cDistance.toFixed(3) + " m";
+        } else {
+          c2cDistanceS = (c2cDistance / 1000.0).toFixed(3) + " km";
+        }
+        var c2cDistanceLbl = "Observer to Cursor Distance: " + c2cDistanceS;
+        setCamera2CursorDistanceLabel(c2cDistanceLbl);
       }
     );
 
@@ -1136,6 +1158,11 @@ document.getElementById("toolbar").appendChild(cameraCoordsDisplay);
 coordsDisplay.style.background = "rgba(42, 42, 42, 0.7)";
 coordsDisplay.style.padding = "5px 10px";
 document.getElementById("toolbar").appendChild(coordsDisplay);
+
+// Show camera to cursor distance.
+camera2CursorDistance.style.background = "rgba(42, 42, 42, 0.7)";
+camera2CursorDistance.style.padding = "5px 10px";
+document.getElementById("toolbar").appendChild(camera2CursorDistance);
 
 // current terrain label
 terrainDisplay.style.background = "rgba(42, 42, 42, 0.7)";
