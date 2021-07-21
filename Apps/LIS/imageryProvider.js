@@ -42,6 +42,7 @@ const NullModel = new Cesium.ProviderViewModel({
 export var layersInfo = {
   WACNoShadows: {
     name: "WAC Mosaic (No Shadows)",
+    servername: "act-test.lroc.asu.edu",
     iconUrl: "./images/ImageryProviders/wac_no_shadows.png",
     tooltip: "WAC Mosaic (No Shadows)",
     layerName: "wac_albedo",
@@ -49,6 +50,7 @@ export var layersInfo = {
   },
   sunVisibilty60m: {
     name: "Sun Visibility 60m",
+    servername: "act-test.lroc.asu.edu",
     iconUrl: "./images/ImageryProviders/sun_visibility_60m.png",
     tooltip: "Sun Visibility 60m",
     layerName: "lavgvis_s_60m",
@@ -56,19 +58,35 @@ export var layersInfo = {
   },
   NACPolarMosaics: {
     name: "NAC Polar Mosaics",
+    servername: "act-test.lroc.asu.edu",
     iconUrl: "./images/ImageryProviders/nac_polar_mosaics.png",
     tooltip: "NAC Polar Mosaics",
     layerName: "lnpole",
     layerFormat: "png",
   },
+  ACTSunlitModel: {
+    name: "ACT Sunlit Model",
+    servername: "mare3.actgate.com",
+    iconUrl: "./images/ImageryProviders/act_sunlit_model.png",
+    tooltip: "ACT Sunlit Model",
+    layerName: "act_sunlit_model",
+    layerFormat: "png",
+  },
 };
 
-function createLayerImageryProvider(layerName, bodyView, format, optURLParam) {
+function createLayerImageryProvider(
+  servername,
+  layerName,
+  bodyView,
+  format,
+  optURLParam
+) {
   const layer_url_template =
-    "https://act-test.lroc.asu.edu/fcgi-bin/fprovweb.exe?_xtype=dynamic&z={zPlusOne}&x={x}&y={y}&format=__FORMAT__&layer=__LAYER__&bodyview=__BODY_VIEW____OPT__&cmd_script=get_tile.msh";
+    "https://__SERVER_NAME__/fcgi-bin/fprovweb.exe?_xtype=dynamic&z={zPlusOne}&x={x}&y={y}&format=__FORMAT__&layer=__LAYER__&bodyview=__BODY_VIEW____OPT__&cmd_script=get_tile.msh";
 
   var layerUrl = layer_url_template.replace("__LAYER__", layerName);
-  var layerUrl = layerUrl.replace("__FORMAT__", format);
+  layerUrl = layerUrl.replace("__SERVER_NAME__", servername);
+  layerUrl = layerUrl.replace("__FORMAT__", format);
   if (!bodyView) {
     bodyView = isOptimizedPolarTerrain
       ? "lunar-polarshifted-eqc"
@@ -108,6 +126,7 @@ function createLayerImageModel(layerObj) {
         ? "lunar-polarshifted-eqc"
         : "lunar-fulleqc";
       var layerImageryProvider = createLayerImageryProvider(
+        layerInfo.servername,
         layerInfo.layerName,
         layerProjection,
         layerInfo.layerFormat
@@ -199,6 +218,7 @@ export function createLayerNACImageProvider(NACImageId) {
     : "lunar-fulleqc";
   // var layerProjection = "lunar-polarshifted-eqc";
   var layerNACImage = createLayerImageryProvider(
+    "act-test.lroc.asu.edu",
     "lrocnac",
     layerProjection,
     "png",
