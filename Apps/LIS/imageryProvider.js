@@ -65,10 +65,10 @@ export var layersInfo = {
     layerFormat: "png",
   },
   ACTSunlitModel: {
-    name: "ACT Sunlit Model",
+    name: "ACT Sun Visibility 60m",
     servername: "mare3.actgate.com",
     iconUrl: "./images/ImageryProviders/act_sunlit_model.png",
-    tooltip: "ACT Sunlit Model",
+    tooltip: "ACT Sun Visibility 60m",
     layerName: "act_sunlit_model",
     layerFormat: "png",
   },
