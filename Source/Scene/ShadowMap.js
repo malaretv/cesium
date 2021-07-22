@@ -1444,7 +1444,7 @@ function checkVisibility(shadowMap, frameState) {
       shadowMap._darkness = shadowMap.darkness;
     }
 
-    if (dot < 0.0) {
+    if (dot < -0.1) {
       shadowMap._outOfView = true;
       shadowMap._needsUpdate = false;
       return;
