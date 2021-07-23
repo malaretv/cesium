@@ -41,10 +41,10 @@ const NullModel = new Cesium.ProviderViewModel({
 
 export var layersInfo = {
   WACNoShadows: {
-    name: "WAC Mosaic (No Shadows)",
+    name: "WAC Global Albedo",
     servername: "act-test.lroc.asu.edu",
     iconUrl: "./images/ImageryProviders/wac_no_shadows.png",
-    tooltip: "WAC Mosaic (No Shadows)",
+    tooltip: "WAC Global Albedo",
     layerName: "wac_albedo",
     layerFormat: "jpg",
   },
