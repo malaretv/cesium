@@ -1,4 +1,4 @@
-import { Cartesian3 } from "../../Source/Cesium.js";
+import { Cartesian3, Matrix3 } from "../../Source/Cesium.js";
 
 export function cartesianToDummyPolar(cartesianCoords) {
   // rotate along y axis by -90 deg
@@ -25,6 +25,12 @@ export function cartesianToDummyPolar(cartesianCoords) {
   polarCartesianCoords.y = -cartesianCoords.y;
   polarCartesianCoords.z = -cartesianCoords.x;
   return polarCartesianCoords;
+}
+
+const regularToPolarRM = new Matrix3(0, 0, -1, 0, -1, 0, -1, 0, 0);
+
+export function matrixtoDummyPolar(matrix) {
+  return Matrix3.multiply(matrix, regularToPolarRM);
 }
 
 export function dummyPolarToCartesian(cartesianCoords) {
