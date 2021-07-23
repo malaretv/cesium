@@ -24,6 +24,7 @@ import {
   dummyPolarToCartesian,
   adjustCartesianCoords,
   invAdjustCartesianCoords,
+  matrixtoDummyPolar,
 } from "./adjustCartesian.js";
 
 import {
@@ -304,6 +305,9 @@ function updateBodiesPos() {
     );
 
     updateEntityVectors(false);
+    // if (rotateCameraAroundPointEnabled) {
+    //   rotateCameraAroundPointSunInFront();
+    // }
 
     /*
 console.log("sun pos");
@@ -908,6 +912,34 @@ udpateBodiesPosToDummyPolar(!checked);
 );
 */
 
+function setRotateCameraAroundPointSunInFrontEnabledFunction() {
+  return function (checked) {
+    if (rotateCameraAroundPointEnabled === checked) {
+      return;
+    }
+    rotateCameraAroundPointEnabled = checked;
+
+    if (
+      !rotateCameraAroundPointEnabled &&
+      !Cesium.defined(scene.trackedEntity)
+    ) {
+      camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+      if (cancelOrbitEventHandler) {
+        cancelOrbitEventHandler();
+      }
+    } else {
+      rotateCameraAroundPointSunInFront();
+    }
+  };
+}
+
+var rotateCameraAroundPointEnabled = false;
+// Sandcastle.addToggleButton(
+//   "Anim",
+//   rotateCameraAroundPointEnabled,
+//   setRotateCameraAroundPointSunInFrontEnabledFunction()
+// );
+
 function updateShadowsMaxDist(maxDist) {
   if (viewModel.shadowsMaxDistance == maxDist) {
     return;
@@ -1044,14 +1076,12 @@ export var cartographicCamera = new Cesium.Cartographic();
 var cartographic = new Cesium.Cartographic();
 var camera = viewer.scene.camera;
 var ellipsoid = viewer.scene.globe.ellipsoid;
-var entity = document.getElementById("hud");
 var height = 1;
-viewer.scene.canvas.addEventListener("mousemove", function (e) {
-  // Mouse over the globe to see the cartographic position
-  cartesian = viewer.camera.pickEllipsoid(
-    new Cesium.Cartesian3(e.clientX, e.clientY),
-    ellipsoid
-  );
+
+let handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+handler.setInputAction(({ endPosition }) => {
+  const ray = viewer.camera.getPickRay(endPosition);
+  cartesian = viewer.scene.globe.pick(ray, viewer.scene);
   if (cartesian) {
     cartographic = ellipsoid.cartesianToCartographic(
       invAdjustCartesianCoords(cartesian, isOptimizedPolarTerrain)
@@ -1064,44 +1094,40 @@ viewer.scene.canvas.addEventListener("mousemove", function (e) {
       3
     );
 
-    // Sample the terrain (async) and write the answer to the console.
-    Cesium.sampleTerrain(viewer.terrainProvider, 9, [cartographic]).then(
-      function (samples) {
-        height = samples[0].height;
-        var lbl =
-          "Cursor: (Lon,Lat,H)=" +
-          longitudeString +
-          ",&nbsp;" +
-          latitudeString +
-          ",&nbsp;" +
-          (height * 0.001).toFixed(1);
-        updateCoordsDisplay(lbl);
-
-        var c2cDistance = Cesium.Cartesian3.distance(
-          cartesian,
-          camera.position
-        );
-        var c2cDistanceS;
-        if (c2cDistance < 1000.0) {
-          c2cDistanceS = c2cDistance.toFixed(3) + " m";
-        } else {
-          c2cDistanceS = (c2cDistance / 1000.0).toFixed(3) + " km";
-        }
-        var c2cDistanceLbl = "Observer to Cursor Distance: " + c2cDistanceS;
-        setCamera2CursorDistanceLabel(c2cDistanceLbl);
-      }
-    );
-
-    // entity.position = cartesian;
+    height = cartographic.height;
     var lbl =
-      "Cursor: (Lon,Lat,H)=" + longitudeString + ",&nbsp;" + latitudeString;
+      "Cursor: (Lon,Lat,H)=" +
+      longitudeString +
+      ",&nbsp;" +
+      latitudeString +
+      ",&nbsp;" +
+      (height * 0.001).toFixed(1);
     updateCoordsDisplay(lbl);
+
+    var c2cDistance = Cesium.Cartesian3.distance(cartesian, camera.positionWC);
+    var c2cDistanceS;
+    if (c2cDistance < 1000.0) {
+      c2cDistanceS = c2cDistance.toFixed(3) + " m";
+    } else {
+      c2cDistanceS = (c2cDistance / 1000.0).toFixed(3) + " km";
+    }
+    var c2cDistanceLbl = "Observer to Cursor Distance: " + c2cDistanceS;
+    setCamera2CursorDistanceLabel(c2cDistanceLbl);
   }
+}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+viewer.scene.canvas.addEventListener("click", function (e) {
+  console.log("click");
 });
 
 function rad2deg(radians) {
   var pi = Math.PI;
   return radians * (180 / pi);
+}
+
+function deg2rad(degrees) {
+  var pi = Math.PI;
+  return degrees * (pi / 180);
 }
 
 viewer.camera.moveEnd.addEventListener(function () {
@@ -1288,6 +1314,10 @@ function icrf(scene, time) {
       );
     }
   }
+
+  // if (rotateCameraAroundPointEnabled) {
+  //   rotateCameraAroundPointSunInFront();
+  // }
 }
 scene.preRender.addEventListener(icrf);
 
@@ -1471,6 +1501,113 @@ function getSelectedEntityToSunLinePositions() {
 
 function getSelectedEntityToSunEarthPositions() {
   return [entityCartesianPos, entityToEarthArrowTipPos];
+}
+
+var POICartesianPos = new Cesium.Cartesian3();
+var POIToSunVec = new Cesium.Cartesian3();
+var POIToSunVecNorm = new Cesium.Cartesian3();
+var sunToCameraVec = new Cesium.Cartesian3();
+var cameraPosSunFront = new Cesium.Cartesian3();
+var cameraUp = new Cesium.Cartesian3();
+
+var referenceFramePrimitive;
+
+var cancelOrbitEventHandler = null;
+function rotateCameraAroundPoint(pointCartesianCoords) {
+  if (cancelOrbitEventHandler) cancelOrbitEventHandler();
+
+  pointCartesianCoords = adjustCartesianCoords(
+    pointCartesianCoords,
+    isOptimizedPolarTerrain
+  );
+
+  var transform = Cesium.Transforms.eastNorthUpToFixedFrame(
+    pointCartesianCoords,
+    ellipsoid
+  );
+
+  // View in east-north-up frame
+  camera.constrainedAxis = Cesium.Cartesian3.UNIT_Z;
+  camera.lookAtTransform(transform);
+
+  const deltaAngle = deg2rad(0.5);
+  cancelOrbitEventHandler = viewer.clock.onTick.addEventListener(() => {
+    viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, deltaAngle);
+  });
+}
+
+function rotateCameraAroundPointSunInFront() {
+  if (cancelOrbitEventHandler) cancelOrbitEventHandler();
+
+  // testing on static entity
+  var POI = locationsInfo["Haworth_1"];
+  var POICartographicPos = Cesium.Cartographic.fromDegrees(...POI, ellipsoid);
+  Cesium.Cartographic.toCartesian(
+    POICartographicPos,
+    ellipsoid,
+    POICartesianPos
+  );
+  POICartesianPos = adjustCartesianCoords(
+    POICartesianPos,
+    isOptimizedPolarTerrain
+  );
+
+  var transform = Cesium.Transforms.eastNorthUpToFixedFrame(
+    POICartesianPos,
+    ellipsoid
+  );
+
+  // const p = camera?.pitch ?? -deg2rad(40);
+  // const m =
+  //     camera?.magnitude ?? 2000;
+
+  // View in east-north-up frame
+  camera.constrainedAxis = Cesium.Cartesian3.UNIT_Z;
+  camera.lookAtTransform(
+    transform
+    // new Cesium.HeadingPitchRange(0, p, m)
+  );
+
+  //  referenceFramePrimitive = scene.primitives.add(
+  //   new Cesium.DebugModelMatrixPrimitive({
+  //     modelMatrix: transform,
+  //     length: 10000.0,
+  //   })
+  // );
+
+  const deltaAngle = deg2rad(0.5);
+  cancelOrbitEventHandler = viewer.clock.onTick.addEventListener(() => {
+    viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, deltaAngle);
+  });
+
+  // // POI to sun vector
+  // Cesium.Cartesian3.subtract(sunPosSPICE, POICartesianPos, POIToSunVec);
+  // Cesium.Cartesian3.normalize(POIToSunVec, POIToSunVecNorm);
+  // // sun to camera vector
+  // Cesium.Cartesian3.negate(POIToSunVecNorm, sunToCameraVec);
+
+  // // camera to POI distance
+  // var C2POIDist = Cesium.Cartesian3.distance(camera.position, POICartesianPos);
+
+  // Cesium.Cartesian3.multiplyByScalar(
+  //   sunToCameraVec,
+  //   C2POIDist,
+  //   cameraPosSunFront
+  // );
+  // Cesium.Cartesian3.add(
+  //   cameraPosSunFront,
+  //   POICartesianPos,
+  //   cameraPosSunFront
+  // );
+
+  // // up direction
+  // Cesium.Cartesian3.normalize(POICartesianPos, cameraUp);
+  // // Cesium.Cartesian3.negate(cameraUp, cameraUp);
+
+  // // move the camera
+  // camera.position = cameraPosSunFront;
+  // camera.direction = POIToSunVecNorm;
+  // camera.up = cameraUp;
 }
 
 /*
@@ -1694,11 +1831,12 @@ function loadStateFromQueryString() {
     // var redRectangle = viewer.entities.add({
     //   rectangle: {
     //     coordinates: rectangle,
-    //     material: Cesium.Color.BLUE.withAlpha(0.5),
-    //     // outline: true,
-    //     // outlineColor: Cesium.Color.RED,
+    //     // material: Cesium.Color.RED.withAlpha(0.5),
+    //     outline: true,
+    //     outlineColor: Cesium.Color.RED,
     //     // height: 2000,
-    //     clampToGround: true,
+    //     fill: false,
+    //     // clampToGround: true,
     //   },
     // });
 
