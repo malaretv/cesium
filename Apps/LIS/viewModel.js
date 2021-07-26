@@ -28,6 +28,7 @@ export var viewModel = {
 
   // terrain
   _terrainProviderName: undefined,
+  _terrainVertexNormalsEnabled: true,
   _terrainMeshMaxError: 1.0,
 
   // contour
@@ -134,6 +135,16 @@ export var viewModel = {
 
   set terrainProviderName(value) {
     this._terrainProviderName = value;
+    saveStateToQueryString();
+  },
+
+  // terrain vertex normals
+  get terrainVertexNormalsEnabled() {
+    return this._terrainVertexNormalsEnabled;
+  },
+
+  set terrainVertexNormalsEnabled(value) {
+    this._terrainVertexNormalsEnabled = value;
     saveStateToQueryString();
   },
 
@@ -366,6 +377,9 @@ export function saveStateToQueryString() {
   // terrain
   var terrainProviderName = viewModel.terrainProviderName;
 
+  // terrain normals enabled
+  var terrainVertexNormalsEnabled = viewModel.terrainVertexNormalsEnabled;
+
   // terrain mesh max error
   var terrainMeshMaxError = viewModel.terrainMeshMaxError;
 
@@ -405,6 +419,7 @@ export function saveStateToQueryString() {
     stopUTCTime,
     lightSourceIdx,
     terrainProviderName,
+    terrainVertexNormalsEnabled,
     terrainMeshMaxError,
     contourEnabled,
     //    atmSimuEnabled,

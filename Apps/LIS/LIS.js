@@ -10,6 +10,7 @@ import {
   newTerrainNameSelected,
   resetTerrain,
   updateTerrainMeshMaxError,
+  updateTerrainVertexNormalsEnabled,
 } from "./terrainProvider.js";
 
 import {
@@ -43,6 +44,7 @@ Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(1737400, 1737400, 1737400);
 var defaultUTCTime = "2022-12-04T00:00:00.000Z";
 var defaultMeshMaxError = 10;
 var defaultTerrainName = "automatic terrain";
+var defaultTerrainNormalsEnabled = true;
 
 var defaultLocationName = "Tycho";
 
@@ -779,12 +781,6 @@ viewer.dataSources.dataSourceAdded.addEventListener(function () {
   }
 });
 
-function setTerrainMeshMaxErrorFunction(maxErr) {
-  return function () {
-    updateTerrainMeshMaxError(maxErr);
-  };
-}
-
 var maxErrorList = [/*0.01, 0.1, */ 1, 10, 20, 50];
 var terrainMaxErrOptions = [];
 for (var i = 0; i < maxErrorList.length; i++) {
@@ -838,6 +834,28 @@ if (window.LIS_MODE === "development") {
   // get checkbox input to be able to modify it programmatically
   var enableSkirtsButton = document.getElementById("toolbar").lastChild;
   var enableSkirtsCbx = enableSkirtsButton.firstChild.firstChild; // input
+}
+
+function setTerrainNormalsEnabledFunction() {
+  return function (checked) {
+    updateTerrainVertexNormalsEnabled(checked);
+  };
+}
+
+Sandcastle.addToggleButton(
+  "shadow relief, cos(I)",
+  viewModel.terrainVertexNormalsEnabled,
+  setTerrainNormalsEnabledFunction()
+);
+
+// get checkbox input to be able to modify it programmatically
+var enableVertexNormalsButton = document.getElementById("toolbar").lastChild;
+var enableVertexNormalsCbx = enableVertexNormalsButton.firstChild.firstChild; // input
+
+function setTerrainMeshMaxErrorFunction(maxErr) {
+  return function () {
+    updateTerrainMeshMaxError(maxErr);
+  };
 }
 
 function setTerrainShadowsEnabledFunction() {
@@ -1117,7 +1135,7 @@ handler.setInputAction(({ endPosition }) => {
 }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
 viewer.scene.canvas.addEventListener("click", function (e) {
-  console.log("click");
+  // console.log("click");
 });
 
 function rad2deg(radians) {
@@ -1146,7 +1164,7 @@ viewer.camera.moveEnd.addEventListener(function () {
     camLat.toFixed(3) +
     ",&nbsp;" +
     camH.toFixed(1) +
-    " - " +
+    "&nbsp;&nbsp;--&nbsp;&nbsp;" +
     "(R,P,Y)=" +
     rad2deg(camera.roll).toFixed(1) +
     ",&nbsp;" +
@@ -1639,7 +1657,7 @@ var terrainMeshMaxErrorIdx = maxErrorList.indexOf(defaultMeshMaxError);
 if (terrainMeshMaxErrorIdx) {
   terrainMaxErrMenu.selectedIndex = terrainMeshMaxErrorIdx;
 }
-newTerrainNameSelected(defaultTerrainName, true);
+newTerrainNameSelected(defaultTerrainName, defaultTerrainNormalsEnabled, true);
 initializeTime(defaultUTCTime);
 
 // set location
@@ -1762,6 +1780,14 @@ function loadStateFromQueryString() {
       terrainMaxErrMenu.selectedIndex = terrainMeshMaxErrorIdx;
       terrainMaxErrOptions[terrainMeshMaxErrorIdx].onselect();
     }
+  }
+
+  // terrain vertex normals enabled
+  if (searchParams.has("terrainVertexNormalsEnabled")) {
+    var checked = searchParams.get("terrainVertexNormalsEnabled") === "true";
+    enableVertexNormalsCbx.checked = checked;
+    var setVertextNormalsEnabled = setTerrainNormalsEnabledFunction();
+    setVertextNormalsEnabled(checked);
   }
 
   // terrain provider
