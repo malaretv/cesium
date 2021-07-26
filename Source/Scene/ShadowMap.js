@@ -1443,8 +1443,9 @@ function checkVisibility(shadowMap, frameState) {
     } else {
       shadowMap._darkness = shadowMap.darkness;
     }
+    // console.log("dot " + dot);
 
-    if (dot < -0.1) {
+    if (dot < -0.00436) {
       shadowMap._outOfView = true;
       shadowMap._needsUpdate = false;
       return;
