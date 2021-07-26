@@ -1452,7 +1452,6 @@ function checkVisibility(shadowMap, frameState) {
     //!!! TEMPORARY SOLUTION FOR FIXING SHADOW MAP COMPUTATION WHEN THE SUN IS A LITTLE BIT BELOW THE HORIZON
     // THE BEST THRESHOLD TO USE CHANGES DEPENDING ON THE LATITUDE
     // TO BE FIXED IN ANOTHER WAY!!!!!!!
-    // console.log("dot " + dot);
 
     // computing current viewer latitude
     var cameraPosCarto = frameState.mapProjection.ellipsoid.cartesianToCartographic(
@@ -1461,8 +1460,6 @@ function checkVisibility(shadowMap, frameState) {
     );
     var cameraLat = CesiumMath.toDegrees(cameraPosCarto.latitude);
 
-    // console.log("camera latitude " + cameraLat);
-
     var polarLat = 75;
     var dotTh;
     if (Math.abs(cameraLat) < polarLat) {
@@ -1470,6 +1467,9 @@ function checkVisibility(shadowMap, frameState) {
     } else {
       dotTh = -0.1;
     }
+    // console.log("camera latitude " + cameraLat);
+    // console.log("dotTh " + dotTh);
+    // console.log("dot " + dot);
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     if (dot < dotTh) {
