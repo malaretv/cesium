@@ -1,5 +1,7 @@
 import * as Cesium from "../../Source/Cesium.js";
 
+import { ProviderViewModel } from "../../Source/Cesium.js";
+
 import {
   cartographicCamera,
   setCurrTerrainLabelVisible,
@@ -358,79 +360,79 @@ var JPLProvider = new Cesium.CesiumTerrainProvider({
   requestVertexNormals: false,
 });
 
-// Automatic
-const automaticTerrainModel = new Cesium.ProviderViewModel({
-  name: "Automatic Terrain",
-  iconUrl: "./images/TerrainProviders/terrain_auto.png",
-  tooltip: "Automatic Terrain Selection based on latitude",
-  creationFunction: function () {
-    return newTerrainNameSelected("automatic terrain");
-  },
-});
-automaticTerrainModel.terrainName = "automatic terrain";
-
-// Automatic - No Normals
-const automaticTerrainNoNormalsModel = new Cesium.ProviderViewModel({
-  name: "Automatic Terrain - No Normals",
-  iconUrl: "./images/TerrainProviders/terrain_no_normals_auto.png",
-  tooltip: "Automatic Terrain Selection based on latitude",
-  creationFunction: function () {
-    return newTerrainNameSelected("automatic terrain - no normals");
-  },
-});
-// add attribute
-automaticTerrainNoNormalsModel.terrainName = "automatic terrain - no normals";
-
-// SLDEM LOLA
-const SldemLolaModel = new Cesium.ProviderViewModel({
-  name: "SLDEM LOLA",
-  iconUrl: "./images/TerrainProviders/terrain.png",
-  tooltip: "SLDEM LOLA",
-  creationFunction: function () {
-    return newTerrainNameSelected("sldem_lola");
-  },
-});
-// add attribute
-SldemLolaModel.terrainName = "sldem_lola";
-
-// SLDEM LOLA - NO NORMALS
-const SldemLolaNoNormalsModel = new Cesium.ProviderViewModel({
-  name: "SLDEM LOLA - No Normals",
-  iconUrl: "./images/TerrainProviders/terrain_no_normals.png",
-  tooltip: "SLDEM LOLA - No Normals",
-  creationFunction: function () {
-    return newTerrainNameSelected("sldem_lola - no normals");
-  },
-});
-// add attribute
-SldemLolaNoNormalsModel.terrainName = "sldem_lola - no normals";
-
-// GOTM (HI RES)
-const GOTMHRModel = new Cesium.ProviderViewModel({
-  name: "Polar Optimized",
-  iconUrl: "./images/TerrainProviders/gotm.png",
-  tooltip: "Polar Optimized",
-  creationFunction: function () {
-    return newTerrainNameSelected("GOTM");
-  },
-});
-// add attribute
-GOTMHRModel.terrainName = "GOTM";
-
-// GOTM (HI RES) - No Normals
-const GOTMHRNoNormalsModel = new Cesium.ProviderViewModel({
-  name: "Polar Optimized - No Normals",
-  iconUrl: "./images/TerrainProviders/terrain_no_normals.png",
-  tooltip: "Polar Optimized - No Normals",
-  creationFunction: function () {
-    return newTerrainNameSelected("GOTM - no normals");
-  },
-});
-// add attribute
-GOTMHRNoNormalsModel.terrainName = "GOTM - no normals";
-
 export function initializeTerrainPicker() {
   viewer.baseLayerPicker.viewModel.terrainProviderViewModels.removeAll();
+
+  // Automatic
+  const automaticTerrainModel = new ProviderViewModel({
+    name: "Automatic Terrain",
+    iconUrl: "./images/TerrainProviders/terrain_auto.png",
+    tooltip: "Automatic Terrain Selection based on latitude",
+    creationFunction: function () {
+      return newTerrainNameSelected("automatic terrain");
+    },
+  });
+  automaticTerrainModel.terrainName = "automatic terrain";
+
+  // Automatic - No Normals
+  const automaticTerrainNoNormalsModel = new ProviderViewModel({
+    name: "Automatic Terrain - No Normals",
+    iconUrl: "./images/TerrainProviders/terrain_no_normals_auto.png",
+    tooltip: "Automatic Terrain Selection based on latitude",
+    creationFunction: function () {
+      return newTerrainNameSelected("automatic terrain - no normals");
+    },
+  });
+  // add attribute
+  automaticTerrainNoNormalsModel.terrainName = "automatic terrain - no normals";
+
+  // SLDEM LOLA
+  const SldemLolaModel = new ProviderViewModel({
+    name: "SLDEM LOLA",
+    iconUrl: "./images/TerrainProviders/terrain.png",
+    tooltip: "SLDEM LOLA",
+    creationFunction: function () {
+      return newTerrainNameSelected("sldem_lola");
+    },
+  });
+  // add attribute
+  SldemLolaModel.terrainName = "sldem_lola";
+
+  // SLDEM LOLA - NO NORMALS
+  const SldemLolaNoNormalsModel = new ProviderViewModel({
+    name: "SLDEM LOLA - No Normals",
+    iconUrl: "./images/TerrainProviders/terrain_no_normals.png",
+    tooltip: "SLDEM LOLA - No Normals",
+    creationFunction: function () {
+      return newTerrainNameSelected("sldem_lola - no normals");
+    },
+  });
+  // add attribute
+  SldemLolaNoNormalsModel.terrainName = "sldem_lola - no normals";
+
+  // GOTM (HI RES)
+  const GOTMHRModel = new ProviderViewModel({
+    name: "Polar Optimized",
+    iconUrl: "./images/TerrainProviders/gotm.png",
+    tooltip: "Polar Optimized",
+    creationFunction: function () {
+      return newTerrainNameSelected("GOTM");
+    },
+  });
+  // add attribute
+  GOTMHRModel.terrainName = "GOTM";
+
+  // GOTM (HI RES) - No Normals
+  const GOTMHRNoNormalsModel = new ProviderViewModel({
+    name: "Polar Optimized - No Normals",
+    iconUrl: "./images/TerrainProviders/terrain_no_normals.png",
+    tooltip: "Polar Optimized - No Normals",
+    creationFunction: function () {
+      return newTerrainNameSelected("GOTM - no normals");
+    },
+  });
+  // add attribute
+  GOTMHRNoNormalsModel.terrainName = "GOTM - no normals";
 
   var providerTerrainModels = [];
   providerTerrainModels.push(automaticTerrainModel);
