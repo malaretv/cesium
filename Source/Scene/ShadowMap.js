@@ -1453,25 +1453,26 @@ function checkVisibility(shadowMap, frameState) {
     // THE BEST THRESHOLD TO USE CHANGES DEPENDING ON THE LATITUDE
     // TO BE FIXED IN ANOTHER WAY!!!!!!!
 
-    // computing current viewer latitude
-    var cameraPosCarto = frameState.mapProjection.ellipsoid.cartesianToCartographic(
-      invAdjustCartesianCoords(sceneCamera.positionWC, isOptimizedPolarTerrain),
-      scratchCartesian1
-    );
-    var cameraLat = CesiumMath.toDegrees(cameraPosCarto.latitude);
+    // // computing current viewer latitude
+    // var cameraPosCarto = frameState.mapProjection.ellipsoid.cartesianToCartographic(
+    //   invAdjustCartesianCoords(sceneCamera.positionWC, isOptimizedPolarTerrain),
+    //   scratchCartesian1
+    // );
+    // var cameraLat = CesiumMath.toDegrees(cameraPosCarto.latitude);
 
-    var polarLat = 75;
-    var dotTh;
-    if (Math.abs(cameraLat) < polarLat) {
-      dotTh = -0.00436;
-    } else {
-      dotTh = -0.1;
-    }
+    // var polarLat = 75;
+    // var dotTh;
+    // if (Math.abs(cameraLat) < polarLat) {
+    //   dotTh = -0.00436;
+    // } else {
+    //   dotTh = -0.1;
+    // }
     // console.log("camera latitude " + cameraLat);
     // console.log("dotTh " + dotTh);
     // console.log("dot " + dot);
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    var dotTh = -0.1;
     if (dot < dotTh) {
       shadowMap._outOfView = true;
       shadowMap._needsUpdate = false;
