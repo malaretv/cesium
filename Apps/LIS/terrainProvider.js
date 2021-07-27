@@ -14,11 +14,16 @@ import { viewModel } from "./viewModel.js";
 
 import { invAdjustCartesianCoords } from "./adjustCartesian.js";
 
+import {
+  isOptimizedPolarTerrain,
+  setOptimizedPolarTerrainEnabled,
+} from "./terrainProviderData.js";
+export { isOptimizedPolarTerrain };
+
 var terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/sldem_lola";
 var terrainResampligMethod = "cubic";
 var terrainMeshScale = 3;
 var terrainMeshAlgorithm = "delatin";
-export var isOptimizedPolarTerrain = false;
 var currTerrainName;
 
 // for automatic regular/polar terrain switch
@@ -120,7 +125,7 @@ function updateTerrainProvider(
   viewer.terrainProvider = createTerrainProvider(requestVertexNormals);
   // check if reference system changed
   var wasOptimizedPolarTerrain = isOptimizedPolarTerrain;
-  isOptimizedPolarTerrain = optimizedPolarTerrain;
+  setOptimizedPolarTerrainEnabled(optimizedPolarTerrain);
 
   maybeUpdateGlobeCartesianPositions(
     wasOptimizedPolarTerrain,
@@ -135,7 +140,7 @@ function setTerrainProvider(terrainProvider, optimizedPolarTerrain) {
   viewer.terrainProvider = terrainProvider;
   // check if reference system changed
   var wasOptimizedPolarTerrain = isOptimizedPolarTerrain;
-  isOptimizedPolarTerrain = optimizedPolarTerrain;
+  setOptimizedPolarTerrainEnabled(optimizedPolarTerrain);
   maybeUpdateGlobeCartesianPositions(
     wasOptimizedPolarTerrain,
     isOptimizedPolarTerrain
