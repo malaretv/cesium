@@ -30,15 +30,6 @@ const NullImageryProvider = createEmptyImageryProvider(
   "png"
 );
 
-const NullModel = new Cesium.ProviderViewModel({
-  name: "None",
-  iconUrl: "./images/ImageryProviders/none.png",
-  tooltip: "None (Plain terrain with shadows)",
-  creationFunction: function () {
-    return NullImageryProvider;
-  },
-});
-
 export var layersInfo = {
   WACNoShadows: {
     name: "WAC Global Albedo",
@@ -141,6 +132,16 @@ function createLayerImageModel(layerObj) {
 
 export function initializeImageryPicker() {
   viewer.baseLayerPicker.viewModel.imageryProviderViewModels.removeAll();
+
+  const NullModel = new Cesium.ProviderViewModel({
+    name: "None",
+    iconUrl: "./images/ImageryProviders/none.png",
+    tooltip: "None (Plain terrain with shadows)",
+    creationFunction: function () {
+      return NullImageryProvider;
+    },
+  });
+
   // viewer.baseLayerPicker.viewModel.terrainProviderViewModels.removeAll();
   var providerViewModels = [];
   providerViewModels.push(NullModel);
