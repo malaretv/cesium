@@ -45,10 +45,10 @@ import PerInstanceColorAppearance from "./PerInstanceColorAppearance.js";
 import Primitive from "./Primitive.js";
 import ShadowMapShader from "./ShadowMapShader.js";
 
-// // TEMPORARY SOLUTION for fixing shadowmap computation when sun is low in the horizon!!!
-// import { invAdjustCartesianCoords } from "../../Apps/LIS/adjustCartesian.js";
+// TEMPORARY SOLUTION for fixing shadowmap computation when sun is low in the horizon!!!
+import { invAdjustCartesianCoords } from "../../Apps/LIS/adjustCartesian.js";
 // import { isOptimizedPolarTerrain } from "../../Apps/LIS/terrainProvider.js";
-// //////////////////////////
+//////////////////////////
 
 /**
  * Use {@link Viewer#shadowMap} to get the scene's shadow map. Do not construct this directly.
@@ -1453,20 +1453,20 @@ function checkVisibility(shadowMap, frameState) {
     // THE BEST THRESHOLD TO USE CHANGES DEPENDING ON THE LATITUDE
     // TO BE FIXED IN ANOTHER WAY!!!!!!!
 
-    // // computing current viewer latitude
-    // var cameraPosCarto = frameState.mapProjection.ellipsoid.cartesianToCartographic(
-    //   invAdjustCartesianCoords(sceneCamera.positionWC, isOptimizedPolarTerrain),
-    //   scratchCartesian1
-    // );
-    // var cameraLat = CesiumMath.toDegrees(cameraPosCarto.latitude);
+    // computing current viewer latitude
+    var cameraPosCarto = frameState.mapProjection.ellipsoid.cartesianToCartographic(
+      invAdjustCartesianCoords(sceneCamera.positionWC, false),
+      scratchCartesian1
+    );
+    var cameraLat = CesiumMath.toDegrees(cameraPosCarto.latitude);
 
-    // var polarLat = 75;
+    var polarLat = 75;
     var dotTh;
-    // if (Math.abs(cameraLat) < polarLat) {
-    //   dotTh = -0.00436;
-    // } else {
-    dotTh = -0.1;
-    // }
+    if (Math.abs(cameraLat) < polarLat) {
+      dotTh = -0.00436;
+    } else {
+      dotTh = -0.1;
+    }
     // console.log("camera latitude " + cameraLat);
     // console.log("dotTh " + dotTh);
     // console.log("dot " + dot);
