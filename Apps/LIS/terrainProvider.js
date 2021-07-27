@@ -20,6 +20,7 @@ var terrainResampligMethod = "cubic";
 var terrainMeshScale = 3;
 var terrainMeshAlgorithm = "delatin";
 export var isOptimizedPolarTerrain = false;
+var currTerrainName;
 
 // for automatic regular/polar terrain switch
 var automaticPolarTerrainTransition = false;
@@ -74,7 +75,9 @@ export function updateTerrainVertexNormalsEnabled(terrainNormalsEnabled) {
 
   viewModel.terrainVertexNormalsEnabled = terrainNormalsEnabled;
   // update terrain provider
-  viewer.terrainProvider = createTerrainProvider(terrainNormalsEnabled);
+  if (currTerrainName) {
+    viewer.terrainProvider = createTerrainProvider(terrainNormalsEnabled);
+  }
 }
 
 export function updateTerrainMeshMaxError(err) {
@@ -84,9 +87,11 @@ export function updateTerrainMeshMaxError(err) {
 
   viewModel.terrainMeshMaxError = err;
   // update terrain provider (only url changed)
-  viewer.terrainProvider = createTerrainProvider(
-    viewModel.terrainVertexNormalsEnabled
-  );
+  if (currTerrainName) {
+    viewer.terrainProvider = createTerrainProvider(
+      viewModel.terrainVertexNormalsEnabled
+    );
+  }
 }
 
 export function resetTerrain() {
@@ -141,7 +146,7 @@ function setTerrainProvider(terrainProvider, optimizedPolarTerrain) {
 // change terrain provider based on terrain name
 function setTerrain(terrainName, terrainNormalsEnabled) {
   if (
-    terrainName === viewModel.terrainProviderName &&
+    terrainName === currTerrainName &&
     terrainNormalsEnabled === viewModel.terrainVertexNormalsEnabled
   ) {
     // nothing to do
@@ -157,9 +162,9 @@ function setTerrain(terrainName, terrainNormalsEnabled) {
   );
   var optimizedPolarTerrain;
 
-  viewModel.terrainProviderName = terrainName;
+  currTerrainName = terrainName;
   viewModel.terrainVertexNormalsEnabled = terrainNormalsEnabled;
-  updateTerrainDisplay("Terrain: " + terrainName);
+  updateTerrainDisplay("Terrain: " + currTerrainName);
 
   if (terrainName === "sldem_lola") {
     terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/sldem_lola";
@@ -263,6 +268,9 @@ export function newTerrainNameSelected(terrainName, updateSelected) {
     );
   }
 
+  // update view model
+  viewModel.terrainProviderName = terrainName;
+
   if (updateSelected) {
     var selectedModelList = viewer.baseLayerPicker.viewModel.terrainProviderViewModels.filter(
       (obj) => {
@@ -290,7 +298,7 @@ function getBestLatTerrainName(lat, height) {
   } else if (Math.abs(lat) < polarDemLatTh - autoDemTransLatTolAdapted) {
     return regularTerrainName;
   } else {
-    return viewModel.terrainName;
+    return currTerrainName;
   }
 }
 
@@ -314,9 +322,17 @@ export function maybeUpdateTerrainProvider(lat, height) {
   }
 
   if (height > autoDemTransitionEnabledAlt) {
-    // high elevation
-    // nothing to do
-    return viewer.terrainProvider;
+    if (currTerrainName) {
+      // high elevation
+      // nothing to do
+      return viewer.terrainProvider;
+    } else {
+      // no terrain initialized. Let's use a default one
+      return setTerrain(
+        regularTerrainName,
+        viewModel.terrainVertexNormalsEnabled
+      );
+    }
   }
 
   // best terrain based on camera location
