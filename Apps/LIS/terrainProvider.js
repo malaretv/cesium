@@ -1,7 +1,5 @@
 import * as Cesium from "../../Source/Cesium.js";
 
-import { ProviderViewModel } from "../../Source/Cesium.js";
-
 import {
   cartographicCamera,
   setCurrTerrainLabelVisible,
@@ -355,7 +353,7 @@ export function initializeTerrainPicker() {
   viewer.baseLayerPicker.viewModel.terrainProviderViewModels.removeAll();
 
   // Automatic
-  const automaticTerrainModel = new ProviderViewModel({
+  const automaticTerrainModel = new Cesium.ProviderViewModel({
     name: "Automatic Terrain",
     iconUrl: "./images/TerrainProviders/terrain_auto.png",
     tooltip: "Automatic Terrain Selection based on latitude",
@@ -366,7 +364,7 @@ export function initializeTerrainPicker() {
   automaticTerrainModel.terrainName = "automatic terrain";
 
   // SLDEM LOLA
-  const SldemLolaModel = new ProviderViewModel({
+  const SldemLolaModel = new Cesium.ProviderViewModel({
     name: "SLDEM LOLA",
     iconUrl: "./images/TerrainProviders/terrain.png",
     tooltip: "SLDEM LOLA",
@@ -378,7 +376,7 @@ export function initializeTerrainPicker() {
   SldemLolaModel.terrainName = "sldem_lola";
 
   // GOTM (HI RES)
-  const GOTMHRModel = new ProviderViewModel({
+  const GOTMHRModel = new Cesium.ProviderViewModel({
     name: "Polar Optimized",
     iconUrl: "./images/TerrainProviders/gotm.png",
     tooltip: "Polar Optimized",
