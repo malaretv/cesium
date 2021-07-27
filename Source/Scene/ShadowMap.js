@@ -47,7 +47,7 @@ import ShadowMapShader from "./ShadowMapShader.js";
 
 // TEMPORARY SOLUTION for fixing shadowmap computation when sun is low in the horizon!!!
 import { invAdjustCartesianCoords } from "../../Apps/LIS/adjustCartesian.js";
-import { isOptimizedPolarTerrain } from "../../Apps/LIS/terrainProvider.js";
+import { isOptimizedPolarTerrain } from "../../Apps/LIS/terrainProviderData.js";
 //////////////////////////
 
 /**

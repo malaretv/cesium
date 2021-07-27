@@ -1,4 +1,6 @@
-import * as Cesium from "../../Source/Cesium.js";
+import CesiumMath from "../../Source/Core/Math.js";
+import CesiumTerrainProvider from "../../Source/Core/CesiumTerrainProvider.js";
+import ProviderViewModel from "../../Source/Widgets/BaseLayerPicker/ProviderViewModel.js";
 
 import {
   cartographicCamera,
@@ -12,12 +14,16 @@ import { viewModel } from "./viewModel.js";
 
 import { invAdjustCartesianCoords } from "./adjustCartesian.js";
 
-var noNormalsNameSuffix = " - no normals";
+import {
+  isOptimizedPolarTerrain,
+  setOptimizedPolarTerrainEnabled,
+} from "./terrainProviderData.js";
+export { isOptimizedPolarTerrain };
+
 var terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/sldem_lola";
 var terrainResampligMethod = "cubic";
 var terrainMeshScale = 3;
 var terrainMeshAlgorithm = "delatin";
-export var isOptimizedPolarTerrain = false;
 var currTerrainName;
 
 // for automatic regular/polar terrain switch
@@ -58,7 +64,7 @@ function buildTerrainUrl() {
 }
 
 function createTerrainProvider(requestVertexNormals) {
-  var terrainProvider = new Cesium.CesiumTerrainProvider({
+  var terrainProvider = new CesiumTerrainProvider({
     url: buildTerrainUrl(),
     requestVertexNormals: requestVertexNormals,
   });
@@ -119,7 +125,7 @@ function updateTerrainProvider(
   viewer.terrainProvider = createTerrainProvider(requestVertexNormals);
   // check if reference system changed
   var wasOptimizedPolarTerrain = isOptimizedPolarTerrain;
-  isOptimizedPolarTerrain = optimizedPolarTerrain;
+  setOptimizedPolarTerrainEnabled(optimizedPolarTerrain);
 
   maybeUpdateGlobeCartesianPositions(
     wasOptimizedPolarTerrain,
@@ -134,7 +140,7 @@ function setTerrainProvider(terrainProvider, optimizedPolarTerrain) {
   viewer.terrainProvider = terrainProvider;
   // check if reference system changed
   var wasOptimizedPolarTerrain = isOptimizedPolarTerrain;
-  isOptimizedPolarTerrain = optimizedPolarTerrain;
+  setOptimizedPolarTerrainEnabled(optimizedPolarTerrain);
   maybeUpdateGlobeCartesianPositions(
     wasOptimizedPolarTerrain,
     isOptimizedPolarTerrain
@@ -315,7 +321,7 @@ export function maybeUpdateTerrainProvider(lat, height) {
       ),
       cartographicCamera
     );
-    lat = Cesium.Math.toDegrees(cartographicCamera.latitude);
+    lat = CesiumMath.toDegrees(cartographicCamera.latitude);
     height = cartographicCamera.height * 0.001; // km
   }
 
@@ -339,12 +345,12 @@ export function maybeUpdateTerrainProvider(lat, height) {
   return setTerrain(bestTerrainName, viewModel.terrainVertexNormalsEnabled);
 }
 
-var usgsLolaProvider = new Cesium.CesiumTerrainProvider({
+var usgsLolaProvider = new CesiumTerrainProvider({
   url: "https://lunar-dem-tiles2.quickmap.io/usgs_lola/",
   requestVertexNormals: true,
 });
 
-var JPLProvider = new Cesium.CesiumTerrainProvider({
+var JPLProvider = new CesiumTerrainProvider({
   url: "https://marshub.s3.amazonaws.com/moon_v14",
   requestVertexNormals: false,
 });
@@ -353,7 +359,7 @@ export function initializeTerrainPicker() {
   viewer.baseLayerPicker.viewModel.terrainProviderViewModels.removeAll();
 
   // Automatic
-  const automaticTerrainModel = new Cesium.ProviderViewModel({
+  const automaticTerrainModel = new ProviderViewModel({
     name: "Automatic Terrain",
     iconUrl: "./images/TerrainProviders/terrain_auto.png",
     tooltip: "Automatic Terrain Selection based on latitude",
@@ -364,7 +370,7 @@ export function initializeTerrainPicker() {
   automaticTerrainModel.terrainName = "automatic terrain";
 
   // SLDEM LOLA
-  const SldemLolaModel = new Cesium.ProviderViewModel({
+  const SldemLolaModel = new ProviderViewModel({
     name: "SLDEM LOLA",
     iconUrl: "./images/TerrainProviders/terrain.png",
     tooltip: "SLDEM LOLA",
@@ -376,7 +382,7 @@ export function initializeTerrainPicker() {
   SldemLolaModel.terrainName = "sldem_lola";
 
   // GOTM (HI RES)
-  const GOTMHRModel = new Cesium.ProviderViewModel({
+  const GOTMHRModel = new ProviderViewModel({
     name: "Polar Optimized",
     iconUrl: "./images/TerrainProviders/gotm.png",
     tooltip: "Polar Optimized",
