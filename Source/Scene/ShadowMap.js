@@ -47,7 +47,7 @@ import ShadowMapShader from "./ShadowMapShader.js";
 
 // TEMPORARY SOLUTION for fixing shadowmap computation when sun is low in the horizon!!!
 import { invAdjustCartesianCoords } from "../../Apps/LIS/adjustCartesian.js";
-// import { isOptimizedPolarTerrain } from "../../Apps/LIS/terrainProvider.js";
+import { isOptimizedPolarTerrain } from "../../Apps/LIS/terrainProvider.js";
 //////////////////////////
 
 /**
@@ -1455,7 +1455,7 @@ function checkVisibility(shadowMap, frameState) {
 
     // computing current viewer latitude
     var cameraPosCarto = frameState.mapProjection.ellipsoid.cartesianToCartographic(
-      invAdjustCartesianCoords(sceneCamera.positionWC, false),
+      invAdjustCartesianCoords(sceneCamera.positionWC, isOptimizedPolarTerrain),
       scratchCartesian1
     );
     var cameraLat = CesiumMath.toDegrees(cameraPosCarto.latitude);
