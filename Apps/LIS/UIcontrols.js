@@ -1,4 +1,4 @@
-import { Cartesian3 } from "../../Source/Cesium.js";
+import { Cartesian3, Matrix4 } from "../../Source/Cesium.js";
 
 import { viewer, locationsInfo, setLocation } from "./LIS.js";
 
@@ -127,6 +127,8 @@ const deltaT = 10;
 function submit(event) {
   hideFormError();
 
+  var goOK = false;
+
   const value = gotoInput.value;
   if (value.includes(",")) {
     // splits string into array off of ',' and converts every item in array to number
@@ -171,6 +173,7 @@ function submit(event) {
         viewer.scene.globe.ellipsoid,
         deltaT
       );
+      goOK = true;
     } else {
       showFormError("Invalid coordinates");
     }
@@ -184,10 +187,21 @@ function submit(event) {
       ];
     if (location !== undefined) {
       setLocation(location);
+      goOK = true;
     } else {
       showFormError("Invalid location");
     }
   }
+
+  if (goOK) {
+    // reset camera transformation when recentering
+    if (viewer.trackedEntity) {
+      viewer.trackedEntity = undefined;
+    } else if (!Matrix4.equals(viewer.camera.transform, Matrix4.IDENTITY)) {
+      viewer.camera.lookAtTransform(Matrix4.IDENTITY);
+    }
+  }
+
   // For this example, don't actually submit the form
   event.preventDefault();
 }
