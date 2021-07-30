@@ -1141,7 +1141,10 @@ var camera = viewer.scene.camera;
 var ellipsoid = viewer.scene.globe.ellipsoid;
 var height = 1;
 
+// EVENTS HANDLING
 let handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+
+// MOUSE MOVE
 handler.setInputAction(({ endPosition }) => {
   const ray = viewer.camera.getPickRay(endPosition);
   cartesian = viewer.scene.globe.pick(ray, viewer.scene);
@@ -1179,6 +1182,7 @@ handler.setInputAction(({ endPosition }) => {
   }
 }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
+// LEFT DOUBLE CLICK
 handler.setInputAction(() => {
   if (
     !Cesium.Matrix4.equals(camera.transform, Cesium.Matrix4.IDENTITY) &&
@@ -1190,9 +1194,134 @@ handler.setInputAction(() => {
   }
 }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
+// LEFT CLICK
 viewer.scene.canvas.addEventListener("click", function (e) {
   // console.log("click");
 });
+
+///////////////////////////////////////////////////////////
+// KEYBOARD NAVIGATION
+//// !!!!SHARED WITH QUICKMAP-3D
+// viewer.canvas.setAttribute('tabindex', '0'); // needed to put focus on the canvas
+function getFlagForKeyCode(keyCode) {
+  switch (keyCode) {
+    case "Down": // IE/Edge specific value
+    case "ArrowDown":
+      return "up";
+    case "Up": // IE/Edge specific value
+    case "ArrowUp":
+      return "down";
+    case "Left": // IE/Edge specific value
+    case "ArrowLeft":
+      return "left";
+    case "Right": // IE/Edge specific value
+    case "ArrowRight":
+      return "right";
+    case "a":
+      return "forward";
+    case "z":
+      return "back";
+    default:
+      return undefined;
+  }
+}
+const flags = {
+  up: {
+    action: "rotateUp",
+    shiftAction: "lookUp",
+  },
+  down: {
+    action: "rotateDown",
+    shiftAction: "lookDown",
+  },
+  left: {
+    action: "rotateLeft",
+    shiftAction: "twistLeft",
+  },
+  right: {
+    action: "rotateRight",
+    shiftAction: "twistRight",
+  },
+  forward: {
+    action: "moveForward",
+  },
+  back: {
+    action: "moveBackward",
+  },
+};
+let isShiftPressed = false;
+function handleKeyDown(e) {
+  if (e.defaultPrevented) {
+    return; // Do nothing if the event was already processed
+  }
+  if (e.key === "Shift") {
+    isShiftPressed = true;
+    return;
+  }
+  var flagName = getFlagForKeyCode(e.key);
+
+  if (typeof flagName !== "undefined") {
+    flags[flagName].active = true;
+  }
+}
+function handleKeyUp(e) {
+  if (e.defaultPrevented) {
+    return; // Do nothing if the event was already processed
+  }
+  if (e.key === "Shift") {
+    isShiftPressed = false;
+    return;
+  }
+  var flagName = getFlagForKeyCode(e.key);
+  if (typeof flagName !== "undefined") {
+    flags[flagName].active = false;
+  }
+}
+document.addEventListener("keydown", handleKeyDown, false);
+
+document.addEventListener("keyup", handleKeyUp, false);
+
+const _rotateRateRangeAdjustment = viewer.scene.globe.ellipsoid.maximumRadius;
+const _rotateFactor = 1.0 / _rotateRateRangeAdjustment;
+const _rotateMaximum = 1.77;
+const _rotateMinimum = 1.0 / 5000.0;
+function handleKeyboardControls(clock) {
+  const cameraHeight = viewer.scene.globe.ellipsoid.cartesianToCartographic(
+    viewer.camera.position
+  ).height;
+  const moveRate = cameraHeight / 100.0;
+
+  var rho = Cesium.Cartesian3.magnitude(viewer.camera.position);
+
+  const rotationRate =
+    Math.max(
+      Math.min(
+        _rotateMaximum,
+        _rotateFactor * (rho - _rotateRateRangeAdjustment)
+      ),
+      _rotateMinimum
+    ) * 0.01;
+
+  Object.entries(flags).forEach(([key, { active, action, shiftAction }]) => {
+    if (active) {
+      const op = (isShiftPressed ? shiftAction : action) ?? action;
+      let rate;
+      if (op.includes("move")) rate = moveRate;
+      if (op.includes("rotate")) {
+        rate = rotationRate;
+        console.log(rotationRate);
+      }
+      if (op.includes("look")) {
+        rate = 0.01;
+      }
+      viewer?.camera?.[op]?.(rate);
+    }
+  });
+}
+
+viewer.clock.onTick.addEventListener(handleKeyboardControls);
+// KEYBOARD NAVIGATION - END
+///////////////////////////////////////////////////////////
 
 function rad2deg(radians) {
   var pi = Math.PI;
