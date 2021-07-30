@@ -28,9 +28,16 @@ export function cartesianToDummyPolar(cartesianCoords) {
 }
 
 const regularToPolarRM = new Matrix3(0, 0, -1, 0, -1, 0, -1, 0, 0);
+const regularToPolarRMI = new Matrix3(0, 0, -1, 0, -1, 0, -1, 0, 0);
 
-export function matrixtoDummyPolar(matrix) {
-  return Matrix3.multiply(matrix, regularToPolarRM);
+var matrix3Scratch = new Matrix3();
+
+export function matrixToDummyPolar(matrix) {
+  return Matrix3.multiply(regularToPolarRMI, matrix, matrix3Scratch);
+}
+
+export function matrixDummyPolarToRegular(matrix) {
+  return Matrix3.multiply(regularToPolarRM, matrix, matrix3Scratch);
 }
 
 export function dummyPolarToCartesian(cartesianCoords) {

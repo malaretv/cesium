@@ -25,7 +25,8 @@ import {
   dummyPolarToCartesian,
   adjustCartesianCoords,
   invAdjustCartesianCoords,
-  matrixtoDummyPolar,
+  matrixToDummyPolar,
+  matrixDummyPolarToRegular,
 } from "./adjustCartesian.js";
 
 import {
@@ -229,11 +230,26 @@ function updateEntitiesPos() {
   }
 }
 
+var newCameraPos;
+var newCameraDir;
+var newCameraUp;
+var cameraR = new Cesium.Matrix3();
+var cameraT = new Cesium.Cartesian3();
 export function updateGlobeCartesianPositions() {
-  var trackedEntity = viewer.trackedEntity;
-  if (trackedEntity) {
-    // untrack the current entity in order to properly rotate around the globe center
-    viewer.trackedEntity = undefined;
+  var transform = camera.transform;
+  var updateTransform = false;
+  if (!Cesium.Matrix4.equals(transform, Cesium.Matrix4.IDENTITY)) {
+    transform = camera.transform;
+    Cesium.Matrix4.getMatrix3(transform, cameraR);
+    Cesium.Matrix4.getTranslation(transform, cameraT);
+    if (viewer.trackedEntity) {
+      // untrack the current entity in order to custom update the camera transform matrix
+      viewer.trackedEntity = undefined;
+    } else {
+      // reset camera transform
+      camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+    }
+    updateTransform = true;
   }
   updateBodiesPosToDummyPolar();
   updateEntitiesPos();
@@ -242,17 +258,46 @@ export function updateGlobeCartesianPositions() {
   updateNACImage();
 
   // preserve camera position/orientation
-  var newCameraPos;
-  var newCameraDir;
-  var newCameraUp;
   if (isOptimizedPolarTerrain) {
     newCameraPos = cartesianToDummyPolar(camera.position);
     newCameraDir = cartesianToDummyPolar(camera.direction);
     newCameraUp = cartesianToDummyPolar(camera.up);
+    if (updateTransform) {
+      // update camera rotation/translation
+      cameraR = matrixToDummyPolar(cameraR);
+      cameraT = cartesianToDummyPolar(cameraT);
+    }
   } else {
     newCameraPos = dummyPolarToCartesian(camera.position);
     newCameraDir = dummyPolarToCartesian(camera.direction);
     newCameraUp = dummyPolarToCartesian(camera.up);
+    if (updateTransform) {
+      // update camera rotation/translation
+      cameraR = matrixDummyPolarToRegular(cameraR);
+      cameraT = dummyPolarToCartesian(cameraT);
+    }
+  }
+
+  if (updateTransform) {
+    // update transform
+    Cesium.Matrix4.fromRotationTranslation(cameraR, cameraT, transform);
+    camera.lookAtTransform(transform);
+    var invTransform = camera.inverseTransform;
+
+    // update camera position and orientation based on camera transformation
+    Cesium.Matrix4.multiplyByPoint(invTransform, newCameraPos, newCameraPos);
+
+    Cesium.Matrix4.multiplyByPointAsVector(
+      invTransform,
+      newCameraDir,
+      newCameraDir
+    );
+
+    Cesium.Matrix4.multiplyByPointAsVector(
+      invTransform,
+      newCameraUp,
+      newCameraUp
+    );
   }
 
   camera.position = newCameraPos;
@@ -1133,6 +1178,17 @@ handler.setInputAction(({ endPosition }) => {
     setCamera2CursorDistanceLabel(c2cDistanceLbl);
   }
 }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+handler.setInputAction(() => {
+  if (
+    !Cesium.Matrix4.equals(camera.transform, Cesium.Matrix4.IDENTITY) &&
+    !viewer.trackedEntity
+  ) {
+    // console.log("reset transform");
+    // reset camera transfor to emulate Cesium behavior when an entity is tracked
+    camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+  }
+}, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
 viewer.scene.canvas.addEventListener("click", function (e) {
   // console.log("click");
