@@ -1249,6 +1249,10 @@ const flags = {
     action: "moveBackward",
   },
 };
+
+// for optimization. Will contain the active keys
+const flagsActive = {};
+
 let isShiftPressed = false;
 function handleKeyDown(e) {
   if (e.defaultPrevented) {
@@ -1262,6 +1266,8 @@ function handleKeyDown(e) {
 
   if (typeof flagName !== "undefined") {
     flags[flagName].active = true;
+    // add to active flags
+    flagsActive[flagName] = flags[flagName];
   }
 }
 function handleKeyUp(e) {
@@ -1274,7 +1280,11 @@ function handleKeyUp(e) {
   }
   var flagName = getFlagForKeyCode(e.key);
   if (typeof flagName !== "undefined") {
-    flags[flagName].active = false;
+    if (flags[flagName].active === true) {
+      flags[flagName].active = false;
+      // remove from active flags
+      delete flagsActive[flagName];
+    }
   }
 }
 document.addEventListener("keydown", handleKeyDown, false);
@@ -1286,36 +1296,39 @@ const _rotateFactor = 1.0 / _rotateRateRangeAdjustment;
 const _rotateMaximum = 1.77;
 const _rotateMinimum = 1.0 / 5000.0;
 function handleKeyboardControls(clock) {
-  const cameraHeight = viewer.scene.globe.ellipsoid.cartesianToCartographic(
-    viewer.camera.position
-  ).height;
-  const moveRate = cameraHeight / 100.0;
+  var moveRate;
+  var rotationRate;
 
-  var rho = Cesium.Cartesian3.magnitude(viewer.camera.position);
-
-  const rotationRate =
-    Math.max(
-      Math.min(
-        _rotateMaximum,
-        _rotateFactor * (rho - _rotateRateRangeAdjustment)
-      ),
-      _rotateMinimum
-    ) * 0.01;
-
-  Object.entries(flags).forEach(([key, { active, action, shiftAction }]) => {
-    if (active) {
-      const op = (isShiftPressed ? shiftAction : action) ?? action;
-      let rate;
-      if (op.includes("move")) rate = moveRate;
-      if (op.includes("rotate")) {
-        rate = rotationRate;
-        console.log(rotationRate);
+  Object.entries(flagsActive).forEach(([key, { action, shiftAction }]) => {
+    const op = (isShiftPressed ? shiftAction : action) ?? action;
+    let rate;
+    if (op.includes("move")) {
+      if (moveRate == null) {
+        const cameraHeight = cartographicCamera.height;
+        moveRate = cameraHeight / 100.0;
       }
-      if (op.includes("look")) {
-        rate = 0.01;
-      }
-      viewer?.camera?.[op]?.(rate);
+      rate = moveRate;
     }
+    if (op.includes("rotate")) {
+      if (rotationRate == null) {
+        var rho = Cesium.Cartesian3.magnitude(viewer.camera.positionWC);
+
+        rotationRate =
+          Math.max(
+            Math.min(
+              _rotateMaximum,
+              _rotateFactor * (rho - _rotateRateRangeAdjustment)
+            ),
+            _rotateMinimum
+          ) * 0.01;
+      }
+      rate = rotationRate;
+      // console.log(rotationRate);
+    }
+    if (op.includes("look")) {
+      rate = 0.01;
+    }
+    viewer?.camera?.[op]?.(rate);
   });
 }
 
