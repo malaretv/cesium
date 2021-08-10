@@ -1019,7 +1019,7 @@ function setShadowsMaxDistanceFunction(maxDist) {
   };
 }
 
-var shadowsMaxDistList = [25, 50, 100, 200 /*, 500, 1000*/]; // km
+var shadowsMaxDistList = [10, 25, 50, 100, 200, 300 /*, 500, 1000*/]; // km
 var shadowsMaxDistOptions = [];
 for (var i = 0; i < shadowsMaxDistList.length; i++) {
   var shadowsMaxDist = shadowsMaxDistList[i];
