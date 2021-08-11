@@ -352,9 +352,9 @@ function updateBodiesPos() {
     );
 
     updateEntityVectors(false);
-    // if (rotateCameraAroundPointEnabled) {
-    //   rotateCameraAroundPointSunInFront();
-    // }
+    if (rotateCameraAroundPointSunInFrontEnabled) {
+      rotateCameraAroundPointSunInFront(mouseClickPosCartesian);
+    }
 
     /*
 console.log("sun pos");
@@ -975,12 +975,21 @@ udpateBodiesPosToDummyPolar(!checked);
 );
 */
 
-function setRotateCameraAroundPointSunInFrontEnabledFunction() {
+function setRotateCameraAroundPointEnabledFunction() {
   return function (checked) {
     if (rotateCameraAroundPointEnabled === checked) {
       return;
     }
     rotateCameraAroundPointEnabled = checked;
+
+    // make sure fly around is disabled
+    if (
+      rotateCameraAroundPointEnabled &&
+      rotateCameraAroundPointSunInFrontEnabled
+    ) {
+      var setRotateCameraAroundPointSunInFrontEnabled = setRotateCameraAroundPointSunInFrontEnabledFunction();
+      setRotateCameraAroundPointSunInFrontEnabled(false);
+    }
 
     if (
       !rotateCameraAroundPointEnabled &&
@@ -990,18 +999,43 @@ function setRotateCameraAroundPointSunInFrontEnabledFunction() {
       if (cancelOrbitEventHandler) {
         cancelOrbitEventHandler();
       }
+      mouseClickPosCartesian = undefined;
     } else {
-      rotateCameraAroundPointSunInFront();
+      rotateCameraAroundPoint(mouseClickPosCartesian);
     }
   };
 }
 
-var rotateCameraAroundPointEnabled = false;
-// Sandcastle.addToggleButton(
-//   "Anim",
-//   rotateCameraAroundPointEnabled,
-//   setRotateCameraAroundPointSunInFrontEnabledFunction()
-// );
+function setRotateCameraAroundPointSunInFrontEnabledFunction() {
+  return function (checked) {
+    if (rotateCameraAroundPointSunInFrontEnabled === checked) {
+      return;
+    }
+    rotateCameraAroundPointSunInFrontEnabled = checked;
+
+    // make sure fly around is disabled
+    if (
+      rotateCameraAroundPointSunInFrontEnabled &&
+      rotateCameraAroundPointEnabled
+    ) {
+      var setRotateCameraAroundPointEnabled = setRotateCameraAroundPointEnabledFunction();
+      setRotateCameraAroundPointEnabled(false);
+    }
+
+    if (
+      !rotateCameraAroundPointSunInFrontEnabled &&
+      !Cesium.defined(scene.trackedEntity)
+    ) {
+      camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+      if (cancelOrbitEventHandler) {
+        cancelOrbitEventHandler();
+      }
+      mouseClickPosCartesian = undefined;
+    } else {
+      rotateCameraAroundPointSunInFront(mouseClickPosCartesian);
+    }
+  };
+}
 
 function updateShadowsMaxDist(maxDist) {
   if (viewModel.shadowsMaxDistance == maxDist) {
@@ -1042,6 +1076,20 @@ function setAtmSimuEnabledFunction() {
     viewModel.atmSimuEnabled = checked;
   };
 }
+
+var rotateCameraAroundPointEnabled = false;
+Sandcastle.addToggleButton(
+  "Fly around point",
+  rotateCameraAroundPointEnabled,
+  setRotateCameraAroundPointEnabledFunction()
+);
+
+var rotateCameraAroundPointSunInFrontEnabled = false;
+Sandcastle.addToggleButton(
+  "Force Sun in Front",
+  rotateCameraAroundPointSunInFrontEnabled,
+  setRotateCameraAroundPointSunInFrontEnabledFunction()
+);
 
 /*
 Sandcastle.addToggleButton(
@@ -1133,7 +1181,7 @@ function updateNACImage() {
 }
 
 // SHOW COORDINATES
-var cartesian = new Cesium.Cartesian3();
+var mousePosCartesian = new Cesium.Cartesian3();
 var cartesianCamera = new Cesium.Cartesian3();
 export var cartographicCamera = new Cesium.Cartographic();
 var cartographic = new Cesium.Cartographic();
@@ -1147,10 +1195,10 @@ let handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
 // MOUSE MOVE
 handler.setInputAction(({ endPosition }) => {
   const ray = viewer.camera.getPickRay(endPosition);
-  cartesian = viewer.scene.globe.pick(ray, viewer.scene);
-  if (cartesian) {
+  mousePosCartesian = viewer.scene.globe.pick(ray, viewer.scene);
+  if (mousePosCartesian) {
     cartographic = ellipsoid.cartesianToCartographic(
-      invAdjustCartesianCoords(cartesian, isOptimizedPolarTerrain)
+      invAdjustCartesianCoords(mousePosCartesian, isOptimizedPolarTerrain)
     );
     //console.log(cartographic);
     var longitudeString = Cesium.Math.toDegrees(cartographic.longitude).toFixed(
@@ -1170,7 +1218,10 @@ handler.setInputAction(({ endPosition }) => {
       (height * 0.001).toFixed(1);
     updateCoordsDisplay(lbl);
 
-    var c2cDistance = Cesium.Cartesian3.distance(cartesian, camera.positionWC);
+    var c2cDistance = Cesium.Cartesian3.distance(
+      mousePosCartesian,
+      camera.positionWC
+    );
     var c2cDistanceS;
     if (c2cDistance < 1000.0) {
       c2cDistanceS = c2cDistance.toFixed(3) + " m";
@@ -1195,9 +1246,22 @@ handler.setInputAction(() => {
 }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
 // LEFT CLICK
-viewer.scene.canvas.addEventListener("click", function (e) {
-  // console.log("click");
-});
+var mouseClickPosCartesian;
+handler.setInputAction(() => {
+  if (
+    (rotateCameraAroundPointEnabled ||
+      rotateCameraAroundPointSunInFrontEnabled) &&
+    !mouseClickPosCartesian
+  ) {
+    mouseClickPosCartesian = Cesium.Cartesian3.clone(mousePosCartesian);
+    // start rotating
+    if (rotateCameraAroundPointSunInFrontEnabled) {
+      initializeRotateCameraAroundPointSunInFront(mouseClickPosCartesian);
+    } else {
+      rotateCameraAroundPoint(mouseClickPosCartesian);
+    }
+  }
+}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
 ///////////////////////////////////////////////////////////
 // KEYBOARD NAVIGATION
@@ -1337,13 +1401,11 @@ viewer.clock.onTick.addEventListener(handleKeyboardControls);
 ///////////////////////////////////////////////////////////
 
 function rad2deg(radians) {
-  var pi = Math.PI;
-  return radians * (180 / pi);
+  return radians * (180.0 / Math.PI);
 }
 
 function deg2rad(degrees) {
-  var pi = Math.PI;
-  return degrees * (pi / 180);
+  return degrees * (Math.PI / 180.0);
 }
 
 viewer.camera.moveEnd.addEventListener(function () {
@@ -1532,7 +1594,7 @@ function icrf(scene, time) {
   }
 
   // if (rotateCameraAroundPointEnabled) {
-  //   rotateCameraAroundPointSunInFront();
+  //   rotateCameraAroundPointSunInFront(mouseClickPosCartesian);
   // }
 }
 scene.preRender.addEventListener(icrf);
@@ -1721,21 +1783,17 @@ function getSelectedEntityToSunEarthPositions() {
 
 var POICartesianPos = new Cesium.Cartesian3();
 var POIToSunVec = new Cesium.Cartesian3();
-var POIToSunVecNorm = new Cesium.Cartesian3();
-var sunToCameraVec = new Cesium.Cartesian3();
-var cameraPosSunFront = new Cesium.Cartesian3();
-var cameraUp = new Cesium.Cartesian3();
+var POIToCameraVec = new Cesium.Cartesian3();
+var POIToSunOVec = new Cesium.Cartesian3();
+var POIToCameraOVec = new Cesium.Cartesian3();
+var crossVec = new Cesium.Cartesian3();
 
 var referenceFramePrimitive;
 
 var cancelOrbitEventHandler = null;
 function rotateCameraAroundPoint(pointCartesianCoords) {
   if (cancelOrbitEventHandler) cancelOrbitEventHandler();
-
-  pointCartesianCoords = adjustCartesianCoords(
-    pointCartesianCoords,
-    isOptimizedPolarTerrain
-  );
+  if (!pointCartesianCoords) return;
 
   var transform = Cesium.Transforms.eastNorthUpToFixedFrame(
     pointCartesianCoords,
@@ -1752,78 +1810,61 @@ function rotateCameraAroundPoint(pointCartesianCoords) {
   });
 }
 
-function rotateCameraAroundPointSunInFront() {
+function initializeRotateCameraAroundPointSunInFront(pointCartesianCoords) {
   if (cancelOrbitEventHandler) cancelOrbitEventHandler();
-
-  // testing on static entity
-  var POI = locationsInfo["Haworth_1"];
-  var POICartographicPos = Cesium.Cartographic.fromDegrees(...POI, ellipsoid);
-  Cesium.Cartographic.toCartesian(
-    POICartographicPos,
-    ellipsoid,
-    POICartesianPos
-  );
-  POICartesianPos = adjustCartesianCoords(
-    POICartesianPos,
-    isOptimizedPolarTerrain
-  );
+  if (!pointCartesianCoords) return;
 
   var transform = Cesium.Transforms.eastNorthUpToFixedFrame(
-    POICartesianPos,
+    pointCartesianCoords,
     ellipsoid
   );
 
-  // const p = camera?.pitch ?? -deg2rad(40);
-  // const m =
-  //     camera?.magnitude ?? 2000;
-
   // View in east-north-up frame
   camera.constrainedAxis = Cesium.Cartesian3.UNIT_Z;
-  camera.lookAtTransform(
-    transform
-    // new Cesium.HeadingPitchRange(0, p, m)
+  camera.lookAtTransform(transform);
+
+  rotateCameraAroundPointSunInFront(pointCartesianCoords);
+}
+
+const PI2 = 2 * Math.PI;
+function rotateCameraAroundPointSunInFront(pointCartesianCoords) {
+  if (!pointCartesianCoords) return;
+
+  // POI to sun vector
+  Cesium.Cartesian3.subtract(sunPosSPICE, pointCartesianCoords, POIToSunVec);
+  Cesium.Cartesian3.normalize(POIToSunVec, POIToSunVec);
+  // POI to camera vector
+  Cesium.Cartesian3.subtract(
+    camera.positionWC,
+    pointCartesianCoords,
+    POIToCameraVec
   );
+  Cesium.Cartesian3.normalize(POIToCameraVec, POIToCameraVec);
 
-  //  referenceFramePrimitive = scene.primitives.add(
-  //   new Cesium.DebugModelMatrixPrimitive({
-  //     modelMatrix: transform,
-  //     length: 10000.0,
-  //   })
-  // );
+  // compute orthogonal vectors (they are on the same plane)
+  Cesium.Cartesian3.normalize(pointCartesianCoords, POICartesianPos);
+  Cesium.Cartesian3.cross(POIToSunVec, POICartesianPos, POIToSunOVec);
+  Cesium.Cartesian3.cross(POIToCameraVec, POICartesianPos, POIToCameraOVec);
+  // compute angle between then
+  // var toSunVsToCameraAngle = Cesium.Cartesian3.angleBetween(POIToSunOVec, POIToCameraOVec);
+  // Note: Extracted from Cartesian3.angleBetween, for optimization purposes
+  var cosine = Cesium.Cartesian3.dot(POIToSunOVec, POIToCameraOVec);
+  Cesium.Cartesian3.cross(POIToSunOVec, POIToCameraOVec, crossVec);
+  var sine = Cesium.Cartesian3.magnitude(crossVec);
+  var toSunVsToCameraAngle = Math.atan2(sine, cosine);
 
-  const deltaAngle = deg2rad(0.5);
-  cancelOrbitEventHandler = viewer.clock.onTick.addEventListener(() => {
-    viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, deltaAngle);
-  });
+  // adjust the sign of the angle
+  // Use cross product of the two vectors to get the normal of the plane formed by the two vectors.
+  // Then check the dotproduct between that and the original plane normal to see if they are facing
+  // the same direction.
+  if (Cesium.Cartesian3.dot(POICartesianPos, crossVec) < 0) {
+    toSunVsToCameraAngle = PI2 - toSunVsToCameraAngle;
+  }
 
-  // // POI to sun vector
-  // Cesium.Cartesian3.subtract(sunPosSPICE, POICartesianPos, POIToSunVec);
-  // Cesium.Cartesian3.normalize(POIToSunVec, POIToSunVecNorm);
-  // // sun to camera vector
-  // Cesium.Cartesian3.negate(POIToSunVecNorm, sunToCameraVec);
-
-  // // camera to POI distance
-  // var C2POIDist = Cesium.Cartesian3.distance(camera.position, POICartesianPos);
-
-  // Cesium.Cartesian3.multiplyByScalar(
-  //   sunToCameraVec,
-  //   C2POIDist,
-  //   cameraPosSunFront
-  // );
-  // Cesium.Cartesian3.add(
-  //   cameraPosSunFront,
-  //   POICartesianPos,
-  //   cameraPosSunFront
-  // );
-
-  // // up direction
-  // Cesium.Cartesian3.normalize(POICartesianPos, cameraUp);
-  // // Cesium.Cartesian3.negate(cameraUp, cameraUp);
-
-  // // move the camera
-  // camera.position = cameraPosSunFront;
-  // camera.direction = POIToSunVecNorm;
-  // camera.up = cameraUp;
+  // rotate camera for having the sun in front
+  const deltaAngle = toSunVsToCameraAngle - Math.PI;
+  // console.log("rotate camera by angle: " + rad2deg(deltaAngle));
+  viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, deltaAngle);
 }
 
 /*
