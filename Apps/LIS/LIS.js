@@ -1804,7 +1804,7 @@ function rotateCameraAroundPoint(pointCartesianCoords) {
   camera.constrainedAxis = Cesium.Cartesian3.UNIT_Z;
   camera.lookAtTransform(transform);
 
-  const deltaAngle = deg2rad(0.5);
+  const deltaAngle = deg2rad(0.05);
   cancelOrbitEventHandler = viewer.clock.onTick.addEventListener(() => {
     viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, deltaAngle);
   });
