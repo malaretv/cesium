@@ -803,15 +803,14 @@ function setHiresDemRegionsEnabledFunction() {
   };
 }
 
-Sandcastle.addToggleButton(
-  "Highlight 5m DEM regions",
-  false,
-  setHiresDemRegionsEnabledFunction()
-);
-// get checkbox input to be able to modify it programmatically
-var enableHiresDemRegionsButton = document.getElementById("toolbar").lastChild;
-var enableHiresDemRegionsCbx =
-  enableHiresDemRegionsButton.firstChild.firstChild; // input
+// Sandcastle.addToggleButton(
+//   "Highlight 5m DEM regions",
+//   false,
+//   setHiresDemRegionsEnabledFunction()
+// );
+// // get checkbox input to be able to modify it programmatically
+// var enableHiresDemRegionsButton = document.getElementById("toolbar").lastChild;
+// var enableHiresDemRegionsCbx = enableHiresDemRegionsButton.firstChild.firstChild; // input
 
 viewer.dataSources.dataSourceAdded.addEventListener(function () {
   if (viewer.dataSources.length > dataSourceLastIndex) {
@@ -2314,7 +2313,7 @@ function loadStateFromQueryString() {
   // layers
   if (searchParams.has("hiresDemRegionsEnabled")) {
     var checked = searchParams.get("hiresDemRegionsEnabled") === "true";
-    enableHiresDemRegionsCbx.checked = checked;
+    // enableHiresDemRegionsCbx.checked = checked;
     var setHiresDemRegionsEnabled = setHiresDemRegionsEnabledFunction();
     setHiresDemRegionsEnabled(checked);
   }

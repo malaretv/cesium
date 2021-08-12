@@ -441,7 +441,7 @@ export function saveStateToQueryString() {
   var shadowsFadingEnabled = viewModel.shadowsFadingEnabled;
 
   // layers
-  var hiresDemRegionsEnabled = viewModel.hiresDemRegionsEnabled;
+  // var hiresDemRegionsEnabled = viewModel.hiresDemRegionsEnabled;
 
   //  var WACMosaicNSEnabled = viewModel.WACMosaicNSEnabled;
   //  var sunVisibility60Enabled = viewModel.sunVisibility60Enabled;
@@ -464,7 +464,7 @@ export function saveStateToQueryString() {
     skirtsEnabled,
     terrainShadowsEnabled,
     shadowsFadingEnabled,
-    hiresDemRegionsEnabled,
+    //    hiresDemRegionsEnabled,
     //    WACMosaicNSEnabled,
     //    sunVisibility60Enabled,
   };
