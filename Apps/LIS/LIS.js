@@ -15,6 +15,7 @@ import {
 
 import {
   createLayerNACImageProvider,
+  createLayerQMapImageProvider,
   layersInfo,
   setLayerImageryEnabled,
   updateBaseLayerPickerImageryLayers,
@@ -256,6 +257,7 @@ export function updateGlobeCartesianPositions() {
   updateEntityVectors(true);
   updateBaseLayerPickerImageryLayers();
   updateNACImage();
+  updateQMapImage();
 
   // preserve camera position/orientation
   if (isOptimizedPolarTerrain) {
@@ -1136,6 +1138,7 @@ Sandcastle.addToolbarMenu(locationToolbarOptions);
 var locationMenu = document.getElementById("toolbar").lastChild;
 */
 
+// NAC IMAGE
 function setNACImageEnabledFunction() {
   return function (checked) {
     viewModel.NACImageEnabled = checked;
@@ -1154,7 +1157,6 @@ function setNACImageEnabledFunction() {
   };
 }
 
-// NAC IMAGE
 Sandcastle.addToggleButton("NAC Image", false, setNACImageEnabledFunction());
 // get checkbox input to be able to modify it programmatically
 var enableNACButton = document.getElementById("toolbar").lastChild;
@@ -1206,6 +1208,108 @@ function updateNACImage() {
 
   // force NAC Image refresh
   addNACImage(viewModel.NACImageID);
+}
+
+// Generic QMap supported image
+function setQMapImageEnabledFunction() {
+  return function (checked) {
+    viewModel.QMapImageEnabled = checked;
+    enableQMapImageCbx.checked = viewModel.QMapImageEnabled;
+
+    if (QMapImageLayer === undefined) {
+      console.log("Warning: no image available");
+      return;
+    }
+
+    if (checked) {
+      QMapImageLayer.show = true;
+    } else {
+      QMapImageLayer.show = false;
+    }
+  };
+}
+
+Sandcastle.addToggleButton("Image", false, setQMapImageEnabledFunction());
+// get checkbox input to be able to modify it programmatically
+var enableQMapImageButton = document.getElementById("toolbar").lastChild;
+var enableQMapImageCbx = enableQMapImageButton.firstChild.firstChild; // input
+var enableQMapImageLbl = enableQMapImageButton.firstChild.lastChild; // label
+setQMapImageButtonVisible(false);
+
+function setQMapImageButtonVisible(yes) {
+  if (!yes) {
+    document.getElementById("toolbar").removeChild(enableQMapImageButton);
+  } else {
+    document
+      .getElementById("toolbar")
+      .insertBefore(enableQMapImageButton, cameraCoordsDisplay);
+  }
+}
+
+//  info for supported data sources
+const QMapImageInfoList = {
+  lis2d_tif: {
+    serverName: "vineview.quickmap.io",
+    lblName: "QTS-2D Image",
+  },
+  lrocnac: {
+    serverName: "act-test.lroc.asu.edu",
+    lblName: "NAC Image",
+  },
+};
+
+function setQMapImageInfo(serverName, layerName, imageID) {
+  var lblName = QMapImageInfoList[layerName]?.lblName;
+  if (!lblName) {
+    lblName = "Image";
+  }
+  enableQMapImageLbl.nodeValue = lblName + ": " + imageID;
+
+  viewModel.setQMapImageInfo(serverName, layerName, imageID);
+}
+
+var QMapImageLayer;
+function addQMapImage(serverName, layerName, imageID) {
+  if (QMapImageLayer !== undefined) {
+    viewer.imageryLayers.remove(QMapImageLayer);
+  }
+  serverName = serverName ?? QMapImageInfoList[layerName]?.serverName;
+  if (!serverName) {
+    console.log(
+      layerName +
+        " not supported. 'QMapImageServerName' must be provided in input URL"
+    );
+    return false;
+  }
+
+  QMapImageLayer = new Cesium.ImageryLayer(
+    createLayerQMapImageProvider(serverName, layerName, imageID)
+  );
+  viewer.imageryLayers.add(QMapImageLayer);
+
+  setQMapImageInfo(serverName, layerName, imageID);
+  setQMapImageButtonVisible(true);
+  var setQMapImageEnabled = setQMapImageEnabledFunction();
+  setQMapImageEnabled(viewModel.QMapImageEnabled);
+  return true;
+}
+
+function updateQMapImage() {
+  if (!Cesium.defined(viewModel.QMapImageID)) {
+    return;
+  }
+
+  if (QMapImageLayer !== undefined) {
+    viewer.imageryLayers.remove(QMapImageLayer);
+  }
+  QMapImageLayer = undefined;
+
+  // force NAC Image refresh
+  addQMapImage(
+    viewModel.QMapImageServerName,
+    viewModel.QMapImageLayerName,
+    viewModel._QMapImageID
+  );
 }
 
 // SHOW COORDINATES
@@ -2246,6 +2350,29 @@ function loadStateFromQueryString() {
     }
     var setNACImageEnabled = setNACImageEnabledFunction();
     setNACImageEnabled(checked);
+  }
+
+  // qmap image
+  if (
+    searchParams.has("QMapImageLayerName") &&
+    searchParams.has("QMapImageID")
+  ) {
+    var QMapImageServerName = searchParams.get("QMapImageServerName");
+    var QMapImageLayerName = searchParams.get("QMapImageLayerName");
+    var QMapImageID = searchParams.get("QMapImageID");
+    var res = addQMapImage(
+      QMapImageServerName,
+      QMapImageLayerName,
+      QMapImageID
+    );
+    if (res) {
+      var checked = true;
+      if (searchParams.has("QMapImageEnabled")) {
+        checked = searchParams.get("QMapImageEnabled") === "true";
+      }
+      var setQMapImageEnabled = setQMapImageEnabledFunction();
+      setQMapImageEnabled(checked);
+    }
   }
 
   viewModel.viewModelLoadFinished = true;

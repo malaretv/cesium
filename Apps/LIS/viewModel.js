@@ -53,6 +53,12 @@ export var viewModel = {
   _NACImageID: undefined,
   _NACImageEnabled: false,
 
+  // QMap IMAGE ID
+  _QMapImageServerName: undefined,
+  _QMapImageLayerName: undefined,
+  _QMapImageID: undefined,
+  _QMapImageEnabled: false,
+
   /**
    * true if the state info have been fully loaded
    */
@@ -256,6 +262,28 @@ export var viewModel = {
     this._NACImageEnabled = checked;
     saveStateToQueryString();
   },
+
+  // QMAP IMAGE ID
+  get QMapImageServerName() {
+    return this._QMapImageServerName;
+  },
+
+  get QMapImageLayerName() {
+    return this._QMapImageLayerName;
+  },
+
+  get QMapImageID() {
+    return this._QMapImageID;
+  },
+
+  get QMapImageEnabled() {
+    return this._QMapImageEnabled;
+  },
+
+  set QMapImageEnabled(checked) {
+    this._QMapImageEnabled = checked;
+    saveStateToQueryString();
+  },
 };
 
 viewModel.setCameraPandO = function (
@@ -274,6 +302,14 @@ viewModel.setCameraPandO = function (
 
     saveStateToQueryString();
   }
+};
+
+viewModel.setQMapImageInfo = function (serverName, layerName, imageID) {
+  this._QMapImageServerName = serverName;
+  this._QMapImageLayerName = layerName;
+  this._QMapImageID = imageID;
+
+  saveStateToQueryString();
 };
 
 var FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL = 1000; // ms
@@ -447,6 +483,17 @@ export function saveStateToQueryString() {
     var NACImageEnabled = viewModel.NACImageEnabled;
     urlParams["NACImageID"] = NACImageID;
     urlParams["NACImageEnabled"] = NACImageEnabled;
+  }
+
+  var QMapImageServerName = viewModel.QMapImageServerName;
+  var QMapImageLayerName = viewModel.QMapImageLayerName;
+  var QMapImageID = viewModel.QMapImageID;
+  if (QMapImageID && QMapImageLayerName && QMapImageServerName) {
+    var QMapImageEnabled = viewModel.QMapImageEnabled;
+    urlParams["QMapImageServerName"] = QMapImageServerName;
+    urlParams["QMapImageLayerName"] = QMapImageLayerName;
+    urlParams["QMapImageID"] = QMapImageID;
+    urlParams["QMapImageEnabled"] = QMapImageEnabled;
   }
 
   // update url

@@ -210,8 +210,6 @@ export function setLayerImageryEnabled(layerObj) {
 }
 
 // NAC Image
-
-// regular WAC no shadows layer
 export function createLayerNACImageProvider(NACImageId) {
   var optURLParam = "&oid=" + NACImageId;
   var layerProjection = isOptimizedPolarTerrain
@@ -226,4 +224,21 @@ export function createLayerNACImageProvider(NACImageId) {
     optURLParam
   );
   return layerNACImage;
+}
+
+// QMap Image
+export function createLayerQMapImageProvider(servername, layername, imageId) {
+  var optURLParam = "&oid=" + imageId;
+  var layerProjection = isOptimizedPolarTerrain
+    ? "lunar-polarshifted-eqc"
+    : "lunar-fulleqc";
+  // var layerProjection = "lunar-polarshifted-eqc";
+  var layerImage = createLayerImageryProvider(
+    servername,
+    layername,
+    layerProjection,
+    "png",
+    optURLParam
+  );
+  return layerImage;
 }
