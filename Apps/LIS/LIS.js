@@ -987,8 +987,14 @@ function setRotateCameraAroundPointEnabledFunction() {
       rotateCameraAroundPointEnabled &&
       rotateCameraAroundPointSunInFrontEnabled
     ) {
-      var setRotateCameraAroundPointSunInFrontEnabled = setRotateCameraAroundPointSunInFrontEnabledFunction();
-      setRotateCameraAroundPointSunInFrontEnabled(false);
+      enableRotateAroundPointSunInFrontCbx.checked = false;
+      rotateCameraAroundPointSunInFrontEnabled = false;
+
+      // // re-use current POI
+      // var mouseClickPosCartesianBack = mouseClickPosCartesian;
+      // var setRotateCameraAroundPointSunInFrontEnabled = setRotateCameraAroundPointSunInFrontEnabledFunction();
+      // setRotateCameraAroundPointSunInFrontEnabled(false);
+      // mouseClickPosCartesian = mouseClickPosCartesianBack;
     }
 
     if (
@@ -1018,8 +1024,17 @@ function setRotateCameraAroundPointSunInFrontEnabledFunction() {
       rotateCameraAroundPointSunInFrontEnabled &&
       rotateCameraAroundPointEnabled
     ) {
-      var setRotateCameraAroundPointEnabled = setRotateCameraAroundPointEnabledFunction();
-      setRotateCameraAroundPointEnabled(false);
+      // re-use current POI
+      enableRotateAroundPointCbx.checked = false;
+      rotateCameraAroundPointEnabled = false;
+      if (cancelOrbitEventHandler) {
+        cancelOrbitEventHandler();
+      }
+
+      // var mouseClickPosCartesianBack = mouseClickPosCartesian;
+      // var setRotateCameraAroundPointEnabled = setRotateCameraAroundPointEnabledFunction();
+      // setRotateCameraAroundPointEnabled(false);
+      // mouseClickPosCartesian = mouseClickPosCartesianBack;
     }
 
     if (
@@ -1079,17 +1094,30 @@ function setAtmSimuEnabledFunction() {
 
 var rotateCameraAroundPointEnabled = false;
 Sandcastle.addToggleButton(
-  "Fly around point",
+  "Fly Around Point",
   rotateCameraAroundPointEnabled,
   setRotateCameraAroundPointEnabledFunction()
 );
+// get checkbox input to be able to modify it programmatically
+var enableRotateAroundPointButton = document.getElementById("toolbar")
+  .lastChild;
+enableRotateAroundPointButton.title = "Fly around selected point";
+var enableRotateAroundPointCbx =
+  enableRotateAroundPointButton.firstChild.firstChild; // input
 
 var rotateCameraAroundPointSunInFrontEnabled = false;
 Sandcastle.addToggleButton(
-  "Force Sun in Front",
+  "Force Sun in Front Point",
   rotateCameraAroundPointSunInFrontEnabled,
   setRotateCameraAroundPointSunInFrontEnabledFunction()
 );
+// get checkbox input to be able to modify it programmatically
+var enableRotateAroundPointSunInFrontButton = document.getElementById("toolbar")
+  .lastChild;
+enableRotateAroundPointSunInFrontButton.title =
+  "Rotate around selected point, forcing the sun to be in front of the viewer";
+var enableRotateAroundPointSunInFrontCbx =
+  enableRotateAroundPointSunInFrontButton.firstChild.firstChild; // input
 
 /*
 Sandcastle.addToggleButton(
