@@ -58,7 +58,7 @@ function buildTerrainUrl() {
       // delatin
       // set some default params
       meshMaxErrorParam =
-        "UNSTABLE_auto_mesh_max_error_multiplier=0.04&UNSTABLE_auto_mesh_max_error_min=10&UNSTABLE_auto_mesh_max_error_max=250";
+        "UNSTABLE_auto_mesh_max_error_multiplier=0.04&UNSTABLE_auto_mesh_max_error_min=1&UNSTABLE_auto_mesh_max_error_max=250";
     }
     meshMaxErrorParam = meshMaxErrorParam + "&auto_mesh_max_error=True";
   }
