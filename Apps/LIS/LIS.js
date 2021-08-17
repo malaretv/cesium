@@ -424,7 +424,7 @@ function initializeTime(currentTimeIso8601, startTimeIso8601, stopTimeIso8601) {
   if (stopTimeIso8601 === undefined) {
     stopTime = Cesium.JulianDate.addDays(
       currentTime,
-      29 * 2,
+      29,
       new Cesium.JulianDate()
     );
   } else {
