@@ -26,7 +26,6 @@ var terrainServername = "https://lunar-dem-tiles2.quickmap.io";
 var terrainBaseUrl = terrainServername + "/sldem_lola";
 var terrainResampligMethod = "cubic";
 var terrainMeshScale = 3;
-var terrainMeshAlgorithm = "delatin";
 var currTerrainName;
 
 // for automatic regular/polar terrain switch
@@ -50,7 +49,18 @@ function buildTerrainUrl() {
   if (viewModel.terrainMeshMaxError !== "auto") {
     meshMaxErrorParam = "mesh_max_error=" + viewModel.terrainMeshMaxError;
   } else {
-    meshMaxErrorParam = "auto_mesh_max_error=True";
+    if (viewModel.terrainMeshAlgorithm === "martini") {
+      // martini
+      // set some default params
+      meshMaxErrorParam =
+        "UNSTABLE_auto_mesh_max_error_multiplier=0.1&UNSTABLE_auto_mesh_max_error_min=0.5&UNSTABLE_auto_mesh_max_error_max=600";
+    } else {
+      // delatin
+      // set some default params
+      meshMaxErrorParam =
+        "UNSTABLE_auto_mesh_max_error_multiplier=0.04&UNSTABLE_auto_mesh_max_error_min=10&UNSTABLE_auto_mesh_max_error_max=250";
+    }
+    meshMaxErrorParam = meshMaxErrorParam + "&auto_mesh_max_error=True";
   }
 
   var terrainUrl =
@@ -63,7 +73,7 @@ function buildTerrainUrl() {
     terrainMeshScale +
     "&" +
     "mesh_algorithm=" +
-    terrainMeshAlgorithm +
+    viewModel.terrainMeshAlgorithm +
     "&" +
     meshMaxErrorParam;
   console.log("terrain url:");
@@ -99,6 +109,20 @@ export function updateTerrainMeshMaxError(err) {
   }
 
   viewModel.terrainMeshMaxError = err;
+  // update terrain provider (only url changed)
+  if (currTerrainName) {
+    viewer.terrainProvider = createTerrainProvider(
+      viewModel.terrainVertexNormalsEnabled
+    );
+  }
+}
+
+export function updateTerrainMeshAlgorithm(alg) {
+  if (viewModel.terrainMeshAlgorithm === alg) {
+    return;
+  }
+
+  viewModel.terrainMeshAlgorithm = alg;
   // update terrain provider (only url changed)
   if (currTerrainName) {
     viewer.terrainProvider = createTerrainProvider(

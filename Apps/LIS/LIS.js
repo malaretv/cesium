@@ -9,6 +9,7 @@ import {
   maybeUpdateTerrainProvider,
   newTerrainNameSelected,
   resetTerrain,
+  updateTerrainMeshAlgorithm,
   updateTerrainMeshMaxError,
   updateTerrainVertexNormalsEnabled,
 } from "./terrainProvider.js";
@@ -847,6 +848,23 @@ for (var i = 0; i < maxErrorList.length; i++) {
 Sandcastle.addToolbarMenu(terrainMaxErrOptions);
 var terrainMaxErrMenu = document.getElementById("toolbar").lastChild;
 
+// terrain mesh algorithm
+var terrainMeshAlgorithmList = ["delatin", "martini"];
+var terrainMeshAlgorithmOptions = [];
+for (var i = 0; i < terrainMeshAlgorithmList.length; i++) {
+  var meshAlg = terrainMeshAlgorithmList[i];
+  var meshAlgEntryName = "mesh alg: " + meshAlg;
+  terrainMeshAlgorithmOptions.push({
+    text: meshAlgEntryName,
+    onselect: setTerrainMeshAlgorithmFunction(meshAlg),
+  });
+}
+
+if (window.LIS_MODE === "development") {
+  Sandcastle.addToolbarMenu(terrainMeshAlgorithmOptions);
+  var terrainMeshAlgMenu = document.getElementById("toolbar").lastChild;
+}
+
 function setContourEnabledFunction() {
   return function (checked) {
     contoursViewModel.enableContour = checked;
@@ -907,6 +925,12 @@ var enableVertexNormalsCbx = enableVertexNormalsButton.firstChild.firstChild; //
 function setTerrainMeshMaxErrorFunction(maxErr) {
   return function () {
     updateTerrainMeshMaxError(maxErr);
+  };
+}
+
+function setTerrainMeshAlgorithmFunction(alg) {
+  return function () {
+    updateTerrainMeshAlgorithm(alg);
   };
 }
 
@@ -2150,11 +2174,27 @@ function loadStateFromQueryString() {
   if (searchParams.has("terrainMeshMaxError")) {
     var terrainMeshMaxError = searchParams.get("terrainMeshMaxError");
     terrainMeshMaxErrorIdx = maxErrorList.indexOf(
-      parseFloat(terrainMeshMaxError)
+      terrainMeshMaxError === "auto"
+        ? terrainMeshMaxError
+        : parseFloat(terrainMeshMaxError)
     );
     if (terrainMeshMaxErrorIdx >= 0) {
       terrainMaxErrMenu.selectedIndex = terrainMeshMaxErrorIdx;
       terrainMaxErrOptions[terrainMeshMaxErrorIdx].onselect();
+    }
+  }
+
+  // terrain mesh algorithm
+  if (searchParams.has("terrainMeshAlgorithm")) {
+    var terrainMeshAlgorithm = searchParams.get("terrainMeshAlgorithm");
+    var terrainMeshAlgorithmIdx = terrainMeshAlgorithmList.indexOf(
+      terrainMeshAlgorithm
+    );
+    if (terrainMeshAlgorithmIdx >= 0) {
+      if (Cesium.defined(terrainMeshAlgMenu)) {
+        terrainMeshAlgMenu.selectedIndex = terrainMeshAlgorithmIdx;
+      }
+      terrainMeshAlgorithmOptions[terrainMeshAlgorithmIdx].onselect();
     }
   }
 

@@ -30,6 +30,7 @@ export var viewModel = {
   _terrainProviderName: undefined,
   _terrainVertexNormalsEnabled: true,
   _terrainMeshMaxError: 1.0,
+  _terrainMeshAlgorithm: "delatin",
 
   // contour
   _contourEnabled: false,
@@ -161,6 +162,16 @@ export var viewModel = {
 
   set terrainMeshMaxError(value) {
     this._terrainMeshMaxError = value;
+    saveStateToQueryString();
+  },
+
+  // terrain mesh algorithm
+  get terrainMeshAlgorithm() {
+    return this._terrainMeshAlgorithm;
+  },
+
+  set terrainMeshAlgorithm(value) {
+    this._terrainMeshAlgorithm = value;
     saveStateToQueryString();
   },
 
@@ -416,6 +427,9 @@ export function saveStateToQueryString() {
   // terrain normals enabled
   var terrainVertexNormalsEnabled = viewModel.terrainVertexNormalsEnabled;
 
+  // terrain mesh algorithm
+  var terrainMeshAlgorithm = viewModel.terrainMeshAlgorithm;
+
   // terrain mesh max error
   var terrainMeshMaxError = viewModel.terrainMeshMaxError;
 
@@ -456,6 +470,7 @@ export function saveStateToQueryString() {
     lightSourceIdx,
     terrainProviderName,
     terrainVertexNormalsEnabled,
+    terrainMeshAlgorithm,
     terrainMeshMaxError,
     contourEnabled,
     //    atmSimuEnabled,
