@@ -1600,7 +1600,9 @@ document.getElementById("toolbar").appendChild(camera2CursorDistance);
 // current terrain label
 terrainDisplay.style.background = "rgba(42, 42, 42, 0.7)";
 terrainDisplay.style.padding = "5px 10px";
-document.getElementById("toolbar").appendChild(terrainDisplay);
+if (window.LIS_MODE === "development") {
+  document.getElementById("toolbar").appendChild(terrainDisplay);
+}
 
 /*
 // Show the coords display below the toobar buttons.
