@@ -827,11 +827,17 @@ viewer.dataSources.dataSourceAdded.addEventListener(function () {
   }
 });
 
-var maxErrorList = [/*0.01, 0.1, */ 1, 10, 20, 50];
+var maxErrorList = ["auto", /*0.01, 0.1, */ 1, 10, 20, 50];
 var terrainMaxErrOptions = [];
 for (var i = 0; i < maxErrorList.length; i++) {
   var maxError = maxErrorList[i];
-  var maxErrorEntryName = "mesh surf. max_err: " + maxError.toString() + "m";
+  var maxErrorS;
+  if (maxError === "auto") {
+    maxErrorS = maxError;
+  } else {
+    maxErrorS = maxError.toString() + "m";
+  }
+  var maxErrorEntryName = "mesh surf. max_err: " + maxErrorS;
   terrainMaxErrOptions.push({
     text: maxErrorEntryName,
     onselect: setTerrainMeshMaxErrorFunction(maxError),
@@ -1920,8 +1926,6 @@ var POIToCameraVec = new Cesium.Cartesian3();
 var POIToSunOVec = new Cesium.Cartesian3();
 var POIToCameraOVec = new Cesium.Cartesian3();
 var crossVec = new Cesium.Cartesian3();
-
-var referenceFramePrimitive;
 
 var cancelOrbitEventHandler = null;
 function rotateCameraAroundPoint(pointCartesianCoords) {

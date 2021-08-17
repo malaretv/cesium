@@ -46,6 +46,13 @@ var regularTerrainName = regularTerrainNameDef;
 var polarTerrainName = polarTerrainNameDef;
 
 function buildTerrainUrl() {
+  var meshMaxErrorParam;
+  if (viewModel.terrainMeshMaxError !== "auto") {
+    meshMaxErrorParam = "mesh_max_error=" + viewModel.terrainMeshMaxError;
+  } else {
+    meshMaxErrorParam = "auto_mesh_max_error=True";
+  }
+
   var terrainUrl =
     terrainBaseUrl +
     "?" +
@@ -58,9 +65,7 @@ function buildTerrainUrl() {
     "mesh_algorithm=" +
     terrainMeshAlgorithm +
     "&" +
-    "mesh_max_error=" +
-    viewModel.terrainMeshMaxError;
-  //  "auto_mesh_max_error=True";
+    meshMaxErrorParam;
   console.log("terrain url:");
   console.log(terrainUrl);
 
