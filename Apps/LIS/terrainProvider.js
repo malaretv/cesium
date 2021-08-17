@@ -20,7 +20,10 @@ import {
 } from "./terrainProviderData.js";
 export { isOptimizedPolarTerrain };
 
-var terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/sldem_lola";
+// use this for having server caching enabled
+var terrainServername = "https://lunar-dem-tiles2.quickmap.io";
+// var terrainServername = "https://lunar-dem-api.quickmap.io";
+var terrainBaseUrl = terrainServername + "/sldem_lola";
 var terrainResampligMethod = "cubic";
 var terrainMeshScale = 3;
 var terrainMeshAlgorithm = "delatin";
@@ -57,6 +60,7 @@ function buildTerrainUrl() {
     "&" +
     "mesh_max_error=" +
     viewModel.terrainMeshMaxError;
+  //  "auto_mesh_max_error=True";
   console.log("terrain url:");
   console.log(terrainUrl);
 
@@ -171,7 +175,7 @@ function setTerrain(terrainName, terrainNormalsEnabled) {
   updateTerrainDisplay("Terrain: " + currTerrainName);
 
   if (terrainName === "sldem_lola") {
-    terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/sldem_lola";
+    terrainBaseUrl = terrainServername + "/sldem_lola";
     optimizedPolarTerrain = false;
     return updateTerrainProvider(
       terrainBaseUrl,
@@ -193,7 +197,7 @@ function setTerrain(terrainName, terrainNormalsEnabled) {
   }
 
   if (terrainName === "Optimized PolarDEM") {
-    terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/dummy_poles2";
+    terrainBaseUrl = terrainServername + "/dummy_poles2";
     optimizedPolarTerrain = true;
     return updateTerrainProvider(
       terrainBaseUrl,
@@ -204,7 +208,7 @@ function setTerrain(terrainName, terrainNormalsEnabled) {
 
   /*
     if (terrainName === "GOTM") {
-      terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles";
+      terrainBaseUrl = terrainServername + "/alt_poles";
       requestVertexNormals = true;
       optimizedPolarTerrain = true;
       return updateTerrainProvider(
@@ -215,7 +219,7 @@ function setTerrain(terrainName, terrainNormalsEnabled) {
     }
   
     if (terrainName === "GOTM - no normals") {
-      terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles";
+      terrainBaseUrl = terrainServername + "/alt_poles";
       requestVertexNormals = false;
       optimizedPolarTerrain = true;
       return updateTerrainProvider(
@@ -227,7 +231,7 @@ function setTerrain(terrainName, terrainNormalsEnabled) {
     */
 
   if (terrainName === "GOTM") {
-    terrainBaseUrl = "https://lunar-dem-tiles2.quickmap.io/alt_poles_hires";
+    terrainBaseUrl = terrainServername + "/alt_poles_hires";
     optimizedPolarTerrain = true;
     return updateTerrainProvider(
       terrainBaseUrl,
