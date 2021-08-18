@@ -58,7 +58,7 @@ var contoursViewModel = {
   contourWidth: 2.0,
 };
 
-var showContourAlt = 200; // km
+var showContourAlt = 100; // km
 
 export var viewer = new Cesium.Viewer("cesiumContainer", {
   //  terrainProvider: createTerrainProvider(),
