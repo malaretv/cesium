@@ -1880,7 +1880,7 @@ function buildLIS() {
           nodir: true,
         }
       ),
-
+      gulp.src(["Apps/LIS/Sandcastle*.js"]),
       gulp.src(["Build/Cesium/Widgets/InfoBox/InfoBoxDescription.css"], {
         base: "Build/Cesium",
       }),
