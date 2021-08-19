@@ -11,6 +11,8 @@ import { updateUrlParams } from "./utils.js";
 
 import { viewer } from "./LIS.js";
 
+import { meshMaxErrorChanged } from "./UIControls.js";
+
 // The viewModel tracks the state of the application.
 // Decouple the state from the interface specific vars.
 // Each setter calls the status updated fuction that updates the state url
@@ -31,6 +33,10 @@ export var viewModel = {
   _terrainVertexNormalsEnabled: true,
   _terrainMeshMaxError: 1.0,
   _terrainMeshAlgorithm: "delatin",
+  _terrainAutoMeshMaxErrorMin: 1,
+  _terrainAutoMeshMaxErrorMax: 250,
+  _terrainAutoMeshMaxErrorMult: 0.04,
+  _terrainAutoMeshMaxErrorThMult: -1,
 
   // contour
   _contourEnabled: false,
@@ -162,6 +168,7 @@ export var viewModel = {
 
   set terrainMeshMaxError(value) {
     this._terrainMeshMaxError = value;
+    meshMaxErrorChanged(this._terrainMeshMaxError);
     saveStateToQueryString();
   },
 
@@ -319,6 +326,15 @@ viewModel.setQMapImageInfo = function (serverName, layerName, imageID) {
   this._QMapImageServerName = serverName;
   this._QMapImageLayerName = layerName;
   this._QMapImageID = imageID;
+
+  saveStateToQueryString();
+};
+
+viewModel.setAutoMeshMaxErrorParams = function (mult, min, max, thMult) {
+  viewModel._terrainAutoMeshMaxErrorMult = mult;
+  viewModel._terrainAutoMeshMaxErrorMin = min;
+  viewModel._terrainAutoMeshMaxErrorMax = max;
+  viewModel._terrainAutoMeshMaxErrorThMult = thMult;
 
   saveStateToQueryString();
 };
@@ -509,6 +525,18 @@ export function saveStateToQueryString() {
     urlParams["QMapImageLayerName"] = QMapImageLayerName;
     urlParams["QMapImageID"] = QMapImageID;
     urlParams["QMapImageEnabled"] = QMapImageEnabled;
+  }
+
+  if (window.LIS_MODE === "development") {
+    // save auto mesh max error settings
+    urlParams["terrainAutoMeshMaxErrorMult"] =
+      viewModel._terrainAutoMeshMaxErrorMult;
+    urlParams["terrainAutoMeshMaxErrorMin"] =
+      viewModel._terrainAutoMeshMaxErrorMin;
+    urlParams["terrainAutoMeshMaxErrorMax"] =
+      viewModel._terrainAutoMeshMaxErrorMax;
+    urlParams["terrainAutoMeshMaxErrorThMult"] =
+      viewModel._terrainAutoMeshMaxErrorThMult;
   }
 
   // update url

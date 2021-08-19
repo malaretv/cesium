@@ -21,8 +21,8 @@ import {
 export { isOptimizedPolarTerrain };
 
 // use this for having server caching enabled
-var terrainServername = "https://lunar-dem-tiles2.quickmap.io";
-// var terrainServername = "https://lunar-dem-api.quickmap.io";
+// var terrainServername = "https://lunar-dem-tiles2.quickmap.io";
+var terrainServername = "https://lunar-dem-api.quickmap.io";
 var terrainBaseUrl = terrainServername + "/sldem_lola";
 var terrainResampligMethod = "cubic";
 var terrainMeshScale = 3;
@@ -52,13 +52,27 @@ function buildTerrainUrl() {
     if (viewModel.terrainMeshAlgorithm === "martini") {
       // martini
       // set some default params
-      meshMaxErrorParam =
-        "UNSTABLE_auto_mesh_max_error_multiplier=0.1&UNSTABLE_auto_mesh_max_error_min=0.5&UNSTABLE_auto_mesh_max_error_max=600";
+      if (viewModel._terrainAutoMeshMaxErrorMult < 0) {
+        // default values
+        viewModel._terrainAutoMeshMaxErrorMult = 0.1;
+        viewModel._terrainAutoMeshMaxErrorMin = 0.5;
+        viewModel._terrainAutoMeshMaxErrorMax = 600;
+      }
     } else {
       // delatin
       // set some default params
+      if (viewModel._terrainAutoMeshMaxErrorMult < 0) {
+        // default values
+        viewModel._terrainAutoMeshMaxErrorMult = 0.04;
+        viewModel._terrainAutoMeshMaxErrorMin = 1;
+        viewModel._terrainAutoMeshMaxErrorMax = 250;
+      }
+    }
+    meshMaxErrorParam = `UNSTABLE_auto_mesh_max_error_multiplier=${viewModel._terrainAutoMeshMaxErrorMult}&UNSTABLE_auto_mesh_max_error_min=${viewModel._terrainAutoMeshMaxErrorMin}&UNSTABLE_auto_mesh_max_error_max=${viewModel._terrainAutoMeshMaxErrorMax}`;
+    if (viewModel._terrainAutoMeshMaxErrorThMult >= 0) {
       meshMaxErrorParam =
-        "UNSTABLE_auto_mesh_max_error_multiplier=0.04&UNSTABLE_auto_mesh_max_error_min=1&UNSTABLE_auto_mesh_max_error_max=250";
+        meshMaxErrorParam +
+        `&UNSTABLE_auto_mesh_max_error_threshold_multiplier=${viewModel._terrainAutoMeshMaxErrorThMult}`;
     }
     meshMaxErrorParam = meshMaxErrorParam + "&auto_mesh_max_error=True";
   }
@@ -128,6 +142,19 @@ export function updateTerrainMeshAlgorithm(alg) {
     viewer.terrainProvider = createTerrainProvider(
       viewModel.terrainVertexNormalsEnabled
     );
+  }
+}
+
+export function updateTerrainMeshMaxErrorParams(mult, min, max, thMult) {
+  viewModel.setAutoMeshMaxErrorParams(mult, min, max, thMult);
+
+  if (viewModel.terrainMeshMaxError === "auto") {
+    // update terrain provider (only url changed)
+    if (currTerrainName) {
+      viewer.terrainProvider = createTerrainProvider(
+        viewModel.terrainVertexNormalsEnabled
+      );
+    }
   }
 }
 
