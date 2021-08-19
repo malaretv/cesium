@@ -11,7 +11,7 @@ import { updateUrlParams } from "./utils.js";
 
 import { viewer } from "./LIS.js";
 
-import { meshMaxErrorChanged } from "./UIControls.js";
+import { meshMaxErrorChanged } from "./UIcontrols.js";
 
 // The viewModel tracks the state of the application.
 // Decouple the state from the interface specific vars.
