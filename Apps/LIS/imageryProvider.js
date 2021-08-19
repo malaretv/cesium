@@ -9,7 +9,7 @@ import { saveStateToQueryString } from "./viewModel.js";
 function createEmptyImageryProvider() {
   /* NOTE: use out of range scaling values for returning empty tiles*/
   var layerUrl =
-    "https://act-test.lroc.asu.edu/fcgi-bin/fprovweb.exe?_xtype=dynamic&z={zPlusOne}&x={x}&y={y}&format=png&layer=wac_albedo&bodyview=lunar-fulleqc&d_mask=1&d_imf=none&d_opt=wcolut0&d_val=1000%2C2000&cmd_script=get_tile.msh";
+    "https://qm-proxy.lroc.asu.edu/fcgi-bin/fprovweb.exe?_xtype=dynamic&z={zPlusOne}&x={x}&y={y}&format=png&layer=wac_albedo&bodyview=lunar-fulleqc&d_mask=1&d_imf=none&d_opt=wcolut0&d_val=1000%2C2000&cmd_script=get_tile.msh";
 
   const layerImageryProvider = new Cesium.UrlTemplateImageryProvider({
     url: layerUrl,
