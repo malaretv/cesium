@@ -7,11 +7,14 @@ import { adjustCartesianCoords } from "./adjustCartesian.js";
 import {
   initializeTerrainPicker,
   isOptimizedPolarTerrain,
+  updateTerrainMeshMaxErrorParams,
 } from "./terrainProvider.js";
 
 import { initializeImageryPicker } from "./imageryProvider.js";
 
 import { cameraFlyToLookDownNorthUp } from "./utils.js";
+
+import { viewModel } from "./viewModel.js";
 
 var buttonBgColor = "rgba(42, 42, 42, 0.7)";
 var buttonBgSelectedColor = "rgba(255, 255, 255, 0.7)";
@@ -251,6 +254,145 @@ export function addTimeButton() {
 
   timeInput.oninvalid = invalid;
   timeForm.onsubmit = submit;
+}
+
+///////////////////////////////////////////////
+////////////// TERRAIN MESH CONTROLS //////////
+///////////////////////////////////////////////
+
+/**
+  add terrain mesh controls
+ */
+var meshControlsForm;
+var meshControlsInput;
+var meshControlsError;
+
+export function addMeshControls() {
+  "use strict";
+
+  var meshControls = document.createElement("div");
+  var meshControlsFormHTML =
+    "<form id='mesh-controls-form'> \
+              <p id='mesh-controls-error' hidden>Please fill out all fields.</p> \
+              <input type='text' id='mesh-controls-input' placeholder='mult,min,max[,th_mult]' required /> \
+              <button type='submit'>Set</button> \
+      </form>";
+  meshControls.innerHTML = meshControlsFormHTML;
+
+  document.getElementById("toolbar").appendChild(meshControls);
+
+  meshControlsForm = document.getElementById("mesh-controls-form");
+  meshControlsInput = document.getElementById("mesh-controls-input");
+  meshControlsError = document.getElementById("mesh-controls-error");
+
+  const params =
+    viewModel._terrainAutoMeshMaxErrorMult < 0
+      ? // use default values
+        viewModel.terrainMeshAlgorithm === "martini"
+        ? [0.1, 0.5, 600, -1]
+        : [0.04, 1, 250, -1]
+      : // use provided values
+        [
+          viewModel._terrainAutoMeshMaxErrorMult,
+          viewModel._terrainAutoMeshMaxErrorMin,
+          viewModel._terrainAutoMeshMaxErrorMax,
+          viewModel._terrainAutoMeshMaxErrorThMult,
+        ];
+
+  meshControlsInput.value = params.toString();
+  // force udpate based on mesh max error
+  meshMaxErrorChanged(viewModel.meshMaxErr);
+
+  meshControlsInput.oninvalid = invalidMeshControls;
+  meshControlsForm.onsubmit = setTerrainMeshParams;
+}
+
+export function refreshMeshControlsParams() {
+  if (meshControlsInput) {
+    const params =
+      viewModel._terrainAutoMeshMaxErrorMult < 0
+        ? // nothing set
+          (meshControlsInput.value = "")
+        : // use provided values
+          [
+            viewModel._terrainAutoMeshMaxErrorMult,
+            viewModel._terrainAutoMeshMaxErrorMin,
+            viewModel._terrainAutoMeshMaxErrorMax,
+            viewModel._terrainAutoMeshMaxErrorThMult,
+          ];
+
+    meshControlsInput.value = params.toString();
+  }
+}
+
+function invalidMeshControls() {
+  meshControlsError.innerHTML = "Must enter value";
+  meshControlsError.removeAttribute("hidden");
+}
+
+function hideMeshControlsFormError() {
+  meshControlsError.setAttribute("hidden", "");
+}
+
+function showMeshControlsFormError(msg) {
+  meshControlsError.innerHTML = msg;
+  meshControlsError.removeAttribute("hidden");
+}
+
+function setMeshControlsFormEnabled(yes) {
+  if (!meshControlsInput) {
+    meshControlsInput = document.getElementById("mesh-controls-input");
+  }
+  if (meshControlsInput) {
+    meshControlsInput.disabled = !yes;
+  }
+}
+
+export function meshMaxErrorChanged(meshMaxErr) {
+  setMeshControlsFormEnabled(meshMaxErr === "auto");
+}
+
+function setTerrainMeshParams() {
+  hideMeshControlsFormError();
+
+  const value = meshControlsInput.value;
+  if (value.includes(",")) {
+    // splits string into array off of ',' and converts every item in array to number
+    const params = value.split(",").map((x) => +x);
+    // check if valid params
+    if (
+      (params.length === 3 || params.length === 4) &&
+      params.every((x) => isFinite(x))
+    ) {
+      if (params.length === 3) {
+        // no mesh_max_error_threshold_multiplier
+        params.push(-1);
+      }
+      const [
+        mesh_max_error_multiplier,
+        mesh_max_error_min,
+        mesh_max_error_max,
+        mesh_max_error_th_multiplier,
+      ] = params;
+      console.log(
+        `mesh_max_error_multiplier: ${mesh_max_error_multiplier} mesh_max_error_min: ${mesh_max_error_min} mesh_max_error_max: ${mesh_max_error_max} mesh_max_error_th_multiplier: ${mesh_max_error_th_multiplier}`
+      );
+
+      // update terrain
+      updateTerrainMeshMaxErrorParams(
+        mesh_max_error_multiplier,
+        mesh_max_error_min,
+        mesh_max_error_max,
+        mesh_max_error_th_multiplier
+      );
+    } else {
+      showMeshControlsFormError("Invalid terrain mesh params");
+    }
+  } else {
+    showMeshControlsFormError("Invalid terrain mesh params");
+  }
+
+  return false;
 }
 
 //////////////////////////////////////////////

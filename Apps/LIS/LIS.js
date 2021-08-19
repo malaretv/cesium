@@ -11,6 +11,7 @@ import {
   resetTerrain,
   updateTerrainMeshAlgorithm,
   updateTerrainMeshMaxError,
+  updateTerrainMeshMaxErrorParams,
   updateTerrainVertexNormalsEnabled,
 } from "./terrainProvider.js";
 
@@ -34,7 +35,8 @@ import {
 import {
   initializeBaseLayerPicker,
   addGoToButton,
-  addTimeButton,
+  addMeshControls,
+  refreshMeshControlsParams,
 } from "./UIcontrols.js";
 
 import { cameraFlyToLookDownNorthUp } from "./utils.js";
@@ -1657,6 +1659,10 @@ setHeightKm(500);
 });
 */
 
+if (window.LIS_MODE === "development") {
+  addMeshControls();
+}
+
 // add go to button
 addGoToButton();
 // add set time button
@@ -2418,6 +2424,33 @@ function loadStateFromQueryString() {
       var setQMapImageEnabled = setQMapImageEnabledFunction();
       setQMapImageEnabled(checked);
     }
+  }
+
+  if (
+    searchParams.has("terrainAutoMeshMaxErrorMult") &&
+    searchParams.has("terrainAutoMeshMaxErrorMin") &&
+    searchParams.has("terrainAutoMeshMaxErrorMax") &&
+    searchParams.has("terrainAutoMeshMaxErrorThMult")
+  ) {
+    var terrainAutoMeshMaxErrorMult = searchParams.get(
+      "terrainAutoMeshMaxErrorMult"
+    );
+    var terrainAutoMeshMaxErrorMin = searchParams.get(
+      "terrainAutoMeshMaxErrorMin"
+    );
+    var terrainAutoMeshMaxErrorMax = searchParams.get(
+      "terrainAutoMeshMaxErrorMax"
+    );
+    var terrainAutoMeshMaxErrorThMult = searchParams.get(
+      "terrainAutoMeshMaxErrorThMult"
+    );
+    updateTerrainMeshMaxErrorParams(
+      terrainAutoMeshMaxErrorMult,
+      terrainAutoMeshMaxErrorMin,
+      terrainAutoMeshMaxErrorMax,
+      terrainAutoMeshMaxErrorThMult
+    );
+    refreshMeshControlsParams();
   }
 
   viewModel.viewModelLoadFinished = true;
