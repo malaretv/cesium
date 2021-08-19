@@ -274,7 +274,7 @@ export function addMeshControls() {
   var meshControlsFormHTML =
     "<form id='mesh-controls-form'> \
               <p id='mesh-controls-error' hidden>Please fill out all fields.</p> \
-              <input type='text' id='mesh-controls-input' placeholder='mult,min,max[,th_mult]' required /> \
+              <label>Auto Mesh Max Error Params: </label><input type='text' id='mesh-controls-input' placeholder='mult,min,max[,th_mult]' required /> \
               <button type='submit'>Set</button> \
       </form>";
   meshControls.innerHTML = meshControlsFormHTML;
