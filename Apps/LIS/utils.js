@@ -6,6 +6,8 @@ import {
   Math,
 } from "../../Source/Cesium.js";
 
+import { flyingToNewPosition } from "./LIS.js";
+
 import { adjustCartesianCoords } from "./adjustCartesian.js";
 
 import { isOptimizedPolarTerrain } from "./terrainProvider.js";
@@ -98,6 +100,7 @@ export function cameraFlyToLookDownNorthUp(
   cameraDirNorm = Cartesian3.normalize(poiCartesian, cameraDirNorm);
   cameraDir = Cartesian3.negate(cameraDirNorm, cameraDir);
 
+  flyingToNewPosition();
   camera.flyTo({
     destination: destination,
     orientation: {
