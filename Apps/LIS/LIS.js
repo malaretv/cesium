@@ -1571,7 +1571,8 @@ function deg2rad(degrees) {
   return degrees * (Math.PI / 180.0);
 }
 
-viewer.camera.moveEnd.addEventListener(function () {
+function cameraPositionUpdated() {
+  // console.log("updating camera position...");
   ellipsoid.cartesianToCartographic(
     invAdjustCartesianCoords(camera.positionWC, isOptimizedPolarTerrain),
     cartographicCamera
@@ -1605,6 +1606,15 @@ viewer.camera.moveEnd.addEventListener(function () {
   // viewModel.camera_up = camera.up;
 
   viewModel.setCameraPandO(camera.position, camera.direction, camera.up);
+}
+
+viewer.camera.moveEnd.addEventListener(() => {
+  cameraPositionUpdated();
+});
+
+viewer.camera.changed.addEventListener(() => {
+  // this is exected after the camera has changed by percentageChanged
+  cameraPositionUpdated();
 });
 
 function setHeightKm(heightInKilometers) {
