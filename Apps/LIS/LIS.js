@@ -1085,6 +1085,24 @@ function setRotateCameraAroundPointSunInFrontEnabledFunction() {
   };
 }
 
+function setRotateAroundPointDisabled() {
+  if (rotateCameraAroundPointEnabled) {
+    enableRotateAroundPointCbx.checked = false;
+    var setRotateCameraAroundPointEnabled = setRotateCameraAroundPointEnabledFunction();
+    setRotateCameraAroundPointEnabled(false);
+  } else if (rotateCameraAroundPointSunInFrontEnabled) {
+    enableRotateAroundPointSunInFrontCbx.checked = false;
+    var setRotateCameraAroundPointSunInFrontEnabled = setRotateCameraAroundPointSunInFrontEnabledFunction();
+    setRotateCameraAroundPointSunInFrontEnabled(false);
+  }
+}
+
+var flyingToNewPositionStarted = false;
+export function flyingToNewPosition() {
+  flyingToNewPositionStarted = true;
+  setRotateAroundPointDisabled();
+}
+
 function updateShadowsMaxDist(maxDist) {
   if (viewModel.shadowsMaxDistance == maxDist) {
     return;
@@ -1610,10 +1628,17 @@ function cameraPositionUpdated() {
 
 viewer.camera.moveEnd.addEventListener(() => {
   cameraPositionUpdated();
+  if (flyingToNewPositionStarted) {
+    flyingToNewPositionStarted = false;
+  }
 });
 
 viewer.camera.changed.addEventListener(() => {
   // this is exected after the camera has changed by percentageChanged
+  if (flyingToNewPositionStarted) {
+    // avoid too many camera updates
+    return;
+  }
   cameraPositionUpdated();
 });
 
