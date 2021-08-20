@@ -318,7 +318,7 @@ viewModel.setCameraPandO = function (
     this._camera_direction = Cartesian3.clone(camera_direction);
     this._camera_up = Cartesian3.clone(camera_up);
 
-    saveStateToQueryString();
+    maybeUpdateStateUrl();
   }
 };
 
