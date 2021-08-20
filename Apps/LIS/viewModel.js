@@ -12,6 +12,7 @@ import { updateUrlParams } from "./utils.js";
 import { viewer } from "./LIS.js";
 
 import { meshMaxErrorChanged } from "./UIcontrols.js";
+import CesiumMath from "../../Source/Core/Math.js";
 
 // The viewModel tracks the state of the application.
 // Decouple the state from the interface specific vars.
@@ -342,8 +343,12 @@ viewModel.setAutoMeshMaxErrorParams = function (mult, min, max, thMult) {
 var FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL = 1000; // ms
 var updateStateTimerId = -1;
 var lastUrlStateUpdateTime = -1;
+var lastUrlCameraPosition = new Cartesian3();
+var lastUrlCameraDirection = new Cartesian3();
+var lastUrlCameraUp = new Cartesian3();
 export function resetStateUpdateTimer() {
   if (updateStateTimerId > 0) {
+    // console.log("resetting timer");
     // stop timer
     clearInterval(updateStateTimerId);
     updateStateTimerId = -1;
@@ -353,14 +358,24 @@ export function resetStateUpdateTimer() {
 // wait FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL since last time update before updating the url
 // this is needed in order to avoid to many history.push requests (there is a limit on Safari browser)
 export function maybeUpdateStateUrl() {
-  if (lastUrlStateUpdateTime !== viewModel.UTCTime) {
+  if (
+    lastUrlStateUpdateTime !== viewModel.UTCTime ||
+    !lastUrlCameraPosition.equals(viewModel.camera_position) ||
+    !lastUrlCameraDirection.equals(viewModel.camera_direction) ||
+    !lastUrlCameraUp.equals(viewModel.camera_up)
+  ) {
     lastUrlStateUpdateTime = viewModel.UTCTime;
+    lastUrlCameraPosition = Cartesian3.clone(viewModel.camera_position);
+    lastUrlCameraDirection = Cartesian3.clone(viewModel.camera_direction);
+    lastUrlCameraUp = Cartesian3.clone(viewModel.camera_up);
+
     if (updateStateTimerId >= 0) {
       // reset the timer
       resetStateUpdateTimer();
     }
 
     // let us set the timer
+    // console.log("Updating timer")
     updateStateTimerId = setInterval(
       saveStateToQueryString,
       FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL
