@@ -1008,6 +1008,18 @@ udpateBodiesPosToDummyPolar(!checked);
 );
 */
 
+function resetCameraPivotPoint() {
+  camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+  if (referenceFramePrimitive) {
+    scene.primitives.remove(referenceFramePrimitive);
+    referenceFramePrimitive = undefined;
+  }
+  if (cancelOrbitEventHandler) {
+    cancelOrbitEventHandler();
+  }
+  mouseClickPosCartesian = undefined;
+}
+
 function setRotateCameraAroundPointEnabledFunction() {
   return function (checked) {
     if (rotateCameraAroundPointEnabled === checked) {
@@ -1034,11 +1046,7 @@ function setRotateCameraAroundPointEnabledFunction() {
       !rotateCameraAroundPointEnabled &&
       !Cesium.defined(scene.trackedEntity)
     ) {
-      camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
-      if (cancelOrbitEventHandler) {
-        cancelOrbitEventHandler();
-      }
-      mouseClickPosCartesian = undefined;
+      resetCameraPivotPoint();
     } else {
       rotateCameraAroundPoint(mouseClickPosCartesian);
     }
@@ -1074,11 +1082,7 @@ function setRotateCameraAroundPointSunInFrontEnabledFunction() {
       !rotateCameraAroundPointSunInFrontEnabled &&
       !Cesium.defined(scene.trackedEntity)
     ) {
-      camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
-      if (cancelOrbitEventHandler) {
-        cancelOrbitEventHandler();
-      }
-      mouseClickPosCartesian = undefined;
+      resetCameraPivotPoint();
     } else {
       rotateCameraAroundPointSunInFront(mouseClickPosCartesian);
     }
@@ -1992,19 +1996,51 @@ var POIToSunOVec = new Cesium.Cartesian3();
 var POIToCameraOVec = new Cesium.Cartesian3();
 var crossVec = new Cesium.Cartesian3();
 
-var cancelOrbitEventHandler = null;
-function rotateCameraAroundPoint(pointCartesianCoords) {
+const pithCorrectTh = deg2rad(0.01);
+var referenceFramePrimitive;
+function setCameraPivotPoint(pointCartesianCoords) {
   if (cancelOrbitEventHandler) cancelOrbitEventHandler();
-  if (!pointCartesianCoords) return;
+  if (!pointCartesianCoords) return false;
 
   var transform = Cesium.Transforms.eastNorthUpToFixedFrame(
     pointCartesianCoords,
     ellipsoid
   );
 
-  // View in east-north-up frame
-  camera.constrainedAxis = Cesium.Cartesian3.UNIT_Z;
-  camera.lookAtTransform(transform);
+  // console.log("camera pitch: " + camera.pitch + "(deg: " + rad2deg(camera.pitch) +")");
+  if (Math.abs(camera.pitch) > Math.PI / 2 - pithCorrectTh) {
+    // note: slightly change the pitch as there could be rotation issues around Z axis when changing transformation
+    // Cesium issue???
+    const p = camera.pitch + pithCorrectTh;
+    const h = 0;
+    const m = Cesium.Cartesian3.distance(
+      camera.positionWC,
+      pointCartesianCoords
+    );
+    camera.lookAtTransform(transform, new Cesium.HeadingPitchRange(h, p, m));
+  } else {
+    // View in east-north-up frame
+    // camera.constrainedAxis = Cesium.Cartesian3.UNIT_Z;
+    camera.lookAtTransform(transform);
+  }
+
+  // console.log("camera pitch: " + camera.pitch + "(deg: " + rad2deg(camera.pitch) +")");
+
+  // referenceFramePrimitive = scene.primitives.add(
+  //   new Cesium.DebugModelMatrixPrimitive({
+  //     modelMatrix: transform,
+  //     length: 10000.0,
+  //   })
+  // );
+
+  return true;
+}
+
+var cancelOrbitEventHandler = null;
+function rotateCameraAroundPoint(pointCartesianCoords) {
+  if (!setCameraPivotPoint(pointCartesianCoords)) {
+    return;
+  }
 
   const deltaAngle = deg2rad(0.05);
   cancelOrbitEventHandler = viewer.clock.onTick.addEventListener(() => {
@@ -2013,17 +2049,9 @@ function rotateCameraAroundPoint(pointCartesianCoords) {
 }
 
 function initializeRotateCameraAroundPointSunInFront(pointCartesianCoords) {
-  if (cancelOrbitEventHandler) cancelOrbitEventHandler();
-  if (!pointCartesianCoords) return;
-
-  var transform = Cesium.Transforms.eastNorthUpToFixedFrame(
-    pointCartesianCoords,
-    ellipsoid
-  );
-
-  // View in east-north-up frame
-  camera.constrainedAxis = Cesium.Cartesian3.UNIT_Z;
-  camera.lookAtTransform(transform);
+  if (!setCameraPivotPoint(pointCartesianCoords)) {
+    return;
+  }
 
   rotateCameraAroundPointSunInFront(pointCartesianCoords);
 }
