@@ -308,6 +308,15 @@ export function updateGlobeCartesianPositions() {
   camera.position = newCameraPos;
   camera.direction = newCameraDir;
   camera.up = newCameraUp;
+
+  if (mouseClickPosCartesian) {
+    // update mouse click position
+    if (isOptimizedPolarTerrain) {
+      mouseClickPosCartesian = cartesianToDummyPolar(mouseClickPosCartesian);
+    } else {
+      mouseClickPosCartesian = dummyPolarToCartesian(mouseClickPosCartesian);
+    }
+  }
 }
 
 function updateBodiesPos() {
