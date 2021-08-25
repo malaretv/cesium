@@ -88,7 +88,8 @@ globe.baseColor = Cesium.Color.GRAY;
 scene.fog.enabled = false;
 
 var shadowMap = viewer.shadowMap;
-var defaultShadowMapMaxDistance = 100000.0; // m
+// var defaultShadowMapMaxDistance = 100.0; // km
+var defaultShadowMapMaxDistance = "auto";
 shadowMap.softShadows = false;
 shadowMap.size = 4096;
 shadowMap.normalOffset = false;
@@ -130,7 +131,6 @@ async function updateBodiesPosSPICE() {
 
   console.log("bodies pos num:");
   console.log(bodiesPosList.length);
-  var utc_time;
   secsFromStartUTCArray.length = bodiesPosList.length;
   for (var i = 0; i < bodiesPosList.length; i++) {
     secsFromStartUTCArray[i] = Cesium.JulianDate.secondsDifference(
@@ -537,6 +537,12 @@ export function updateTerrainDisplay(msg) {
   terrainDisplay.innerHTML = msg;
 }
 
+var shadowsMaxDistanceDisplay = document.createElement("div");
+export function updateShadowsMaxDistanceDisplay(shadowsMaxDist) {
+  shadowsMaxDistanceDisplay.innerHTML =
+    "Shadows Max Distance: " + (shadowsMaxDist / 1000).toFixed(0) + " km";
+}
+
 /*
 function updateTimeDisplay() {
   var msg =
@@ -629,6 +635,14 @@ export function setCurrTerrainLabelVisible(showLbl) {
     terrainDisplay.removeAttribute("hidden");
   } else {
     terrainDisplay.setAttribute("hidden", "");
+  }
+}
+
+export function setCurrShadowsMaxDistVisible(showLbl) {
+  if (showLbl) {
+    shadowsMaxDistanceDisplay.removeAttribute("hidden");
+  } else {
+    shadowsMaxDistanceDisplay.setAttribute("hidden", "");
   }
 }
 
@@ -1257,6 +1271,7 @@ function updateShadowsMaxDist(maxDist) {
   }
   viewModel.shadowsMaxDistance = shadowsMaxDistance;
   var effectiveShadowsMaxDistance = shadowsMaxDistance;
+  setCurrShadowsMaxDistVisible(shadowsMaxDistance === "auto");
   if (shadowsMaxDistance === "auto") {
     effectiveShadowsMaxDistance = getBestShadowsMaxDistance();
     console.log(
@@ -1264,6 +1279,7 @@ function updateShadowsMaxDist(maxDist) {
         (effectiveShadowsMaxDistance / 1000.0).toFixed(3) +
         "km"
     );
+    updateShadowsMaxDistanceDisplay(effectiveShadowsMaxDistance);
   }
   shadowMap.maximumDistance = effectiveShadowsMaxDistance;
 }
@@ -1276,6 +1292,7 @@ function maybeUpdateShadowsMaxDistance() {
         (shadowMap.maximumDistance / 1000.0).toFixed(3) +
         "km"
     );
+    updateShadowsMaxDistanceDisplay(shadowMap.maximumDistance);
   }
 }
 
@@ -1844,6 +1861,13 @@ if (window.LIS_MODE === "development") {
   document.getElementById("toolbar").appendChild(terrainDisplay);
 }
 
+// current shadows max distance label
+shadowsMaxDistanceDisplay.style.background = "rgba(42, 42, 42, 0.7)";
+shadowsMaxDistanceDisplay.style.padding = "5px 10px";
+if (window.LIS_MODE === "development") {
+  document.getElementById("toolbar").appendChild(shadowsMaxDistanceDisplay);
+}
+
 /*
 // Show the coords display below the toobar buttons.
 timeDisplay.style.background = "rgba(42, 42, 42, 0.7)";
@@ -2292,7 +2316,7 @@ setSceneLight(sunLightSPICE);
 updateTerrainMeshMaxError(defaultMeshMaxError);
 // terrain mesh error
 var terrainMeshMaxErrorIdx = maxErrorList.indexOf(defaultMeshMaxError);
-if (terrainMeshMaxErrorIdx) {
+if (terrainMeshMaxErrorIdx >= 0) {
   terrainMaxErrMenu.selectedIndex = terrainMeshMaxErrorIdx;
 }
 newTerrainNameSelected(defaultTerrainName, defaultTerrainNormalsEnabled, true);
@@ -2310,9 +2334,9 @@ if (defaultLocation) {
 
 // shadows max distance
 var shadowsMaxDistanceIdx = shadowsMaxDistList.indexOf(
-  defaultShadowMapMaxDistance / 1000.0
+  defaultShadowMapMaxDistance
 );
-if (shadowsMaxDistanceIdx) {
+if (shadowsMaxDistanceIdx >= 0) {
   shadowsMaxDistMenu.selectedIndex = shadowsMaxDistanceIdx;
   shadowsMaxDistOptions[shadowsMaxDistanceIdx].onselect();
 }
