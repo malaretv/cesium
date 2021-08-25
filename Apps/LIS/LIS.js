@@ -985,15 +985,11 @@ Sandcastle.addToggleButton(
 var enableShadowsFadingButton = document.getElementById("toolbar").lastChild;
 var enableShadowsFadingCbx = enableShadowsFadingButton.firstChild.firstChild; // input
 
-/*
-Sandcastle.addToggleButton(
-"Soft Shadows",
-shadowMap.softShadows,
-function (checked) {
-shadowMap.softShadows = checked;
-}
-);
-*/
+Sandcastle.addToggleButton("Soft Shadows", shadowMap.softShadows, function (
+  checked
+) {
+  shadowMap.softShadows = checked;
+});
 
 /*
 Sandcastle.addToggleButton(
