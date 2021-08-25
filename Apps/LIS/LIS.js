@@ -1115,15 +1115,168 @@ export function flyingToNewPosition() {
   flyingToNewPositionStarted = true;
   setRotateAroundPointDisabled();
 }
+// find first valid view row given a view column (recursive)
+function findFirstValidRowPixelBinarySearchRec(
+  col,
+  startRow,
+  endRow,
+  statsObj
+) {
+  statsObj.nit += 1;
+  let middle = Math.floor((startRow + endRow) / 2);
+  let posCartesian = getScreenPixelCoords(new Cesium.Cartesian2(col, middle));
+
+  if (middle == startRow) {
+    if (posCartesian) {
+      return [startRow, posCartesian];
+    } else {
+      // check next row
+      posCartesian = getScreenPixelCoords(new Cesium.Cartesian2(col, endRow));
+      if (posCartesian) {
+        return [endRow, posCartesian];
+      } else {
+        // not found
+        return [undefined, undefined];
+      }
+    }
+  }
+
+  if (!posCartesian) {
+    // go ahead in finding first valid pixel
+    return findFirstValidRowPixelBinarySearchRec(col, middle, endRow, statsObj);
+  } else {
+    // go back and find first valid pixel
+    return findFirstValidRowPixelBinarySearchRec(
+      col,
+      startRow,
+      middle,
+      statsObj
+    );
+  }
+}
+
+// find first valid view row. Binary search is used for better performance.
+function findFirstValidRowCoords(col, viewHeight) {
+  let startRow = 0;
+  let endRow = viewHeight - 1;
+  let statsObj = { nit: 0 }; // just to keep track of number of iterations
+
+  const [validRow, posCartesian] = findFirstValidRowPixelBinarySearchRec(
+    col,
+    startRow,
+    endRow,
+    statsObj
+  );
+  // console.log("Found valid row " + validRow + " - nit (" + statsObj.nit + ")");
+  return posCartesian;
+}
+
+// return the pixel coord on the ellipsoid. Note: if the camera height is negative
+// then the coordinate on the actual terrain will be returned as the previous approch
+// would return the coordinate of point at the opposite position in the ellipsoid
+function getScreenPixelCoords(pixelCoors) {
+  let pixelPosCartesian;
+  // pickEllipsoid does not work when camera height is negative
+  if (cartographicCamera.height >= 0) {
+    pixelPosCartesian = camera.pickEllipsoid(pixelCoors, ellipsoid);
+  } else {
+    // smarter way for finding ground interception (slower)
+    let pixelPosRay = viewer.camera.getPickRay(pixelCoors);
+    pixelPosCartesian = viewer.scene.globe.pick(pixelPosRay, viewer.scene);
+  }
+  return pixelPosCartesian;
+}
+
+const SHADOWS_MAX_DISTANCE_DEFAULT = 100.0 * 1000.0; // 100 Km default
+function getBestShadowsMaxDistance() {
+  // do not update shadows max distance when not needed
+  if (viewModel.terrainShadowsEnabled === false) {
+    return SHADOWS_MAX_DISTANCE_DEFAULT;
+  }
+
+  var camH = cartographicCamera.height * 0.001; // km
+  if (camH > 500) {
+    // high elevation
+    return SHADOWS_MAX_DISTANCE_DEFAULT;
+  }
+
+  const canvas = scene.canvas;
+  let w = canvas.width,
+    h = canvas.height;
+
+  // pickEllipsoid does not work when camera height is negative
+  let posULCartesian = getScreenPixelCoords(new Cesium.Cartesian2(0, 0));
+  let posURCartesian = getScreenPixelCoords(new Cesium.Cartesian2(w - 1, 0));
+  let posLLCartesian = getScreenPixelCoords(new Cesium.Cartesian2(0, h - 1));
+  let posLRCartesian = getScreenPixelCoords(
+    new Cesium.Cartesian2(w - 1, h - 1)
+  );
+
+  // find corner points if they are not valid
+  if (!posULCartesian && posLLCartesian) {
+    posULCartesian = findFirstValidRowCoords(0, h);
+  }
+  if (!posURCartesian && posLRCartesian) {
+    posURCartesian = findFirstValidRowCoords(w - 1, h);
+  }
+
+  let maxDist = 0;
+  let posCartesianArray = [
+    posULCartesian,
+    posLRCartesian,
+    posLLCartesian,
+    posURCartesian,
+  ];
+  for (let i = 0; i < posCartesianArray.length; i++) {
+    let posCartesian = posCartesianArray[i];
+    if (posCartesian) {
+      let c2cDistance = Cesium.Cartesian3.distance(
+        posCartesian,
+        camera.positionWC
+      );
+
+      if (c2cDistance > maxDist) {
+        maxDist = c2cDistance;
+      }
+    }
+  }
+
+  if (maxDist > 0) return maxDist * 1.2; // increase a little bit the shadows max dist (20%)
+
+  return SHADOWS_MAX_DISTANCE_DEFAULT; // 100 Km default
+}
 
 function updateShadowsMaxDist(maxDist) {
   if (viewModel.shadowsMaxDistance == maxDist) {
     return;
   }
 
-  var shadowsMaxDistance = maxDist * 1000.0; // m
+  var shadowsMaxDistance = maxDist;
+  if (maxDist !== "auto") {
+    shadowsMaxDistance = maxDist * 1000.0; // m
+  }
   viewModel.shadowsMaxDistance = shadowsMaxDistance;
-  shadowMap.maximumDistance = shadowsMaxDistance;
+  var effectiveShadowsMaxDistance = shadowsMaxDistance;
+  if (shadowsMaxDistance === "auto") {
+    effectiveShadowsMaxDistance = getBestShadowsMaxDistance();
+    console.log(
+      "best shadows max dist " +
+        (effectiveShadowsMaxDistance / 1000.0).toFixed(3) +
+        "km"
+    );
+  }
+  shadowMap.maximumDistance = effectiveShadowsMaxDistance;
+}
+
+function maybeUpdateShadowsMaxDistance() {
+  if (viewModel.shadowsMaxDistance === "auto") {
+    shadowMap.maximumDistance = getBestShadowsMaxDistance();
+    console.log(
+      "Updating shadow max distance: " +
+        (shadowMap.maximumDistance / 1000.0).toFixed(3) +
+        "km"
+    );
+  }
 }
 
 function setShadowsMaxDistanceFunction(maxDist) {
@@ -1132,12 +1285,17 @@ function setShadowsMaxDistanceFunction(maxDist) {
   };
 }
 
-var shadowsMaxDistList = [10, 25, 50, 100, 200, 300 /*, 500, 1000*/]; // km
+var shadowsMaxDistList = ["auto", 10, 25, 50, 100, 200, 300 /*, 500, 1000*/]; // km
 var shadowsMaxDistOptions = [];
 for (var i = 0; i < shadowsMaxDistList.length; i++) {
   var shadowsMaxDist = shadowsMaxDistList[i];
-  var shadowsMaxDistEntryName =
-    "Shadows Max Distance: " + shadowsMaxDist.toString() + "km";
+  var shadowsMaxDistS;
+  if (shadowsMaxDist === "auto") {
+    shadowsMaxDistS = shadowsMaxDist;
+  } else {
+    shadowsMaxDistS = shadowsMaxDist.toString() + "km";
+  }
+  var shadowsMaxDistEntryName = "Shadows Max Distance: " + shadowsMaxDistS;
   shadowsMaxDistOptions.push({
     text: shadowsMaxDistEntryName,
     onselect: setShadowsMaxDistanceFunction(shadowsMaxDist),
@@ -1637,6 +1795,8 @@ function cameraPositionUpdated() {
   // viewModel.camera_up = camera.up;
 
   viewModel.setCameraPandO(camera.position, camera.direction, camera.up);
+
+  maybeUpdateShadowsMaxDistance();
 }
 
 viewer.camera.moveEnd.addEventListener(() => {
@@ -2385,7 +2545,9 @@ function loadStateFromQueryString() {
   if (searchParams.has("shadowsMaxDistance")) {
     var shadowsMaxDistance = searchParams.get("shadowsMaxDistance");
     shadowsMaxDistanceIdx = shadowsMaxDistList.indexOf(
-      parseFloat(shadowsMaxDistance) / 1000.0
+      shadowsMaxDistance === "auto"
+        ? shadowsMaxDistance
+        : parseFloat(shadowsMaxDistance) / 1000.0
     );
     if (shadowsMaxDistanceIdx >= 0) {
       shadowsMaxDistMenu.selectedIndex = shadowsMaxDistanceIdx;
