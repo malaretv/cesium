@@ -20,6 +20,59 @@ var buttonBgColor = "rgba(42, 42, 42, 0.7)";
 var buttonBgSelectedColor = "rgba(255, 255, 255, 0.7)";
 
 //////////////////////////////////////////////
+// SHOW/HIDE CONTROLS BUTTON
+//////////////////////////////////////////////
+
+var controlVisibilityButtonSrc = "./images/gearwheel_white_16x16.png";
+var controlVisibilityButtonSelectedSrc = "./images/gearwheel_16x16.png";
+
+var controlVisibilityButton;
+export function addControlsVisibilityButton() {
+  "use strict";
+
+  var controlVisibilityButtonDiv = document.createElement("div");
+  controlVisibilityButton = document.createElement("input");
+  controlVisibilityButton.src = controlVisibilityButtonSrc;
+  controlVisibilityButton.type = "image";
+  controlVisibilityButton.style.backgroundColor = buttonBgColor;
+  controlVisibilityButton.title = "Show/Hide Controls";
+  controlVisibilityButtonDiv.appendChild(controlVisibilityButton);
+  var toolbar = document.getElementById("toolbar");
+  var toolbarParent = toolbar.parentElement;
+  toolbarParent.insertBefore(controlVisibilityButtonDiv, toolbar);
+
+  controlVisibilityButton.onclick = controlVisibilityButtonClicked;
+}
+
+function controlVisibilityButtonClicked() {
+  var toolbar = document.getElementById("toolbar");
+  var checked = toolbar.style.display === "none";
+  setControlVisibilityButtonChecked(checked);
+}
+
+export function setControlVisibilityButtonChecked(checked) {
+  if (checked) {
+    // select
+    controlVisibilityButton.style.backgroundColor = buttonBgSelectedColor;
+    controlVisibilityButton.src = controlVisibilityButtonSelectedSrc;
+  } else {
+    // unselect
+    controlVisibilityButton.style.backgroundColor = buttonBgColor;
+    controlVisibilityButton.src = controlVisibilityButtonSrc;
+  }
+  setControlsPanelVisible(checked);
+}
+
+function setControlsPanelVisible(checked) {
+  var toolbar = document.getElementById("toolbar");
+  if (toolbar.style.display === "none") {
+    toolbar.style.display = "block";
+  } else {
+    toolbar.style.display = "none";
+  }
+}
+
+//////////////////////////////////////////////
 ///////////// GO TO TOOL /////////////////////
 //////////////////////////////////////////////
 
@@ -41,9 +94,10 @@ export function addGoToButton() {
   recenterButton = document.createElement("input");
   recenterButton.src = recenterButtonSrc;
   recenterButton.type = "image";
+  recenterButton.title = "Show/Hide Go-To Controls";
   recenterButton.style.backgroundColor = buttonBgColor;
   recenterButtonDiv.appendChild(recenterButton);
-  document.getElementById("toolbar").appendChild(recenterButtonDiv);
+  document.getElementById("toolbar-label").appendChild(recenterButtonDiv);
 
   recenterButton.onclick = recenterButtonClicked;
 
@@ -62,7 +116,7 @@ export function addGoToButton() {
     locationsOptionList += '<option value="' + locationName + '" />';
   }
 
-  document.getElementById("toolbar").appendChild(goto);
+  document.getElementById("toolbar-label").appendChild(goto);
 
   gotoForm = document.getElementById("goto-form");
   gotoInput = document.getElementById("goto-input");
@@ -233,7 +287,7 @@ export function addTimeButton() {
   timeButton.type = "image";
   timeButton.style.backgroundColor = buttonBgColor;
   timeButtonDiv.appendChild(timeButton);
-  document.getElementById("toolbar").appendChild(timeButtonDiv);
+  document.getElementById("toolbar-label").appendChild(timeButtonDiv);
 
   // timeButton.onclick = timeButtonClicked;
 
@@ -246,7 +300,7 @@ export function addTimeButton() {
     </form>";
   time.innerHTML = timeformHTML;
 
-  document.getElementById("toolbar").appendChild(time);
+  document.getElementById("toolbar-label").appendChild(time);
 
   timeForm = document.getElementById("time-form");
   timeInput = document.getElementById("time-input");
