@@ -34,9 +34,11 @@ import {
 
 import {
   initializeBaseLayerPicker,
+  addControlsVisibilityButton,
   addGoToButton,
   addMeshControls,
   refreshMeshControlsParams,
+  setControlVisibilityButtonChecked,
 } from "./UIcontrols.js";
 
 import { cameraFlyToLookDownNorthUp } from "./utils.js";
@@ -1842,37 +1844,39 @@ function setHeightKm(heightInKilometers) {
 // Show the coords display below the toobar buttons.
 cameraCoordsDisplay.style.background = "rgba(42, 42, 42, 0.7)";
 cameraCoordsDisplay.style.padding = "5px 10px";
-document.getElementById("toolbar").appendChild(cameraCoordsDisplay);
+document.getElementById("toolbar-label").appendChild(cameraCoordsDisplay);
 
 // Show the coords display below the toobar buttons.
 coordsDisplay.style.background = "rgba(42, 42, 42, 0.7)";
 coordsDisplay.style.padding = "5px 10px";
-document.getElementById("toolbar").appendChild(coordsDisplay);
+document.getElementById("toolbar-label").appendChild(coordsDisplay);
 
 // Show camera to cursor distance.
 camera2CursorDistance.style.background = "rgba(42, 42, 42, 0.7)";
 camera2CursorDistance.style.padding = "5px 10px";
-document.getElementById("toolbar").appendChild(camera2CursorDistance);
+document.getElementById("toolbar-label").appendChild(camera2CursorDistance);
 
 // current terrain label
 terrainDisplay.style.background = "rgba(42, 42, 42, 0.7)";
 terrainDisplay.style.padding = "5px 10px";
 if (window.LIS_MODE === "development") {
-  document.getElementById("toolbar").appendChild(terrainDisplay);
+  document.getElementById("toolbar-label").appendChild(terrainDisplay);
 }
 
 // current shadows max distance label
 shadowsMaxDistanceDisplay.style.background = "rgba(42, 42, 42, 0.7)";
 shadowsMaxDistanceDisplay.style.padding = "5px 10px";
 if (window.LIS_MODE === "development") {
-  document.getElementById("toolbar").appendChild(shadowsMaxDistanceDisplay);
+  document
+    .getElementById("toolbar-label")
+    .appendChild(shadowsMaxDistanceDisplay);
 }
 
 /*
 // Show the coords display below the toobar buttons.
 timeDisplay.style.background = "rgba(42, 42, 42, 0.7)";
 timeDisplay.style.padding = "5px 10px";
-document.getElementById("toolbar").appendChild(timeDisplay);
+document.getElementById("toolbar-label").appendChild(timeDisplay);
 */
 
 /*
@@ -1895,6 +1899,11 @@ if (window.LIS_MODE === "development") {
   addMeshControls();
 }
 
+// add button for showing/hiding controls
+addControlsVisibilityButton();
+// hide controls
+setControlVisibilityButtonChecked(false);
+
 // add go to button
 addGoToButton();
 // add set time button
@@ -1906,7 +1915,7 @@ if (window.LIS_MODE === "development") {
   viewer.extend(Cesium.viewerCesiumInspectorMixin);
 }
 
-document.getElementById("toolbar").style.width = "50%";
+document.getElementById("toolbarWrapper").style.width = "50%";
 
 // SUN
 var solarRadiusInMeters = 6.955e8;
