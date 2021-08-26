@@ -14,6 +14,12 @@
     <script type="text/javascript" src="./Sandcastle-helpers.js"></script>
     <script>
       window.LIS_MODE = "development";
+
+      function toggleToolbarDisplay() {
+        let toolbarEl = document.getElementById("toolbar");
+        toolbarEl.style.display =
+          toolbarEl.style.display === "none" ? "block" : "none";
+      }
     </script>
   </head>
   <body
@@ -22,7 +28,11 @@
   >
     <div id="cesiumContainer" class="fullSize"></div>
     <div id="loadingOverlay"><h1>Loading...</h1></div>
-    <div id="toolbar"></div>
+    <div id="toolbarWrapper">
+      <button onClick="toggleToolbarDisplay()">Toggle Toolbar</button>
+      <div id="toolbar"></div>
+    </div>
+
     <script type="module" src="LIS.js"></script>
   </body>
 </html>
