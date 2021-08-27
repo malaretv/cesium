@@ -46,6 +46,16 @@ body {
   display: block;
 }
 
+.ActLogo {
+  position: absolute;
+  top: 0;
+  left: 36px;
+  padding: 0 4px;
+}
+.ActLogo img {
+  opacity: 0.7;
+}
+
 .sandcastle-loading #toolbar {
   display: none;
 }
