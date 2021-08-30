@@ -1407,9 +1407,7 @@ function setNACButtonVisible(yes) {
   if (!yes) {
     document.getElementById("toolbar").removeChild(enableNACButton);
   } else {
-    document
-      .getElementById("toolbar")
-      .insertBefore(enableNACButton, cameraCoordsDisplay);
+    document.getElementById("toolbar").appendChild(enableNACButton);
   }
 }
 
@@ -1479,9 +1477,7 @@ function setQMapImageButtonVisible(yes) {
   if (!yes) {
     document.getElementById("toolbar").removeChild(enableQMapImageButton);
   } else {
-    document
-      .getElementById("toolbar")
-      .insertBefore(enableQMapImageButton, cameraCoordsDisplay);
+    document.getElementById("toolbar").appendChild(enableQMapImageButton);
   }
 }
 
