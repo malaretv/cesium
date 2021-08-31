@@ -39,6 +39,7 @@ import {
   addMeshControls,
   refreshMeshControlsParams,
   setControlVisibilityButtonChecked,
+  setMapLoadingIconVisible,
 } from "./UIcontrols.js";
 
 import { cameraFlyToLookDownNorthUp } from "./utils.js";
@@ -615,6 +616,7 @@ function finishForceTerrainShadowsRefresh() {
 
 function terrainTileLoaded(loadTilesQueueCount) {
   if (!terrainShadowsRefreshStarted) {
+    setMapLoadingIconVisible(true);
     // schedule force terrain shadows refresh
     // it can take time loading all the tiles. Let us force a shadows refresh before load finishes
     forceTerrainShadowsRefreshTimeoutId = setTimeout(
@@ -629,6 +631,7 @@ function terrainTileLoaded(loadTilesQueueCount) {
       clearTimeout(forceTerrainShadowsRefreshTimeoutId);
     }
     forceTerrainShadowsRefresh();
+    setMapLoadingIconVisible(false);
   }
 }
 

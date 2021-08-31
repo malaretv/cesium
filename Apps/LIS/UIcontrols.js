@@ -457,3 +457,12 @@ export function initializeBaseLayerPicker() {
   initializeImageryPicker();
   initializeTerrainPicker();
 }
+
+//////////////////////////////////////////////
+export function setMapLoadingIconVisible(yes) {
+  if (yes) {
+    document.getElementById("map-loading").style.display = "inline-block";
+  } else {
+    document.getElementById("map-loading").style.display = "none";
+  }
+}
