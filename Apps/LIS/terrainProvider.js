@@ -21,8 +21,8 @@ import {
 export { isOptimizedPolarTerrain };
 
 // use this for having server caching enabled
-// var terrainServername = "https://lunar-dem-tiles2.quickmap.io";
-var terrainServername = "https://lunar-dem-api.quickmap.io";
+var terrainServername = "https://lunar-dem-tiles2.quickmap.io";
+// var terrainServername = "https://lunar-dem-api.quickmap.io";
 var terrainBaseUrl = terrainServername + "/sldem_lola";
 var terrainResampligMethod = "cubic";
 var terrainMeshScale = 3;
