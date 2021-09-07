@@ -1,6 +1,6 @@
-import { Cartesian3, Matrix4 } from "../../Source/Cesium.js";
+import { JulianDate, Cartesian3, Matrix4 } from "../../Source/Cesium.js";
 
-import { viewer, locationsInfo, setLocation } from "./LIS.js";
+import { viewer, locationsInfo, setLocation, setTimes } from "./LIS.js";
 
 import { adjustCartesianCoords } from "./adjustCartesian.js";
 
@@ -35,6 +35,8 @@ export function addControlsVisibilityButton() {
   controlVisibilityButton.src = controlVisibilityButtonSrc;
   controlVisibilityButton.type = "image";
   controlVisibilityButton.style.backgroundColor = buttonBgColor;
+  controlVisibilityButton.style.margin = "1px";
+  controlVisibilityButton.style.borderRadius = "4px";
   controlVisibilityButton.title = "Show/Hide Controls";
   controlVisibilityButtonDiv.appendChild(controlVisibilityButton);
   var toolbar = document.getElementById("toolbar");
@@ -90,14 +92,14 @@ var gotoError;
 export function addGoToButton() {
   "use strict";
 
-  var recenterButtonDiv = document.createElement("div");
   recenterButton = document.createElement("input");
   recenterButton.src = recenterButtonSrc;
   recenterButton.type = "image";
   recenterButton.title = "Show/Hide Go-To Controls";
   recenterButton.style.backgroundColor = buttonBgColor;
-  recenterButtonDiv.appendChild(recenterButton);
-  document.getElementById("toolbar-label").appendChild(recenterButtonDiv);
+  recenterButton.style.margin = "1px";
+  recenterButton.style.borderRadius = "4px";
+  document.getElementById("toolbar-buttons").appendChild(recenterButton);
 
   recenterButton.onclick = recenterButtonClicked;
 
@@ -116,7 +118,7 @@ export function addGoToButton() {
     locationsOptionList += '<option value="' + locationName + '" />';
   }
 
-  document.getElementById("toolbar-label").appendChild(goto);
+  document.getElementById("toolbar-buttons-ctrls").appendChild(goto);
 
   gotoForm = document.getElementById("goto-form");
   gotoInput = document.getElementById("goto-input");
@@ -152,7 +154,16 @@ function setRecenterButtonChecked(checked) {
 
 function recenterButtonClicked() {
   var checked = gotoForm.hasAttribute("hidden");
+  if (checked) {
+    // only on button at a time can be checked
+    untoggleToolbarButtons();
+  }
   setRecenterButtonChecked(checked);
+}
+
+function untoggleToolbarButtons() {
+  setRecenterButtonChecked(false);
+  setTimeButtonChecked(false);
 }
 
 function setGotoFormVisible(yes) {
@@ -275,41 +286,207 @@ var timeButtonSelectedSrc = "./images/clock_16x16.png";
  */
 var timeButton;
 var timeForm;
-var timeInput;
+var startTimeInput;
+var stopTimeInput;
+var currentTimeInput;
 var timeError;
 
 export function addTimeButton() {
   "use strict";
 
-  var timeButtonDiv = document.createElement("div");
   timeButton = document.createElement("input");
   timeButton.src = timeButtonSrc;
   timeButton.type = "image";
+  timeButton.title = "Show/Hide Time Controls";
   timeButton.style.backgroundColor = buttonBgColor;
-  timeButtonDiv.appendChild(timeButton);
-  document.getElementById("toolbar-label").appendChild(timeButtonDiv);
+  timeButton.style.margin = "1px";
+  timeButton.style.borderRadius = "4px";
+  var toolbarButtonsDiv = document.getElementById("toolbar-buttons");
+  toolbarButtonsDiv.appendChild(timeButton);
 
-  // timeButton.onclick = timeButtonClicked;
+  timeButton.onclick = timeButtonClicked;
 
   var time = document.createElement("div");
   var timeformHTML =
     "<form id='time-form' hidden> \
             <p id='time-error' hidden>Please fill out all fields.</p> \
-            <input type='text' id='time-input' placeholder='startT,endT,currentT' required /> \
+            <label>Start Time: </label><input type='text' id='start-time-input' placeholder='Start Time (ISO 8601))' required /><br> \
+            <label>Stop Time: </label><input type='text' id='stop-time-input' placeholder='Stop Time (ISO 8601) - opt'/><br> \
+            <label>Current Time: </label><input type='text' id='current-time-input' placeholder='Current Time (ISO 8601) - opt' /><br> \
             <button type='submit'>Go</button> \
     </form>";
   time.innerHTML = timeformHTML;
 
-  document.getElementById("toolbar-label").appendChild(time);
+  document.getElementById("toolbar-buttons-ctrls").appendChild(time);
 
   timeForm = document.getElementById("time-form");
-  timeInput = document.getElementById("time-input");
+  startTimeInput = document.getElementById("start-time-input");
+  stopTimeInput = document.getElementById("stop-time-input");
+  currentTimeInput = document.getElementById("current-time-input");
+  var is_chrome = navigator.userAgent.indexOf("Chrome") > -1;
+  var is_safari = navigator.userAgent.indexOf("Safari") > -1;
+  if (is_chrome && is_safari) {
+    is_safari = false;
+  }
+  if (!is_safari) {
+    // not Safari.
+    // Does not work on Safari.
+    startTimeInput.className = "cesium-button";
+    stopTimeInput.className = "cesium-button";
+    currentTimeInput.className = "cesium-button";
+  }
   timeError = document.getElementById("time-error");
 
-  timeInput.oninvalid = invalid;
-  timeForm.onsubmit = submit;
+  startTimeInput.oninvalid = invalid;
+  timeForm.onsubmit = submitTime;
 }
 
+function hideTimeFormError() {
+  timeError.setAttribute("hidden", "");
+}
+
+function showTimeFormError(msg) {
+  timeError.innerHTML = msg;
+  timeError.removeAttribute("hidden");
+}
+
+function stringToJulianDate(date) {
+  try {
+    let julDate = JulianDate.fromIso8601(date);
+    return [true, julDate];
+  } catch (error) {
+    console.log(error.message);
+    return [false, undefined];
+  }
+}
+
+function submitTime(event) {
+  hideTimeFormError();
+
+  let startTimeS = startTimeInput.value;
+  let stopTimeS = stopTimeInput.value;
+  let currentTimeS = currentTimeInput.value;
+  let startTime, stopTime, currentTime;
+
+  let res;
+  if (startTimeS) {
+    [res, startTime] = stringToJulianDate(startTimeS);
+    if (!res) {
+      showTimeFormError(
+        "Invalid Start Time format.<br>Please use ISO 8601 format YYYY-MM-DDTHH:MM:SSZ"
+      );
+      return false;
+    }
+  }
+  if (stopTimeS) {
+    [res, stopTime] = stringToJulianDate(stopTimeS);
+    if (!res) {
+      showTimeFormError(
+        "Invalid Stop Time format.<br>Please use ISO 8601 format YYYY-MM-DDTHH:MM:SSZ"
+      );
+      return false;
+    }
+  }
+  if (currentTimeS) {
+    [res, currentTime] = stringToJulianDate(currentTimeS);
+    if (!res) {
+      showTimeFormError(
+        "Invalid Current Time format.<br>Please use ISO 8601 format YYYY-MM-DDTHH:MM:SSZ"
+      );
+      return false;
+    }
+  }
+
+  if (!startTime && !currentTime) {
+    showTimeFormError("Please insert valid Start time or Current Time");
+    return false;
+  }
+
+  if (currentTime && !startTime) {
+    startTime = currentTime;
+    startTimeS = currentTimeS;
+  } else if (startTime && !currentTime) {
+    currentTime = startTime;
+    currentTimeS = startTimeS;
+  }
+
+  if (!stopTime) {
+    stopTime = JulianDate.addDays(startTime, 29, new JulianDate());
+    stopTimeS = stopTime.toString(stopTime);
+  }
+
+  // check
+  // startTime < stopTime
+  if (JulianDate.compare(startTime, stopTime) >= 0) {
+    showTimeFormError("Stop time must be greater than start time");
+    return false;
+  }
+
+  // check
+  // current time >= start time
+  // current time <= end time
+  if (JulianDate.compare(currentTime, startTime) < 0) {
+    showTimeFormError("Current time must be greater than start time");
+    return false;
+  }
+
+  if (JulianDate.compare(currentTime, stopTime) > 0) {
+    showTimeFormError("Current time must be lower than end time");
+    return false;
+  }
+
+  // initialize missing fields
+  if (!stopTimeInput.value) {
+    stopTimeInput.value = stopTimeS;
+  }
+  if (!startTimeInput.value) {
+    startTimeInput.value = startTimeS;
+  }
+  if (!currentTimeInput.value) {
+    currentTimeInput.value = currentTimeS;
+  }
+
+  // update time
+  setTimes(startTime, stopTime, currentTime);
+
+  // For this example, don't actually submit the form
+  event.preventDefault();
+}
+
+function setTimeButtonChecked(checked) {
+  if (checked) {
+    // select
+    timeButton.style.backgroundColor = buttonBgSelectedColor;
+    timeButton.src = timeButtonSelectedSrc;
+  } else {
+    // unselect
+    timeButton.style.backgroundColor = buttonBgColor;
+    timeButton.src = timeButtonSrc;
+  }
+  setTimeFormVisible(checked);
+}
+
+function timeButtonClicked() {
+  var checked = timeForm.hasAttribute("hidden");
+  if (checked) {
+    // only on button at a time can be checked
+    untoggleToolbarButtons();
+  }
+  setTimeButtonChecked(checked);
+}
+
+function setTimeFormVisible(yes) {
+  if (yes) {
+    timeForm.removeAttribute("hidden");
+  } else {
+    timeForm.setAttribute("hidden", "");
+    hideTimeFormError();
+    // clear input string
+    startTimeInput.value = JulianDate.fromIso8601(viewModel.startUTCTime);
+    stopTimeInput.value = JulianDate.fromIso8601(viewModel.stopUTCTime);
+    currentTimeInput.value = JulianDate.fromIso8601(viewModel.UTCTime);
+  }
+}
 ///////////////////////////////////////////////
 ////////////// TERRAIN MESH CONTROLS //////////
 ///////////////////////////////////////////////
