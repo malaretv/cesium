@@ -136,3 +136,11 @@ body {
     transform: translate(12px, 0);
   }
 }
+
+/* toolbar button */
+
+.toolbar-button {
+  background-color: rgba(42, 42, 42, 0.7);
+  margin: 1px;
+  border-radius: 4px;
+}

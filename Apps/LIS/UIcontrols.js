@@ -34,9 +34,7 @@ export function addControlsVisibilityButton() {
   controlVisibilityButton = document.createElement("input");
   controlVisibilityButton.src = controlVisibilityButtonSrc;
   controlVisibilityButton.type = "image";
-  controlVisibilityButton.style.backgroundColor = buttonBgColor;
-  controlVisibilityButton.style.margin = "1px";
-  controlVisibilityButton.style.borderRadius = "4px";
+  controlVisibilityButton.className = "toolbar-button";
   controlVisibilityButton.title = "Show/Hide Controls";
   controlVisibilityButtonDiv.appendChild(controlVisibilityButton);
   var toolbar = document.getElementById("toolbar");
@@ -96,9 +94,7 @@ export function addGoToButton() {
   recenterButton.src = recenterButtonSrc;
   recenterButton.type = "image";
   recenterButton.title = "Show/Hide Go-To Controls";
-  recenterButton.style.backgroundColor = buttonBgColor;
-  recenterButton.style.margin = "1px";
-  recenterButton.style.borderRadius = "4px";
+  recenterButton.className = "toolbar-button";
   document.getElementById("toolbar-buttons").appendChild(recenterButton);
 
   recenterButton.onclick = recenterButtonClicked;
@@ -298,9 +294,7 @@ export function addTimeButton() {
   timeButton.src = timeButtonSrc;
   timeButton.type = "image";
   timeButton.title = "Show/Hide Time Controls";
-  timeButton.style.backgroundColor = buttonBgColor;
-  timeButton.style.margin = "1px";
-  timeButton.style.borderRadius = "4px";
+  timeButton.className = "toolbar-button";
   var toolbarButtonsDiv = document.getElementById("toolbar-buttons");
   toolbarButtonsDiv.appendChild(timeButton);
 
