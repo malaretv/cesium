@@ -37,6 +37,7 @@ import {
   addControlsVisibilityButton,
   addGoToButton,
   addMeshControls,
+  addTimeButton,
   refreshMeshControlsParams,
   setControlVisibilityButtonChecked,
   setMapLoadingIconVisible,
@@ -432,7 +433,11 @@ function timeUpdated() {
   viewModel.UTCTime = viewer.clock.currentTime;
 }
 
-function initializeTime(currentTimeIso8601, startTimeIso8601, stopTimeIso8601) {
+export function initializeTime(
+  currentTimeIso8601,
+  startTimeIso8601,
+  stopTimeIso8601
+) {
   var currentTime = Cesium.JulianDate.fromIso8601(currentTimeIso8601);
   var stopTime;
   if (stopTimeIso8601 === undefined) {
@@ -476,6 +481,10 @@ function initializeTime(currentTimeIso8601, startTimeIso8601, stopTimeIso8601) {
   );
   */
 
+  setTimes(startTime, stopTime, currentTime);
+}
+
+export function setTimes(startTime, stopTime, currentTime) {
   var isTimeRangeChanged = false;
   if (
     viewer.clock.startTime !== startTime ||
@@ -484,10 +493,10 @@ function initializeTime(currentTimeIso8601, startTimeIso8601, stopTimeIso8601) {
     isTimeRangeChanged = true;
   }
 
-  viewer.clock.currentTime = currentTime;
   viewer.clock.startTime = startTime;
   viewer.clock.stopTime = stopTime;
   viewer.timeline.zoomTo(startTime, stopTime);
+  viewer.clock.currentTime = currentTime;
 
   viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
 
@@ -1906,7 +1915,7 @@ setControlVisibilityButtonChecked(false);
 // add go to button
 addGoToButton();
 // add set time button
-// addTimeButton();
+addTimeButton();
 
 initializeBaseLayerPicker();
 
