@@ -1,4 +1,9 @@
-import { JulianDate, Cartesian3, Matrix4 } from "../../Source/Cesium.js";
+import {
+  JulianDate,
+  Cartesian3,
+  Matrix4,
+  viewerCesiumInspectorMixin,
+} from "../../Source/Cesium.js";
 
 import { viewer, locationsInfo, setLocation, setTimes } from "./LIS.js";
 
@@ -19,6 +24,32 @@ import { viewModel } from "./viewModel.js";
 var buttonBgColor = "rgba(42, 42, 42, 0.7)";
 var buttonBgSelectedColor = "rgba(255, 255, 255, 0.7)";
 
+export function initializeUI() {
+  if (window.LIS_MODE === "development") {
+    addMeshControls();
+  }
+
+  // add button for showing/hiding controls
+  addControlsVisibilityButton();
+  // hide controls
+  setControlVisibilityButtonChecked(false);
+
+  // add go to button
+  addGoToButton();
+  // add set time button
+  addTimeButton();
+
+  initializeBaseLayerPicker();
+
+  if (window.LIS_MODE === "development") {
+    viewer.extend(viewerCesiumInspectorMixin);
+  }
+
+  document.getElementById("toolbarWrapper").style.width = "50%";
+
+  // addStatusBar();
+}
+
 //////////////////////////////////////////////
 // SHOW/HIDE CONTROLS BUTTON
 //////////////////////////////////////////////
@@ -27,7 +58,7 @@ var controlVisibilityButtonSrc = "./images/gearwheel_white_16x16.png";
 var controlVisibilityButtonSelectedSrc = "./images/gearwheel_16x16.png";
 
 var controlVisibilityButton;
-export function addControlsVisibilityButton() {
+function addControlsVisibilityButton() {
   "use strict";
 
   var controlVisibilityButtonDiv = document.createElement("div");
@@ -50,7 +81,7 @@ function controlVisibilityButtonClicked() {
   setControlVisibilityButtonChecked(checked);
 }
 
-export function setControlVisibilityButtonChecked(checked) {
+function setControlVisibilityButtonChecked(checked) {
   if (checked) {
     // select
     controlVisibilityButton.style.backgroundColor = buttonBgSelectedColor;
@@ -87,7 +118,7 @@ var gotoForm;
 var gotoInput;
 var gotoError;
 
-export function addGoToButton() {
+function addGoToButton() {
   "use strict";
 
   recenterButton = document.createElement("input");
@@ -287,7 +318,7 @@ var stopTimeInput;
 var currentTimeInput;
 var timeError;
 
-export function addTimeButton() {
+function addTimeButton() {
   "use strict";
 
   timeButton = document.createElement("input");
@@ -344,6 +375,46 @@ function showTimeFormError(msg) {
   timeError.removeAttribute("hidden");
 }
 
+function fixISOMissingT(dateString) {
+  // Looks for strings that match ISO8601 but have whitespace instead of a T
+  if (
+    dateString.match(
+      /(\d{4}-[01]\d-[0-3]\d [0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\d [0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\d [0-2]\d:[0-5]\d)/
+    )
+  ) {
+    return dateString.replace(" ", "T");
+  }
+  return dateString;
+}
+
+function fixISOMissingTimeZone(dateString) {
+  if (dateString.endsWith("Z")) {
+    return dateString;
+  }
+
+  // check whether the string has time zone information
+  // Note: time zone patter ±[hh]:[mm], ±[hh][mm] o ±[hh]
+  let re = /[+-][0-2]\d(?:\:?[0-5]\d)?$/;
+  if (dateString.match(re)) {
+    // found time zone substring
+    // console.log("time zone " + dateString.match(re));
+    return dateString;
+  }
+  // no time zone
+  // force UTC
+  return dateString + "Z";
+}
+
+function fixTimeISOString(dateString) {
+  // remove whitespace on either end
+  dateString = dateString.trim();
+  // if ISO8601 format and using space instead of T fix it
+  dateString = fixISOMissingT(dateString);
+  // if ISO8601 and not time zone is specified then force Z param for UTC
+  dateString = fixISOMissingTimeZone(dateString);
+  return dateString;
+}
+
 function stringToJulianDate(date) {
   try {
     let julDate = JulianDate.fromIso8601(date);
@@ -364,6 +435,7 @@ function submitTime(event) {
 
   let res;
   if (startTimeS) {
+    startTimeS = fixTimeISOString(startTimeS);
     [res, startTime] = stringToJulianDate(startTimeS);
     if (!res) {
       showTimeFormError(
@@ -373,6 +445,7 @@ function submitTime(event) {
     }
   }
   if (stopTimeS) {
+    stopTimeS = fixTimeISOString(stopTimeS);
     [res, stopTime] = stringToJulianDate(stopTimeS);
     if (!res) {
       showTimeFormError(
@@ -382,6 +455,7 @@ function submitTime(event) {
     }
   }
   if (currentTimeS) {
+    currentTimeS = fixTimeISOString(currentTimeS);
     [res, currentTime] = stringToJulianDate(currentTimeS);
     if (!res) {
       showTimeFormError(
@@ -429,14 +503,16 @@ function submitTime(event) {
     return false;
   }
 
+  // update fields strings
+
   // initialize missing fields
-  if (!stopTimeInput.value) {
+  if (!stopTimeInput.value || stopTimeInput.value !== stopTimeS) {
     stopTimeInput.value = stopTimeS;
   }
-  if (!startTimeInput.value) {
+  if (!startTimeInput.value || startTimeInput.value !== startTimeS) {
     startTimeInput.value = startTimeS;
   }
-  if (!currentTimeInput.value) {
+  if (!currentTimeInput.value || currentTimeInput.value !== currentTimeS) {
     currentTimeInput.value = currentTimeS;
   }
 
@@ -492,7 +568,7 @@ var meshControlsForm;
 var meshControlsInput;
 var meshControlsError;
 
-export function addMeshControls() {
+function addMeshControls() {
   "use strict";
 
   var meshControls = document.createElement("div");
@@ -624,7 +700,7 @@ function setTerrainMeshParams() {
 ////////////// BASE LAYER PICKER /////////////
 //////////////////////////////////////////////
 
-export function initializeBaseLayerPicker() {
+function initializeBaseLayerPicker() {
   initializeImageryPicker();
   initializeTerrainPicker();
 }
@@ -636,4 +712,12 @@ export function setMapLoadingIconVisible(yes) {
   } else {
     document.getElementById("map-loading").style.display = "none";
   }
+}
+
+// Status Bar
+function addStatusBar() {
+  var bottomContainer = viewer.bottomContainer;
+
+  var statusBarHTML = "<label>This is a test</label>";
+  bottomContainer.innerHTML = statusBarHTML;
 }
