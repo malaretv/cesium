@@ -33,13 +33,8 @@ import {
 } from "./adjustCartesian.js";
 
 import {
-  initializeBaseLayerPicker,
-  addControlsVisibilityButton,
-  addGoToButton,
-  addMeshControls,
-  addTimeButton,
+  initializeUI,
   refreshMeshControlsParams,
-  setControlVisibilityButtonChecked,
   setMapLoadingIconVisible,
 } from "./UIcontrols.js";
 
@@ -1903,27 +1898,7 @@ setHeightKm(500);
 });
 */
 
-if (window.LIS_MODE === "development") {
-  addMeshControls();
-}
-
-// add button for showing/hiding controls
-addControlsVisibilityButton();
-// hide controls
-setControlVisibilityButtonChecked(false);
-
-// add go to button
-addGoToButton();
-// add set time button
-addTimeButton();
-
-initializeBaseLayerPicker();
-
-if (window.LIS_MODE === "development") {
-  viewer.extend(Cesium.viewerCesiumInspectorMixin);
-}
-
-document.getElementById("toolbarWrapper").style.width = "50%";
+initializeUI();
 
 // SUN
 var solarRadiusInMeters = 6.955e8;
