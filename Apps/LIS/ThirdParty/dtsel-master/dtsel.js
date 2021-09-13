@@ -237,6 +237,8 @@
     var self = this;
     this.addHandler("visible", function (state, prevState) {
       if (state.visible && !prevState.visible) {
+        // force position update
+        this.setPosition();
         document.body.appendChild(this.el.wrapper);
 
         var parts = self.elem.value.split(/\s*,\s*/);
