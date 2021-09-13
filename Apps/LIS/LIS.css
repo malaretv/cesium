@@ -144,3 +144,14 @@ body {
   margin: 1px;
   border-radius: 4px;
 }
+
+/* Time Picker Button */
+.time-picker-button {
+  background-color: rgba(42, 42, 42, 0.7);
+  border-radius: 4px;
+  /* display: block; */
+  /* float: left; */
+  height: 25px;
+  margin: -1px -2px -2px;
+  width: 25px;
+}
