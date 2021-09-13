@@ -359,7 +359,7 @@ function addTimeButton() {
             <input type='image' id='curr-time-picker-button' src='" +
     timePickerButtonSrc +
     "' title='Date Picker' class='time-picker-button'/><br> \
-            <button type='submit'>Go</button> \
+            <button type='submit' name='submit-time'>Go</button> \
     </form>";
   time.innerHTML = timeformHTML;
 
@@ -490,7 +490,6 @@ function timePickerButtonClicked(timePickerButton) {
     timePickerButton.value = timeInputsArray[btnIdx].value
       .replace("T", ", ")
       .replace("Z", "");
-    console.log(timePickerButton.value);
   }
 
   // show/hide picker
@@ -553,6 +552,12 @@ function stringToJulianDate(date) {
 }
 
 function submitTime(event) {
+  if (event.submitter.name !== "submit-time") {
+    // ignore
+    event.preventDefault();
+    return;
+  }
+
   hideTimeFormError();
 
   let startTimeS = startTimeInput.value;
