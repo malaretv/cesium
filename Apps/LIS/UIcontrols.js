@@ -486,7 +486,6 @@ function timePickerButtonClicked(timePickerButton) {
     // only on button at a time can be checked
     untoggleTimePickerButtons();
 
-    console.log("button clicked");
     let btnIdx = timePickerButtonsArray.indexOf(timePickerButton);
     timePickerButton.value = timeInputsArray[btnIdx].value
       .replace("T", ", ")
