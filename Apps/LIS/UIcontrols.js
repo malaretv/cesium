@@ -319,12 +319,16 @@ var timeForm;
 var startTimeInput;
 var stopTimeInput;
 var currentTimeInput;
+var timeInputsArray;
 var timeError;
 var startTimePickerButton;
 var stopTimePickerButton;
 var currTimePickerButton;
-var timePickerButtons;
+var timePickerButtonsArray;
 var startTimePicker;
+var stopTimePicker;
+var currTimePicker;
+var timePickersArray;
 
 function addTimeButton() {
   "use strict";
@@ -346,7 +350,7 @@ function addTimeButton() {
             <label>Start Time: </label><input type='text' id='start-time-input' placeholder='Start Time (ISO 8601))' required /> \
             <input type='image' id='start-time-picker-button' src='" +
     timePickerButtonSrc +
-    "' title='Date Picker' class='time-picker-button' name='dateTimePicker'/><br> \
+    "' title='Date Picker' class='time-picker-button'/><br> \
             <label>Stop Time: </label><input type='text' id='stop-time-input' placeholder='Stop Time (ISO 8601) - opt'/> \
             <input type='image' id='stop-time-picker-button' src='" +
     timePickerButtonSrc +
@@ -365,6 +369,7 @@ function addTimeButton() {
   startTimeInput = document.getElementById("start-time-input");
   stopTimeInput = document.getElementById("stop-time-input");
   currentTimeInput = document.getElementById("current-time-input");
+  timeInputsArray = [startTimeInput, stopTimeInput, currentTimeInput];
   var is_chrome = navigator.userAgent.indexOf("Chrome") > -1;
   var is_safari = navigator.userAgent.indexOf("Safari") > -1;
   if (is_chrome && is_safari) {
@@ -373,9 +378,9 @@ function addTimeButton() {
   if (!is_safari) {
     // not Safari.
     // Does not work on Safari.
-    startTimeInput.className = "cesium-button";
-    stopTimeInput.className = "cesium-button";
-    currentTimeInput.className = "cesium-button";
+    for (let i = 0; i < timeInputsArray.length; i++) {
+      timeInputsArray[i].className = "cesium-button";
+    }
   }
   timeError = document.getElementById("time-error");
 
@@ -385,36 +390,50 @@ function addTimeButton() {
   startTimePickerButton.onclick = startTimePickerButtonClicked;
   stopTimePickerButton.onclick = stopTimePickerButtonClicked;
   currTimePickerButton.onclick = currTimePickerButtonClicked;
-  timePickerButtons = [
+  timePickerButtonsArray = [
     startTimePickerButton,
     stopTimePickerButton,
     currTimePickerButton,
   ];
-  for (var i = 0; i < timePickerButtons.length; i++) {
-    timePickerButtons[i].setAttribute("checked", false);
+  for (let i = 0; i < timePickerButtonsArray.length; i++) {
+    timePickerButtonsArray[i].setAttribute("checked", false);
+
+    // set name for opening date-time picker
+    timePickerButtonsArray[i].name = "dateTimePicker" + i;
   }
 
   startTimeInput.oninvalid = invalid;
   timeForm.onsubmit = submitTime;
 
-  startTimePicker = new dtsel.DTS('input[name="dateTimePicker"]', {
-    showTime: true,
-    dateFormat: "yyyy-mm-dd",
-    timeFormat: "HH:MM:SS",
-  });
+  timePickersArray = [startTimePicker, stopTimePicker, currTimePicker];
+  for (let i = 0; i < timePickersArray.length; i++) {
+    timePickersArray[i] = new dtsel.DTS(
+      'input[name="dateTimePicker' + i + '"]',
+      {
+        showTime: true,
+        dateFormat: "yyyy-mm-dd",
+        timeFormat: "HH:MM:SS",
+      }
+    );
 
-  function pickerTimeValueToISO(dateString) {
-    return dateString.replace(", ", "T") + "Z";
+    timePickerButtonsArray[i].addEventListener(
+      "pickerDateTimeChanged",
+      function (e) {
+        timeInputsArray[i].value = pickerTimeValueToISO(
+          timePickerButtonsArray[i].value
+        );
+      }
+    );
+    timePickerButtonsArray[i].addEventListener("pickerClosed", function (e) {
+      if (timePickerButtonToggled(timePickerButtonsArray[i])) {
+        setTimePickerVisible(timePickerButtonsArray[i], false);
+      }
+    });
   }
+}
 
-  startTimePickerButton.addEventListener("pickerDateTimeChanged", function (e) {
-    startTimeInput.value = pickerTimeValueToISO(startTimePickerButton.value);
-  });
-  startTimePickerButton.addEventListener("pickerClosed", function (e) {
-    if (timePickerButtonToggled(startTimePickerButton)) {
-      setTimePickerVisible(startTimePickerButton, false);
-    }
-  });
+function pickerTimeValueToISO(dateString) {
+  return dateString.replace(", ", "T") + "Z";
 }
 
 function hideTimeFormError() {
@@ -434,9 +453,9 @@ function currTimePickerButtonClicked() {
 }
 
 function untoggleTimePickerButtons() {
-  for (var i = 0; i < timePickerButtons.length; i++) {
-    if (timePickerButtonToggled(timePickerButtons[i])) {
-      setTimePickerVisible(timePickerButtons[i], false);
+  for (var i = 0; i < timePickerButtonsArray.length; i++) {
+    if (timePickerButtonToggled(timePickerButtonsArray[i])) {
+      setTimePickerVisible(timePickerButtonsArray[i], false);
     }
   }
 }
@@ -466,13 +485,12 @@ function timePickerButtonClicked(timePickerButton) {
     // only on button at a time can be checked
     untoggleTimePickerButtons();
 
-    if (timePickerButton === startTimePickerButton) {
-      console.log("button clicked");
-      startTimePickerButton.value = startTimeInput.value
-        .replace("T", ", ")
-        .replace("Z", "");
-      console.log(startTimePickerButton.value);
-    }
+    console.log("button clicked");
+    let btnIdx = timePickerButtonsArray.indexOf(timePickerButton);
+    timePickerButton.value = timeInputsArray[btnIdx].value
+      .replace("T", ", ")
+      .replace("Z", "");
+    console.log(timePickerButton.value);
   }
 
   // show/hide picker
