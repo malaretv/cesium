@@ -117,6 +117,8 @@
         this.dtbox = new DTBox(e.target, this);
       }
       this.dtbox.visible = !this.dtbox.visible;
+      // force button focus (e.g. they are not focused on click on Safari)
+      e.target.focus();
     } else if (e.type == "blur" && this.dtbox && this.dtbox.visible) {
       var self = this;
       setTimeout(function () {
