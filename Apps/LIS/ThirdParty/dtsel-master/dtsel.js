@@ -112,7 +112,6 @@
   };
   DTS.prototype.inputElemHandler = function (e) {
     if (e.type == "click") {
-      console.log("picker click");
       if (!this.dtbox) {
         this.dtbox = new DTBox(e.target, this);
       }
