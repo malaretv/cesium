@@ -347,7 +347,7 @@ function addTimeButton() {
   var timeformHTML =
     "<form id='time-form' hidden> \
             <p id='time-error' hidden>Please fill out all fields.</p> \
-            <label>Start Time: </label><input type='text' id='start-time-input' placeholder='Start Time (ISO 8601))' required /> \
+            <label>Start Time: </label><input type='text' id='start-time-input' placeholder='Start Time (ISO 8601))' /> \
             <input type='image' id='start-time-picker-button' src='" +
     timePickerButtonSrc +
     "' title='Date Picker' class='time-picker-button'/><br> \
