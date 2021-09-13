@@ -1881,6 +1881,17 @@ function buildLIS() {
         }
       ),
       gulp.src(["Apps/LIS/Sandcastle*.js"]),
+      gulp.src(
+        [
+          "Apps/LIS/ThirdParty/**",
+          "Apps/LIS/ThirdParty/**/*.js",
+          "Apps/LIS/ThirdParty/**/*.css",
+        ],
+        {
+          base: "Apps/LIS",
+          nodir: true,
+        }
+      ),
       gulp.src(["Build/Cesium/Widgets/InfoBox/InfoBoxDescription.css"], {
         base: "Build/Cesium",
       }),
