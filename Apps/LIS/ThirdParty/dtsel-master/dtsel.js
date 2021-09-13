@@ -1,3 +1,6 @@
+// Source code from https://github.com/crossxcell99/dtsel
+// Slightly Modified for QTS-3D integration (open on date-time button picker click)
+
 (function () {
   "use strict";
 
