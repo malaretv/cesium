@@ -345,7 +345,7 @@ function addTimeButton() {
 
   var time = document.createElement("div");
   var timeformHTML =
-    "<form id='time-form' hidden> \
+    "<form id='time-form' onsubmit='return false' hidden> \
             <p id='time-error' hidden>Please fill out all fields.</p> \
             <label>Start Time: </label><input type='text' id='start-time-input' placeholder='Start Time (ISO 8601))' required /> \
             <input type='image' id='start-time-picker-button' src='" +
@@ -359,7 +359,7 @@ function addTimeButton() {
             <input type='image' id='curr-time-picker-button' src='" +
     timePickerButtonSrc +
     "' title='Date Picker' class='time-picker-button'/><br> \
-            <button type='submit' name='submit-time'>Go</button> \
+            <button type='submit' id='submit-time' name='submit-time'>Go</button> \
     </form>";
   time.innerHTML = timeformHTML;
 
@@ -403,7 +403,8 @@ function addTimeButton() {
   }
 
   startTimeInput.oninvalid = invalid;
-  timeForm.onsubmit = submitTime;
+  // timeForm.onsubmit = submitTime;
+  document.getElementById("submit-time").onclick = submitTime;
 
   timePickersArray = [startTimePicker, stopTimePicker, currTimePicker];
   for (let i = 0; i < timePickersArray.length; i++) {
@@ -551,13 +552,7 @@ function stringToJulianDate(date) {
   }
 }
 
-function submitTime(event) {
-  if (event.submitter.name !== "submit-time") {
-    // ignore
-    event.preventDefault();
-    return;
-  }
-
+function submitTime() {
   hideTimeFormError();
 
   let startTimeS = startTimeInput.value;
@@ -650,9 +645,6 @@ function submitTime(event) {
 
   // update time
   setTimes(startTime, stopTime, currentTime);
-
-  // For this example, don't actually submit the form
-  event.preventDefault();
 }
 
 function setTimeButtonChecked(checked) {
