@@ -36,6 +36,9 @@ import {
   initializeUI,
   refreshMeshControlsParams,
   setMapLoadingIconVisible,
+  setStatusBarCameraHeight,
+  setStatusBarCursorPosition,
+  setStatusBarObs2CursorDist,
 } from "./UIcontrols.js";
 
 import { cameraFlyToLookDownNorthUp } from "./utils.js";
@@ -1575,35 +1578,41 @@ handler.setInputAction(({ endPosition }) => {
       invAdjustCartesianCoords(mousePosCartesian, isOptimizedPolarTerrain)
     );
     //console.log(cartographic);
-    var longitudeString = Cesium.Math.toDegrees(cartographic.longitude).toFixed(
-      3
-    );
-    var latitudeString = Cesium.Math.toDegrees(cartographic.latitude).toFixed(
-      3
-    );
+    // var longitudeString = Cesium.Math.toDegrees(cartographic.longitude).toFixed(
+    //   3
+    // );
+    // var latitudeString = Cesium.Math.toDegrees(cartographic.latitude).toFixed(
+    //   3
+    // );
 
-    height = cartographic.height;
-    var lbl =
-      "Cursor: (Lon,Lat,H)=" +
-      longitudeString +
-      ",&nbsp;" +
-      latitudeString +
-      ",&nbsp;" +
-      (height * 0.001).toFixed(1);
-    updateCoordsDisplay(lbl);
+    // height = cartographic.height;
+    // var lbl =
+    //   "Cursor: (Lon,Lat,H)=" +
+    //   longitudeString +
+    //   ",&nbsp;" +
+    //   latitudeString +
+    //   ",&nbsp;" +
+    //   (height * 0.001).toFixed(1);
+    // updateCoordsDisplay(lbl);
+    setStatusBarCursorPosition(
+      Cesium.Math.toDegrees(cartographic.longitude),
+      Cesium.Math.toDegrees(cartographic.latitude),
+      cartographic.height
+    );
 
     var c2cDistance = Cesium.Cartesian3.distance(
       mousePosCartesian,
       camera.positionWC
     );
-    var c2cDistanceS;
-    if (c2cDistance < 1000.0) {
-      c2cDistanceS = c2cDistance.toFixed(3) + " m";
-    } else {
-      c2cDistanceS = (c2cDistance / 1000.0).toFixed(3) + " km";
-    }
-    var c2cDistanceLbl = "Observer to Cursor Distance: " + c2cDistanceS;
-    setCamera2CursorDistanceLabel(c2cDistanceLbl);
+    // var c2cDistanceS;
+    // if (c2cDistance < 1000.0) {
+    //   c2cDistanceS = c2cDistance.toFixed(3) + " m";
+    // } else {
+    //   c2cDistanceS = (c2cDistance / 1000.0).toFixed(3) + " km";
+    // }
+    // var c2cDistanceLbl = "Observer to Cursor Distance: " + c2cDistanceS;
+    // setCamera2CursorDistanceLabel(c2cDistanceLbl);
+    setStatusBarObs2CursorDist(c2cDistance);
   }
 }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
@@ -1807,6 +1816,7 @@ function cameraPositionUpdated() {
     ",&nbsp;" +
     rad2deg(camera.heading).toFixed(1);
   updateCameraCoordsDisplay(lbl);
+  setStatusBarCameraHeight(camH);
 
   maybeUpdateTerrainProvider(camLat, camH);
   maybeUpdateContours(camH);
@@ -1849,15 +1859,15 @@ cameraCoordsDisplay.style.background = "rgba(42, 42, 42, 0.7)";
 cameraCoordsDisplay.style.padding = "5px 10px";
 document.getElementById("toolbar-label").appendChild(cameraCoordsDisplay);
 
-// Show the coords display below the toobar buttons.
-coordsDisplay.style.background = "rgba(42, 42, 42, 0.7)";
-coordsDisplay.style.padding = "5px 10px";
-document.getElementById("toolbar-label").appendChild(coordsDisplay);
+// // Show the coords display below the toobar buttons.
+// coordsDisplay.style.background = "rgba(42, 42, 42, 0.7)";
+// coordsDisplay.style.padding = "5px 10px";
+// document.getElementById("toolbar-label").appendChild(coordsDisplay);
 
-// Show camera to cursor distance.
-camera2CursorDistance.style.background = "rgba(42, 42, 42, 0.7)";
-camera2CursorDistance.style.padding = "5px 10px";
-document.getElementById("toolbar-label").appendChild(camera2CursorDistance);
+// // Show camera to cursor distance.
+// camera2CursorDistance.style.background = "rgba(42, 42, 42, 0.7)";
+// camera2CursorDistance.style.padding = "5px 10px";
+// document.getElementById("toolbar-label").appendChild(camera2CursorDistance);
 
 // current terrain label
 terrainDisplay.style.background = "rgba(42, 42, 42, 0.7)";
