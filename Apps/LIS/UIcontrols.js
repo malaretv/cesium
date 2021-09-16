@@ -47,7 +47,7 @@ export function initializeUI() {
 
   document.getElementById("toolbarWrapper").style.width = "50%";
 
-  // addStatusBar();
+  addStatusBar();
 }
 
 //////////////////////////////////////////////
@@ -837,10 +837,83 @@ export function setMapLoadingIconVisible(yes) {
   }
 }
 
+var statusBarLblCamera;
+var statusBarLblLongitude;
+var statusBarLblLatitude;
+var statusBarLblPosition;
+var statusBarLblHeight;
+var statusBarLBLObs2PosDist;
+
 // Status Bar
 function addStatusBar() {
   var bottomContainer = viewer.bottomContainer;
 
-  var statusBarHTML = "<label>This is a test</label>";
-  bottomContainer.innerHTML = statusBarHTML;
+  var statusBar = document.createElement("div");
+  statusBar.className = "statusbar";
+  bottomContainer.appendChild(statusBar);
+
+  statusBarLblCamera = document.createElement("div");
+  statusBarLblCamera.id = "lbl-camera";
+  statusBarLblCamera.title = "Elevation of the camera above average radius";
+  statusBar.appendChild(statusBarLblCamera);
+  statusBarLblCamera.innerHTML = "Camera: ";
+
+  statusBarLblPosition = document.createElement("div");
+  var lonLbl = statusBarLblPosition.appendChild(document.createElement("div"));
+  lonLbl.innerHTML = "Lon:";
+  statusBarLblLongitude = document.createElement("div");
+  statusBarLblLongitude.className = "min-w-[4em] text-right";
+  statusBarLblLongitude.id = "lbl-lon";
+  statusBarLblPosition.appendChild(statusBarLblLongitude);
+  var latLbl = statusBarLblPosition.appendChild(document.createElement("div"));
+  latLbl.innerHTML = "Lat:";
+  statusBarLblLatitude = document.createElement("div");
+  statusBarLblLatitude.className = "min-w-[4em] text-right";
+  statusBarLblLatitude.id = "lbl-lat";
+  statusBarLblPosition.appendChild(statusBarLblLatitude);
+  var heightLbl = statusBarLblPosition.appendChild(
+    document.createElement("div")
+  );
+  heightLbl.innerHTML = "H:";
+  statusBarLblHeight = document.createElement("div");
+  statusBarLblHeight.className = "min-w-[4em] text-right";
+  statusBarLblHeight.title = "Ground point elevation above average radius";
+  statusBarLblHeight.id = "lbl-height";
+  statusBarLblPosition.appendChild(statusBarLblHeight);
+
+  statusBarLblPosition.title = "Ground point coordinates at cursor position";
+  statusBar.appendChild(statusBarLblPosition);
+
+  statusBarLBLObs2PosDist = document.createElement("div");
+  statusBarLBLObs2PosDist.id = "lbl-obs2pos-dist";
+  statusBarLBLObs2PosDist.title =
+    "Distance from observer position to cursor ground point";
+  statusBar.appendChild(statusBarLBLObs2PosDist);
+  statusBarLBLObs2PosDist.innerHTML = "Distance to Ground: ";
+
+  // var statusBarHTML = "<label>This is a test</label>";
+  // statusBar.innerHTML = statusBarHTML;
+
+  bottomContainer.style.width = "100%";
+}
+
+export function setStatusBarCameraHeight(value) {
+  statusBarLblCamera.innerHTML = `Camera: ${value.toFixed(1)} km`;
+}
+
+export function setStatusBarCursorPosition(lon, lat, height) {
+  statusBarLblLongitude.innerHTML = lon.toFixed(3);
+  statusBarLblLatitude.innerHTML = lat.toFixed(3);
+
+  statusBarLblHeight.innerHTML = `${(height * 0.001).toFixed(1)} km`;
+}
+
+export function setStatusBarObs2CursorDist(value) {
+  var c2cDistanceS;
+  if (value < 1000.0) {
+    c2cDistanceS = value.toFixed(3) + " m";
+  } else {
+    c2cDistanceS = (value / 1000.0).toFixed(3) + " km";
+  }
+  statusBarLBLObs2PosDist.innerHTML = `Distance to Ground: ${c2cDistanceS}`;
 }

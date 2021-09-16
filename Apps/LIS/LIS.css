@@ -138,7 +138,6 @@ body {
 }
 
 /* toolbar button */
-
 .toolbar-button {
   background-color: rgba(42, 42, 42, 0.7);
   margin: 1px;
@@ -154,4 +153,52 @@ body {
   height: 26px;
   margin: 0px 0px -8px -5px;
   width: 26px;
+}
+
+/* status bar */
+.statusbar {
+  width: 100%;
+  border-radius: 4px;
+  background-color: rgba(42, 42, 42, 0.7);
+  font-size: 12px;
+  padding: 5px 10px;
+}
+
+.statusbar div {
+  display: inline-block;
+  padding-right: 15px;
+
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* .statusbar #lbl-position {
+ 
+}
+*/
+
+.statusbar #lbl-height {
+  padding-left: 0px;
+  padding-right: 5px;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.min-w-\[3em\] {
+  min-width: 3em;
+}
+
+.min-w-\[4em\] {
+  min-width: 4em;
+}
+
+.statusbar #lbl-camera {
+  padding-left: 0px;
+  padding-right: 25px;
+}
+
+.statusbar #lbl-obs2pos-dist {
+  padding-left: 10px;
 }
