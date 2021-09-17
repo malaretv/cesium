@@ -611,9 +611,9 @@ function setCamera2CursorDistanceLabel(msg) {
   camera2CursorDistance.innerHTML = msg;
 }
 
-// function updateSubSolarPointDisplay(msg) {
-//   subSolarPointDisplay.innerHTML = msg;
-// }
+function updateSubSolarPointDisplay(msg) {
+  subSolarPointDisplay.innerHTML = msg;
+}
 
 export function updateTerrainDisplay(msg) {
   if (terrainDisplay) {
@@ -1863,7 +1863,7 @@ initializeUI();
 
 var cameraCoordsDisplay = addStatusBarDetailInfo();
 
-// var subSolarPointDisplay = addStatusBarDetailInfo();
+var subSolarPointDisplay = addStatusBarDetailInfo();
 
 // // Show the coords display below the toobar buttons.
 // coordsDisplay.style.background = "rgba(42, 42, 42, 0.7)";
@@ -2182,22 +2182,32 @@ function updateEntityVectors(entityChanged) {
   }
 }
 
+var sunDir = new Cesium.Cartesian3();
+var sunDirNorm = new Cesium.Cartesian3();
 // compute sub solar point
 function updateSubSolarPoint() {
-  // const raySun = viewer.camera.getPickRay(sunPosSPICE);
-  // var subSolarCartesian = globe.pick(raySun, scene);
-  // var subSolarPointValueS;
-  // if (subSolarCartesian) {
-  //   var subSolarCartographic = ellipsoid.cartesianToCartographic(
-  //     invAdjustCartesianCoords(subSolarCartesian, isOptimizedPolarTerrain)
-  //   );
-  //   subSolarPointValueS = `${subSolarPointS} ${Cesium.Math.toDegrees(subSolarCartographic.longitude)},${Cesium.Math.toDegrees(subSolarCartographic.latitude)}`;
-  //   updateSubSolarPointDisplay(subSolarPointS);
-  // } else {
-  //   subSolarPointValueS = "";
-  // }
-  // var subSolarPointS = `Sub Solar Point (Lon,Lat): ${subSolarPointValueS}`;
-  // updateSubSolarPointDisplay(subSolarPointS);
+  Cesium.Cartesian3.negate(sunPosSPICE, sunDir);
+  Cesium.Cartesian3.normalize(sunDir, sunDirNorm);
+  const raySun = new Cesium.Ray(sunPosSPICE, sunDirNorm);
+
+  var subSolarCartesian = globe.pick(raySun, scene);
+  var subSolarPointValueS;
+  if (subSolarCartesian) {
+    var subSolarCartographic = ellipsoid.cartesianToCartographic(
+      invAdjustCartesianCoords(subSolarCartesian, isOptimizedPolarTerrain)
+    );
+
+    subSolarPointValueS = `${Cesium.Math.toDegrees(
+      subSolarCartographic.longitude
+    ).toFixed(3)},${Cesium.Math.toDegrees(
+      subSolarCartographic.latitude
+    ).toFixed(3)}`;
+  } else {
+    subSolarPointValueS = "";
+  }
+
+  var subSolarPointS = `Sub Solar Point (Lon,Lat): ${subSolarPointValueS}`;
+  updateSubSolarPointDisplay(subSolarPointS);
 }
 
 function getSelectedEntityToSunLinePositions() {
