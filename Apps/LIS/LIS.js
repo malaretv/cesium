@@ -647,18 +647,22 @@ function terrainTileLoaded(loadTilesQueueCount) {
 }
 
 export function setCurrTerrainLabelVisible(showLbl) {
-  if (showLbl) {
-    terrainDisplay.removeAttribute("hidden");
-  } else {
-    terrainDisplay.setAttribute("hidden", "");
+  if (terrainDisplay) {
+    if (showLbl) {
+      terrainDisplay.removeAttribute("hidden");
+    } else {
+      terrainDisplay.setAttribute("hidden", "");
+    }
   }
 }
 
 export function setCurrShadowsMaxDistVisible(showLbl) {
-  if (showLbl) {
-    shadowsMaxDistanceDisplay.removeAttribute("hidden");
-  } else {
-    shadowsMaxDistanceDisplay.setAttribute("hidden", "");
+  if (shadowsMaxDistanceDisplay) {
+    if (showLbl) {
+      shadowsMaxDistanceDisplay.removeAttribute("hidden");
+    } else {
+      shadowsMaxDistanceDisplay.setAttribute("hidden", "");
+    }
   }
 }
 
