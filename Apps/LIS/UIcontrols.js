@@ -843,38 +843,90 @@ var statusBarLblLatitude;
 var statusBarLblPosition;
 var statusBarLblHeight;
 var statusBarLBLObs2PosDist;
+var detailInfoShowButton;
+var detailInfoHideButton;
+var datailsStatusBar;
+var statusBarWrapper;
+
+var detailInfoShowButtonSrc = "./images/up_24x24.png";
+var detailInfoHideButtonSrc = "./images/down_24x24.png";
+
+const statusBarWrapperCornerRadius = "4px";
 
 // Status Bar
 function addStatusBar() {
   var bottomContainer = viewer.bottomContainer;
+  bottomContainer.style.width = "100%";
 
+  // detail info show button
+  var detailInfoHideButtonDiv = document.createElement("div");
+  detailInfoHideButtonDiv.className = "statusbar-hide-info-button-div";
+  detailInfoHideButton = document.createElement("input");
+  detailInfoHideButton.src = detailInfoHideButtonSrc;
+  detailInfoHideButton.type = "image";
+  detailInfoHideButton.className = "statusbar-hide-info-button";
+  detailInfoHideButton.title = "Hide Detail Info";
+  detailInfoHideButtonDiv.appendChild(detailInfoHideButton);
+  // hide by default
+  detailInfoHideButton.style.display = "none";
+  bottomContainer.appendChild(detailInfoHideButtonDiv);
+  detailInfoHideButton.onclick = detailInfoHideButtonClicked;
+
+  statusBarWrapper = document.createElement("div");
+  statusBarWrapper.className = "statusbar-wrapper";
+  statusBarWrapper.style.borderRadius = statusBarWrapperCornerRadius;
+  bottomContainer.appendChild(statusBarWrapper);
+
+  // status bar main div
+  datailsStatusBar = document.createElement("div");
+  datailsStatusBar.className = "statusbar-detail";
+  // hide by default
+  datailsStatusBar.style.display = "none";
+  statusBarWrapper.appendChild(datailsStatusBar);
   var statusBar = document.createElement("div");
   statusBar.className = "statusbar";
-  bottomContainer.appendChild(statusBar);
+  statusBarWrapper.appendChild(statusBar);
 
+  // detail info show button
+  detailInfoShowButton = document.createElement("input");
+  detailInfoShowButton.src = detailInfoShowButtonSrc;
+  detailInfoShowButton.type = "image";
+  detailInfoShowButton.className = "statusbar-button";
+  detailInfoShowButton.title = "More Info";
+  statusBar.appendChild(detailInfoShowButton);
+  detailInfoShowButton.onclick = detailInfoShowButtonClicked;
+
+  // camera info
   statusBarLblCamera = document.createElement("div");
   statusBarLblCamera.id = "lbl-camera";
   statusBarLblCamera.title = "Elevation of the camera above average radius";
   statusBar.appendChild(statusBarLblCamera);
   statusBarLblCamera.innerHTML = "Camera: ";
 
+  // position info
   statusBarLblPosition = document.createElement("div");
+  // lon label
   var lonLbl = statusBarLblPosition.appendChild(document.createElement("div"));
   lonLbl.innerHTML = "Lon:";
+  // lon
   statusBarLblLongitude = document.createElement("div");
   statusBarLblLongitude.className = "min-w-[4em] text-right";
   statusBarLblLongitude.id = "lbl-lon";
   statusBarLblPosition.appendChild(statusBarLblLongitude);
+  // lat label
   var latLbl = statusBarLblPosition.appendChild(document.createElement("div"));
   latLbl.innerHTML = "Lat:";
+  // lat
   statusBarLblLatitude = document.createElement("div");
   statusBarLblLatitude.className = "min-w-[4em] text-right";
   statusBarLblLatitude.id = "lbl-lat";
   statusBarLblPosition.appendChild(statusBarLblLatitude);
+  // height label
   var heightLbl = statusBarLblPosition.appendChild(
     document.createElement("div")
   );
   heightLbl.innerHTML = "H:";
+  // height
   statusBarLblHeight = document.createElement("div");
   statusBarLblHeight.className = "min-w-[4em] text-right";
   statusBarLblHeight.title = "Ground point elevation above average radius";
@@ -884,17 +936,19 @@ function addStatusBar() {
   statusBarLblPosition.title = "Ground point coordinates at cursor position";
   statusBar.appendChild(statusBarLblPosition);
 
+  // observer to cursor distance
   statusBarLBLObs2PosDist = document.createElement("div");
   statusBarLBLObs2PosDist.id = "lbl-obs2pos-dist";
   statusBarLBLObs2PosDist.title =
     "Distance from observer position to cursor ground point";
   statusBar.appendChild(statusBarLBLObs2PosDist);
   statusBarLBLObs2PosDist.innerHTML = "Distance to Ground: ";
+}
 
-  // var statusBarHTML = "<label>This is a test</label>";
-  // statusBar.innerHTML = statusBarHTML;
-
-  bottomContainer.style.width = "100%";
+export function addStatusBarDetailInfo(label) {
+  var elem = document.createElement("div");
+  datailsStatusBar.appendChild(elem);
+  return elem;
 }
 
 export function setStatusBarCameraHeight(value) {
@@ -916,4 +970,35 @@ export function setStatusBarObs2CursorDist(value) {
     c2cDistanceS = (value / 1000.0).toFixed(3) + " km";
   }
   statusBarLBLObs2PosDist.innerHTML = `Distance to Ground: ${c2cDistanceS}`;
+}
+
+//////////////////////////////////////////////
+// DETAIL INFO BUTTON
+//////////////////////////////////////////////
+
+function detailInfoShowButtonClicked() {
+  setStatusDetailInfoVisible(true);
+}
+
+function detailInfoHideButtonClicked() {
+  setStatusDetailInfoVisible(false);
+}
+
+function setStatusDetailInfoVisible(checked) {
+  if (checked) {
+    // remove corner radius for better detailInfoHideButton edges matching
+    statusBarWrapper.style.borderTopLeftRadius = "0px";
+    datailsStatusBar.style.display = "block";
+    detailInfoHideButton.style.display = "block";
+    detailInfoShowButton.style.display = "none";
+    // more camera info in detail info label
+    statusBarLblCamera.style.display = "none";
+  } else {
+    datailsStatusBar.style.display = "none";
+    // restore border radius
+    statusBarWrapper.style.borderTopLeftRadius = statusBarWrapperCornerRadius;
+    detailInfoHideButton.style.display = "none";
+    detailInfoShowButton.style.display = "";
+    statusBarLblCamera.style.display = "";
+  }
 }

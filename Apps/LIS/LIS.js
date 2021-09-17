@@ -33,6 +33,7 @@ import {
 } from "./adjustCartesian.js";
 
 import {
+  addStatusBarDetailInfo,
   initializeUI,
   refreshMeshControlsParams,
   setMapLoadingIconVisible,
@@ -73,6 +74,8 @@ export var viewer = new Cesium.Viewer("cesiumContainer", {
   terrainShadows: Cesium.ShadowMode.ENABLED,
   scene3DOnly: true,
 });
+
+initializeUI();
 
 /*
 // TBD: enhance the geocoder (search tool)
@@ -532,7 +535,6 @@ function updateCoordsDisplay(msg) {
   coordsDisplay.innerHTML = msg;
 }
 
-var cameraCoordsDisplay = document.createElement("div");
 function updateCameraCoordsDisplay(msg) {
   cameraCoordsDisplay.innerHTML = msg;
 }
@@ -542,15 +544,17 @@ function setCamera2CursorDistanceLabel(msg) {
   camera2CursorDistance.innerHTML = msg;
 }
 
-var terrainDisplay = document.createElement("div");
 export function updateTerrainDisplay(msg) {
-  terrainDisplay.innerHTML = msg;
+  if (terrainDisplay) {
+    terrainDisplay.innerHTML = msg;
+  }
 }
 
-var shadowsMaxDistanceDisplay = document.createElement("div");
 export function updateShadowsMaxDistanceDisplay(shadowsMaxDist) {
-  shadowsMaxDistanceDisplay.innerHTML =
-    "Shadows Max Distance: " + (shadowsMaxDist / 1000).toFixed(0) + " km";
+  if (shadowsMaxDistanceDisplay) {
+    shadowsMaxDistanceDisplay.innerHTML =
+      "Shadows Max Distance: " + (shadowsMaxDist / 1000).toFixed(0) + " km";
+  }
 }
 
 /*
@@ -1855,9 +1859,12 @@ function setHeightKm(heightInKilometers) {
 }
 
 // Show the coords display below the toobar buttons.
-cameraCoordsDisplay.style.background = "rgba(42, 42, 42, 0.7)";
-cameraCoordsDisplay.style.padding = "5px 10px";
-document.getElementById("toolbar-label").appendChild(cameraCoordsDisplay);
+// var cameraCoordsDisplay = document.createElement("div");
+// cameraCoordsDisplay.style.background = "rgba(42, 42, 42, 0.7)";
+// cameraCoordsDisplay.style.padding = "5px 10px";
+// document.getElementById("toolbar-label").appendChild(cameraCoordsDisplay);
+
+var cameraCoordsDisplay = addStatusBarDetailInfo();
 
 // // Show the coords display below the toobar buttons.
 // coordsDisplay.style.background = "rgba(42, 42, 42, 0.7)";
@@ -1870,19 +1877,30 @@ document.getElementById("toolbar-label").appendChild(cameraCoordsDisplay);
 // document.getElementById("toolbar-label").appendChild(camera2CursorDistance);
 
 // current terrain label
-terrainDisplay.style.background = "rgba(42, 42, 42, 0.7)";
-terrainDisplay.style.padding = "5px 10px";
+// var terrainDisplay = document.createElement("div");
+// terrainDisplay.style.background = "rgba(42, 42, 42, 0.7)";
+// terrainDisplay.style.padding = "5px 10px";
+// if (window.LIS_MODE === "development") {
+//   document.getElementById("toolbar-label").appendChild(terrainDisplay);
+// }
+var terrainDisplay;
 if (window.LIS_MODE === "development") {
-  document.getElementById("toolbar-label").appendChild(terrainDisplay);
+  terrainDisplay = addStatusBarDetailInfo();
 }
 
 // current shadows max distance label
-shadowsMaxDistanceDisplay.style.background = "rgba(42, 42, 42, 0.7)";
-shadowsMaxDistanceDisplay.style.padding = "5px 10px";
+// var shadowsMaxDistanceDisplay = document.createElement("div");
+// shadowsMaxDistanceDisplay.style.background = "rgba(42, 42, 42, 0.7)";
+// shadowsMaxDistanceDisplay.style.padding = "5px 10px";
+// if (window.LIS_MODE === "development") {
+//   document
+//     .getElementById("toolbar-label")
+//     .appendChild(shadowsMaxDistanceDisplay);
+// }
+
+var shadowsMaxDistanceDisplay;
 if (window.LIS_MODE === "development") {
-  document
-    .getElementById("toolbar-label")
-    .appendChild(shadowsMaxDistanceDisplay);
+  shadowsMaxDistanceDisplay = addStatusBarDetailInfo();
 }
 
 /*
@@ -1907,8 +1925,6 @@ Sandcastle.addToolbarButton("500km height", function () {
 setHeightKm(500);
 });
 */
-
-initializeUI();
 
 // SUN
 var solarRadiusInMeters = 6.955e8;
