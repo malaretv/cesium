@@ -65,6 +65,74 @@ var contoursViewModel = {
 
 var showContourAlt = 100; // km
 
+// LOCATIONS
+export var locationsInfo = {
+  Tycho: {
+    name: "Tycho",
+    longitude: -11.34246,
+    latitude: -43.33986,
+    height: -1000,
+    color: Cesium.Color.WHITE,
+    entity: null,
+  },
+  Haworth_1: {
+    name: "Haworth_1",
+    longitude: -17.665,
+    latitude: -86.744,
+    height: 1300,
+    color: Cesium.Color.WHITE,
+    entity: null,
+  },
+  Haworth_2: {
+    name: "Haworth_2",
+    longitude: -19.023,
+    latitude: -86.516,
+    height: 1300,
+    color: Cesium.Color.TOMATO,
+    entity: null,
+  },
+  PSR0: {
+    name: "PSR0",
+    longitude: 135.36409,
+    latitude: -81.87225,
+    height: -4100,
+    color: Cesium.Color.TOMATO,
+    entity: null,
+  },
+  PSR1: {
+    name: "PSR1",
+    longitude: -11.77213,
+    latitude: -85.61268,
+    height: 2500,
+    color: Cesium.Color.WHITE,
+    entity: null,
+  },
+  Hill_Top_Near_SP: {
+    name: "Hill_Top_Near_SP",
+    longitude: 222,
+    latitude: -89.44,
+    height: 2000,
+    color: Cesium.Color.WHITE,
+    entity: null,
+  },
+  Hill_Top_Near_NP: {
+    name: "Hill_Top_Near_NP",
+    longitude: -45.63,
+    latitude: 89.645,
+    height: 500,
+    color: Cesium.Color.WHITE,
+    entity: null,
+  },
+  testing2: {
+    name: "testing2",
+    longitude: -2.146,
+    latitude: 0.667,
+    height: -900,
+    color: Cesium.Color.WHITE,
+    entity: null,
+  },
+};
+
 export var viewer = new Cesium.Viewer("cesiumContainer", {
   //  terrainProvider: createTerrainProvider(),
   infoBox: false,
@@ -74,8 +142,6 @@ export var viewer = new Cesium.Viewer("cesiumContainer", {
   terrainShadows: Cesium.ShadowMode.ENABLED,
   scene3DOnly: true,
 });
-
-initializeUI();
 
 /*
 // TBD: enhance the geocoder (search tool)
@@ -371,6 +437,7 @@ function updateBodiesPos() {
     );
 
     updateEntityVectors(false);
+    updateSubSolarPoint();
     if (rotateCameraAroundPointSunInFrontEnabled) {
       rotateCameraAroundPointSunInFront(mouseClickPosCartesian);
     }
@@ -544,6 +611,10 @@ function setCamera2CursorDistanceLabel(msg) {
   camera2CursorDistance.innerHTML = msg;
 }
 
+// function updateSubSolarPointDisplay(msg) {
+//   subSolarPointDisplay.innerHTML = msg;
+// }
+
 export function updateTerrainDisplay(msg) {
   if (terrainDisplay) {
     terrainDisplay.innerHTML = msg;
@@ -556,19 +627,6 @@ export function updateShadowsMaxDistanceDisplay(shadowsMaxDist) {
       "Shadows Max Distance: " + (shadowsMaxDist / 1000).toFixed(0) + " km";
   }
 }
-
-/*
-function updateTimeDisplay() {
-  var msg =
-    "Time: " + Cesium.JulianDate.toIso8601(viewer.clock.currentTime, 3);
-  setTimeDisplay(msg);
-}
-
-var timeDisplay = document.createElement("div");
-function setTimeDisplay(msg) {
-  timeDisplay.innerHTML = msg;
-}
-*/
 
 // CONTROLS
 var illuminationOptions = [
@@ -701,74 +759,6 @@ for (var i = 0; i < terrainNameList.length; i++) {
   });
 }
 */
-
-// LOCATIONS
-export var locationsInfo = {
-  Tycho: {
-    name: "Tycho",
-    longitude: -11.34246,
-    latitude: -43.33986,
-    height: -1000,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  Haworth_1: {
-    name: "Haworth_1",
-    longitude: -17.665,
-    latitude: -86.744,
-    height: 1300,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  Haworth_2: {
-    name: "Haworth_2",
-    longitude: -19.023,
-    latitude: -86.516,
-    height: 1300,
-    color: Cesium.Color.TOMATO,
-    entity: null,
-  },
-  PSR0: {
-    name: "PSR0",
-    longitude: 135.36409,
-    latitude: -81.87225,
-    height: -4100,
-    color: Cesium.Color.TOMATO,
-    entity: null,
-  },
-  PSR1: {
-    name: "PSR1",
-    longitude: -11.77213,
-    latitude: -85.61268,
-    height: 2500,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  Hill_Top_Near_SP: {
-    name: "Hill_Top_Near_SP",
-    longitude: 222,
-    latitude: -89.44,
-    height: 2000,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  Hill_Top_Near_NP: {
-    name: "Hill_Top_Near_NP",
-    longitude: -45.63,
-    latitude: 89.645,
-    height: 500,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  testing2: {
-    name: "testing2",
-    longitude: -2.146,
-    latitude: 0.667,
-    height: -900,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-};
 
 function setLocationFunction(location) {
   return function () {
@@ -1862,6 +1852,9 @@ function setHeightKm(heightInKilometers) {
   camera.position = cartesianCamera;
 }
 
+// TBD: need to move the UI initialization code inside initializeUI for better UI-engine separation
+initializeUI();
+
 // Show the coords display below the toobar buttons.
 // var cameraCoordsDisplay = document.createElement("div");
 // cameraCoordsDisplay.style.background = "rgba(42, 42, 42, 0.7)";
@@ -1869,6 +1862,8 @@ function setHeightKm(heightInKilometers) {
 // document.getElementById("toolbar-label").appendChild(cameraCoordsDisplay);
 
 var cameraCoordsDisplay = addStatusBarDetailInfo();
+
+// var subSolarPointDisplay = addStatusBarDetailInfo();
 
 // // Show the coords display below the toobar buttons.
 // coordsDisplay.style.background = "rgba(42, 42, 42, 0.7)";
@@ -1906,13 +1901,6 @@ var shadowsMaxDistanceDisplay;
 if (window.LIS_MODE === "development") {
   shadowsMaxDistanceDisplay = addStatusBarDetailInfo();
 }
-
-/*
-// Show the coords display below the toobar buttons.
-timeDisplay.style.background = "rgba(42, 42, 42, 0.7)";
-timeDisplay.style.padding = "5px 10px";
-document.getElementById("toolbar-label").appendChild(timeDisplay);
-*/
 
 /*
 // Add buttons, for convenience.
@@ -2152,13 +2140,11 @@ var entityToEarthVecNorm = new Cesium.Cartesian3();
 var entityToEarthVecScaled = new Cesium.Cartesian3();
 var entityToEarthArrowTipPos = new Cesium.Cartesian3();
 var entityCartesianPos;
-var entityCartoPos;
 function updateEntityVectors(entityChanged) {
   if (entityChanged) {
     entityCartesianPos = entitySelected.position.getValue(
       viewer.clock.currentTime
     );
-    entityCartoPos = ellipsoid.cartesianToCartographic(entityCartesianPos);
   }
 
   if (itemToSunArrow.show) {
@@ -2194,6 +2180,24 @@ function updateEntityVectors(entityChanged) {
       entityToEarthArrowTipPos
     );
   }
+}
+
+// compute sub solar point
+function updateSubSolarPoint() {
+  // const raySun = viewer.camera.getPickRay(sunPosSPICE);
+  // var subSolarCartesian = globe.pick(raySun, scene);
+  // var subSolarPointValueS;
+  // if (subSolarCartesian) {
+  //   var subSolarCartographic = ellipsoid.cartesianToCartographic(
+  //     invAdjustCartesianCoords(subSolarCartesian, isOptimizedPolarTerrain)
+  //   );
+  //   subSolarPointValueS = `${subSolarPointS} ${Cesium.Math.toDegrees(subSolarCartographic.longitude)},${Cesium.Math.toDegrees(subSolarCartographic.latitude)}`;
+  //   updateSubSolarPointDisplay(subSolarPointS);
+  // } else {
+  //   subSolarPointValueS = "";
+  // }
+  // var subSolarPointS = `Sub Solar Point (Lon,Lat): ${subSolarPointValueS}`;
+  // updateSubSolarPointDisplay(subSolarPointS);
 }
 
 function getSelectedEntityToSunLinePositions() {
