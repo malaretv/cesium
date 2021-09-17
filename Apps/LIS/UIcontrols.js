@@ -984,17 +984,42 @@ function detailInfoHideButtonClicked() {
   setStatusDetailInfoVisible(false);
 }
 
+function getStatusDetailInfoHeight() {
+  datailsStatusBar.style.display = "block"; // Make it visible
+  var height = datailsStatusBar.scrollHeight + "px"; // Get it's height
+  datailsStatusBar.style.display = ""; //  Hide it again
+  return height;
+}
+
 function setStatusDetailInfoVisible(checked) {
   if (checked) {
     // remove corner radius for better detailInfoHideButton edges matching
     statusBarWrapper.style.borderTopLeftRadius = "0px";
-    datailsStatusBar.style.display = "block";
+    var height = getStatusDetailInfoHeight();
+    datailsStatusBar.classList.add("is-visible");
+    datailsStatusBar.style.height = height;
+
+    // Once the transition is complete, remove the inline max-height so the content can scale responsively
+    window.setTimeout(function () {
+      datailsStatusBar.style.height = "";
+    }, 350);
+
     detailInfoHideButton.style.display = "block";
     detailInfoShowButton.style.display = "none";
     // more camera info in detail info label
     statusBarLblCamera.style.display = "none";
   } else {
-    datailsStatusBar.style.display = "none";
+    datailsStatusBar.style.height = datailsStatusBar.scrollHeight + "px";
+    // Set the height back to 0
+    window.setTimeout(function () {
+      datailsStatusBar.style.height = "0";
+    }, 1);
+
+    // When the transition is complete, hide it
+    window.setTimeout(function () {
+      datailsStatusBar.classList.remove("is-visible");
+    }, 350);
+
     // restore border radius
     statusBarWrapper.style.borderTopLeftRadius = statusBarWrapperCornerRadius;
     detailInfoHideButton.style.display = "none";
