@@ -148,20 +148,29 @@ body {
 .time-picker-button {
   background-color: rgba(42, 42, 42, 0.7);
   border-radius: 4px;
-  /* display: block; */
-  /* float: left; */
   height: 26px;
   margin: 0px 0px -8px -5px;
   width: 26px;
 }
 
+.statusbar-wrapper {
+  width: 100%;
+  font-size: 12px;
+  background-color: rgba(42, 42, 42, 0.7);
+}
+
+.statusbar-detail {
+  padding-top: 5px;
+}
+
+.statusbar-detail div {
+  margin: 8px;
+}
+
 /* status bar */
 .statusbar {
   width: 100%;
-  border-radius: 4px;
-  background-color: rgba(42, 42, 42, 0.7);
-  font-size: 12px;
-  padding: 5px 10px;
+  padding: 5px 10px 5px 5px;
 }
 
 .statusbar div {
@@ -171,11 +180,6 @@ body {
   margin-left: auto;
   margin-right: 0;
 }
-
-/* .statusbar #lbl-position {
- 
-}
-*/
 
 .statusbar #lbl-height {
   padding-left: 0px;
@@ -195,10 +199,42 @@ body {
 }
 
 .statusbar #lbl-camera {
-  padding-left: 0px;
+  padding-left: 10px;
   padding-right: 25px;
 }
 
 .statusbar #lbl-obs2pos-dist {
   padding-left: 10px;
+}
+
+.statusbar-button {
+  height: 16px;
+  width: 16px;
+  margin-bottom: -4px;
+  padding-bottom: 0px;
+  border-radius: 4px;
+}
+
+.statusbar-button:hover {
+  background-color: #5c80a3;
+}
+
+.statusbar-hide-info-button-div {
+  width: 16px;
+  border-radius: 4px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+  padding-left: 5px;
+  padding-bottom: 0px;
+  background-color: rgba(42, 42, 42, 0.7);
+}
+
+.statusbar-hide-info-button {
+  height: 16px;
+  width: 16px;
+  border-radius: 4px;
+}
+
+.statusbar-hide-info-button:hover {
+  background-color: #5c80a3;
 }
