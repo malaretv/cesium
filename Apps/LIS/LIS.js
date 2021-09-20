@@ -615,6 +615,10 @@ function setCamera2CursorDistanceLabel(msg) {
 function updateSubSolarPointDisplay(lon, lat) {
   let subSolarPointValueS = "";
   if (lon && lat) {
+    if (lon > 180) {
+      // lon in [-180,180] range
+      lon -= 360;
+    }
     subSolarPointValueS = `${lon.toFixed(3)},${lat.toFixed(3)}`;
   }
 
@@ -2238,7 +2242,7 @@ async function updateSubSolarPoint() {
     viewModel.UTCTime.replace("Z", "") +
     "&oformat=json&cmd_script=satview_get_subsolar_records.msh";
 
-  console.log(act_subsolar_points_url);
+  // console.log(act_subsolar_points_url);
   var response = await fetch(act_subsolar_points_url);
   var subSolarPos = await response.json();
   if (subSolarPos.status !== 0) {
