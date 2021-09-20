@@ -437,7 +437,6 @@ function updateBodiesPos() {
     );
 
     updateEntityVectors(false);
-    updateSubSolarPoint();
     if (rotateCameraAroundPointSunInFrontEnabled) {
       rotateCameraAroundPointSunInFront(mouseClickPosCartesian);
     }
@@ -499,6 +498,8 @@ viewer.clock.onTick.addEventListener(timeUpdated);
 function timeUpdated() {
   // update view model
   viewModel.UTCTime = viewer.clock.currentTime;
+
+  maybeUpdateSubSolarPoint();
 }
 
 export function initializeTime(
@@ -611,7 +612,13 @@ function setCamera2CursorDistanceLabel(msg) {
   camera2CursorDistance.innerHTML = msg;
 }
 
-function updateSubSolarPointDisplay(msg) {
+function updateSubSolarPointDisplay(lon, lat) {
+  let subSolarPointValueS = "";
+  if (lon && lat) {
+    subSolarPointValueS = `${lon.toFixed(3)},${lat.toFixed(3)}`;
+  }
+
+  let msg = `Sub Solar Point (Lon,Lat): ${subSolarPointValueS}`;
   subSolarPointDisplay.innerHTML = msg;
 }
 
@@ -1863,8 +1870,7 @@ initializeUI();
 
 var cameraCoordsDisplay = addStatusBarDetailInfo();
 
-// var subSolarPointDisplay = addStatusBarDetailInfo();
-var subSolarPointDisplay = document.createElement("div");
+var subSolarPointDisplay = addStatusBarDetailInfo();
 
 // // Show the coords display below the toobar buttons.
 // coordsDisplay.style.background = "rgba(42, 42, 42, 0.7)";
@@ -2183,29 +2189,71 @@ function updateEntityVectors(entityChanged) {
   }
 }
 
+var SUBSOLAR_POINT_UPDATE_TRIGGER_INTERVAL = 1000; // ms
+var updateSubSolarPointTimerId = -1;
+var lastSubSolarPointTriggerTime;
+export function resetSubSolarPointUpdateTimer() {
+  if (updateSubSolarPointTimerId > 0) {
+    // stop timer
+    clearInterval(updateSubSolarPointTimerId);
+    updateSubSolarPointTimerId = -1;
+  }
+}
+
+function maybeUpdateSubSolarPoint() {
+  if (
+    lastSubSolarPointTriggerTime &&
+    lastSubSolarPointTriggerTime === viewModel.UTCTime
+  ) {
+    // nothing to be done
+    return;
+  }
+
+  lastSubSolarPointTriggerTime = viewModel.UTCTime;
+
+  if (updateSubSolarPointTimerId >= 0) {
+    // reset the timer
+    resetSubSolarPointUpdateTimer();
+  }
+
+  // let us set the timer
+  updateSubSolarPointTimerId = setInterval(
+    updateSubSolarPoint,
+    SUBSOLAR_POINT_UPDATE_TRIGGER_INTERVAL
+  );
+
+  // reset subsolar point info
+  updateSubSolarPointDisplay();
+}
+
 var sunDir = new Cesium.Cartesian3();
 var sunDirNorm = new Cesium.Cartesian3();
 // compute sub solar point
-function updateSubSolarPoint() {
-  // Cesium.Cartesian3.negate(sunPosSPICE, sunDir);
-  // Cesium.Cartesian3.normalize(sunDir, sunDirNorm);
-  // const raySun = new Cesium.Ray(sunPosSPICE, sunDirNorm);
-  // var subSolarCartesian = globe.pick(raySun, scene);
-  // var subSolarPointValueS;
-  // if (subSolarCartesian) {
-  //   var subSolarCartographic = ellipsoid.cartesianToCartographic(
-  //     invAdjustCartesianCoords(subSolarCartesian, isOptimizedPolarTerrain)
-  //   );
-  //   subSolarPointValueS = `${Cesium.Math.toDegrees(
-  //     subSolarCartographic.longitude
-  //   ).toFixed(3)},${Cesium.Math.toDegrees(
-  //     subSolarCartographic.latitude
-  //   ).toFixed(3)}`;
-  // } else {
-  //   subSolarPointValueS = "";
-  // }
-  // var subSolarPointS = `Sub Solar Point (Lon,Lat): ${subSolarPointValueS}`;
-  // updateSubSolarPointDisplay(subSolarPointS);
+async function updateSubSolarPoint() {
+  resetSubSolarPointUpdateTimer();
+
+  // build url to get sub solar point
+  var act_subsolar_points_url =
+    "https://mare3.actgate.com/fcgi-bin/fprovweb.exe?_xtype=text/plain&dsource=satview&verbose=0&version=0&target=MOON&time=" +
+    viewModel.UTCTime.replace("Z", "") +
+    "&oformat=json&cmd_script=satview_get_subsolar_records.msh";
+
+  console.log(act_subsolar_points_url);
+  var response = await fetch(act_subsolar_points_url);
+  var subSolarPos = await response.json();
+  if (subSolarPos.status !== 0) {
+    console.log("subsolar pos retrieve error: " + subSolarPos.error);
+    return;
+  }
+  if (subSolarPos.records?.length !== 1) {
+    console.log("invalid sub solar record");
+    return;
+  }
+  let subSolarPosRecord = subSolarPos.records[0];
+  updateSubSolarPointDisplay(
+    subSolarPosRecord.SubSolLON,
+    subSolarPosRecord.SubSolLAT
+  );
 }
 
 function getSelectedEntityToSunLinePositions() {
