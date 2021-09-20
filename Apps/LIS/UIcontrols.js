@@ -38,6 +38,8 @@ export function initializeUI() {
   addGoToButton();
   // add set time button
   addTimeButton();
+  // add tutorial button
+  addTutorialButton();
 
   initializeBaseLayerPicker();
 
@@ -126,7 +128,7 @@ function addGoToButton() {
   recenterButton.type = "image";
   recenterButton.title = "Show/Hide Go-To Controls";
   recenterButton.className = "toolbar-button";
-  document.getElementById("toolbar-buttons").appendChild(recenterButton);
+  document.getElementById("toolbar-buttons-ctrls").appendChild(recenterButton);
 
   recenterButton.onclick = recenterButtonClicked;
 
@@ -338,7 +340,7 @@ function addTimeButton() {
   timeButton.type = "image";
   timeButton.title = "Show/Hide Time Controls";
   timeButton.className = "toolbar-button";
-  var toolbarButtonsDiv = document.getElementById("toolbar-buttons");
+  var toolbarButtonsDiv = document.getElementById("toolbar-buttons-ctrls");
   toolbarButtonsDiv.appendChild(timeButton);
 
   timeButton.onclick = timeButtonClicked;
@@ -680,6 +682,33 @@ function setTimeFormVisible(yes) {
     currentTimeInput.value = JulianDate.fromIso8601(viewModel.UTCTime);
   }
 }
+
+///////////////////////////////////////////////
+/////////////// TUTORIAL BUTTON ///////////////
+///////////////////////////////////////////////
+
+var tutorialButtonSrc = "./images/manual_white_16x16.png";
+
+function addTutorialButton() {
+  "use strict";
+
+  var tutorialButton = document.createElement("input");
+  tutorialButton.src = tutorialButtonSrc;
+  tutorialButton.type = "image";
+  tutorialButton.title = "Open tutorial page";
+  tutorialButton.className = "toolbar-button";
+  var toolbarButtonsDiv = document.getElementById("toolbar-buttons-ctrls");
+  toolbarButtonsDiv.appendChild(tutorialButton);
+
+  tutorialButton.onclick = tutorialButtonClicked;
+}
+
+function tutorialButtonClicked() {
+  let tutorial_url =
+    "https://docs.google.com/document/d/1-rHFrKKnIDlUEakjfWYyHsDHWZwVfHGKwOkRK9Yd6Y8/edit#bookmark=id.43le16fer84h";
+  window.open(tutorial_url);
+}
+
 ///////////////////////////////////////////////
 ////////////// TERRAIN MESH CONTROLS //////////
 ///////////////////////////////////////////////
@@ -943,6 +972,8 @@ function addStatusBar() {
     "Distance from observer position to cursor ground point";
   statusBar.appendChild(statusBarLBLObs2PosDist);
   statusBarLBLObs2PosDist.innerHTML = "Distance to Ground: ";
+
+  // accuracy disclaimer
 }
 
 export function addStatusBarDetailInfo(label) {
