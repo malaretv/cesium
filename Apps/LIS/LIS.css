@@ -68,6 +68,7 @@ body {
   padding: 2px 5px;
   position: absolute;
 }
+
 .infoPanel {
   background: rgba(42, 42, 42, 0.8);
   padding: 4px;
@@ -246,4 +247,55 @@ body {
 
 .statusbar-hide-info-button:hover {
   background-color: #5c80a3;
+}
+
+#disclaimer-dialog {
+  background: rgb(42, 42, 42);
+  /* border-style: solid;
+  border-color: rgb(168, 168, 168);
+  border-width: 1px; */
+  color: white;
+  padding: 30px;
+  font-size: 13px;
+  border-radius: 4px;
+  display: none;
+  width: 300px;
+}
+
+#disclaimer-dialog-arrow,
+#disclaimer-dialog-arrow::before {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: inherit;
+}
+
+#disclaimer-dialog-arrow {
+  visibility: hidden;
+}
+
+#disclaimer-dialog-arrow::before {
+  visibility: visible;
+  content: "";
+  transform: rotate(45deg);
+}
+
+#disclaimer-dialog[data-popper-placement^="top"] > #disclaimer-dialog-arrow {
+  bottom: -6px;
+}
+
+#disclaimer-dialog[data-popper-placement^="bottom"] > #disclaimer-dialog-arrow {
+  top: -6px;
+}
+
+#disclaimer-dialog[data-popper-placement^="left"] > #disclaimer-dialog-arrow {
+  right: -6px;
+}
+
+#disclaimer-dialog[data-popper-placement^="right"] > #disclaimer-dialog-arrow {
+  left: -6px;
+}
+
+#disclaimer-dialog[data-show] {
+  display: block;
 }

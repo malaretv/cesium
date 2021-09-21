@@ -879,6 +879,7 @@ var statusBarWrapper;
 
 var detailInfoShowButtonSrc = "./images/up_24x24.png";
 var detailInfoHideButtonSrc = "./images/down_24x24.png";
+var disclaimerDialogShowButtonSrc = "./images/info_16x16.png";
 
 const statusBarWrapperCornerRadius = "4px";
 
@@ -974,6 +975,81 @@ function addStatusBar() {
   statusBarLBLObs2PosDist.innerHTML = "Distance to Ground: ";
 
   // accuracy disclaimer
+  addDisclaimerDialogButton(statusBar);
+}
+
+const disclaimerDialogMessage =
+  "QTS 3D is a 3D engine for inspecting terrain topography and illumination. Both terrain and shadows are simulated and may not be accurate enough.<br><br> \
+For proper usage see manual.";
+
+function addDisclaimerDialogButton(statusBar) {
+  var button = document.createElement("input");
+  button.src = disclaimerDialogShowButtonSrc;
+  button.type = "image";
+  button.className = "statusbar-button";
+  button.title = "More Info";
+  button.setAttribute("aria-describedby", "disclaimer-dialog");
+  statusBar.appendChild(button);
+
+  var disclaimerDialog = document.createElement("div");
+  disclaimerDialog.innerHTML =
+    disclaimerDialogMessage +
+    " <div id='disclaimer-dialog-arrow' data-popper-arrow></div>";
+  disclaimerDialog.id = "disclaimer-dialog";
+  disclaimerDialog.role = "disclaimer-dialog";
+  statusBar.appendChild(disclaimerDialog);
+
+  var disclaimerDialogPopperInstance = Popper.createPopper(
+    button,
+    disclaimerDialog,
+    {
+      placement: "top",
+      modifiers: [
+        {
+          name: "offset",
+          options: {
+            offset: [0, 15],
+          },
+        },
+      ],
+      strategy: "fixed",
+    }
+  );
+
+  function show() {
+    disclaimerDialog.setAttribute("data-show", "");
+
+    // We need to tell Popper to update the tooltip position
+    // after we show the tooltip, otherwise it will be incorrect
+    disclaimerDialogPopperInstance.update();
+  }
+
+  function hide() {
+    disclaimerDialog.removeAttribute("data-show");
+  }
+
+  // const disclaimerDialogAShowEvents = ['click'];
+  const disclaimerDialogHideEvents = ["blur"];
+
+  // disclaimerDialogAShowEvents.forEach((event) => {
+  //   button.addEventListener(event, show);
+  // });
+
+  disclaimerDialogHideEvents.forEach((event) => {
+    button.addEventListener(event, hide);
+  });
+
+  button.onclick = disclaimerButtonClicked;
+
+  function disclaimerButtonClicked() {
+    if (disclaimerDialog.hasAttribute("data-show")) {
+      hide();
+    } else {
+      show();
+    }
+  }
+
+  return button;
 }
 
 export function addStatusBarDetailInfo(label) {
