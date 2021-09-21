@@ -979,7 +979,7 @@ function addStatusBar() {
 }
 
 const disclaimerDialogMessage =
-  "QTS 3D is a 3D engine for inspecting terrain topography and illumination. Both terrain and shadows are simulated and may not be accurate enough.<br><br> \
+  "QTS 3D is a 3D engine for inspecting terrain topography and illumination. Both terrain and shadows are simulated. It provides many control options to speed up results, at the expense of accuracy in the resulting view.<br><br> \
 For proper usage see manual.";
 
 function addDisclaimerDialogButton(statusBar) {
@@ -987,7 +987,7 @@ function addDisclaimerDialogButton(statusBar) {
   button.src = disclaimerDialogShowButtonSrc;
   button.type = "image";
   button.className = "statusbar-button";
-  button.title = "More Info";
+  button.title = "Accuracy";
   button.setAttribute("aria-describedby", "disclaimer-dialog");
   statusBar.appendChild(button);
 
