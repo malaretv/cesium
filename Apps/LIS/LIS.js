@@ -2,6 +2,8 @@ window.CESIUM_BASE_URL = "../../Source/";
 
 import * as Cesium from "../../Source/Cesium.js";
 
+import { QTSConfig } from "./config/config.js";
+
 import { resetStateUpdateTimer, viewModel } from "./viewModel.js";
 
 import {
@@ -44,26 +46,14 @@ import {
 
 import { cameraFlyToLookDownNorthUp } from "./utils.js";
 
-Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(1737400, 1737400, 1737400);
+Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(
+  QTSConfig.ellipsoidRadius.x,
+  QTSConfig.ellipsoidRadius.y,
+  QTSConfig.ellipsoidRadius.z
+);
 
 // tiles settings
 // https://lunar-dem-tiles2.quickmap.io/sldem_lola/docs#/default/serve_layer_info_layer_json_get
-
-var defaultUTCTime = "2022-12-04T00:00:00.000Z";
-var defaultMeshMaxError = 10;
-var defaultTerrainName = "automatic terrain";
-var defaultTerrainNormalsEnabled = true;
-
-var defaultLocationName = "Tycho";
-
-// The viewModel tracks the state of our mini application.
-var contoursViewModel = {
-  enableContour: false,
-  contourSpacing: 150.0,
-  contourWidth: 2.0,
-};
-
-var showContourAlt = 100; // km
 
 // LOCATIONS
 export var locationsInfo = {
@@ -913,17 +903,15 @@ if (window.LIS_MODE === "development") {
 
 function setContourEnabledFunction() {
   return function (checked) {
-    contoursViewModel.enableContour = checked;
-    updateContours();
-
     // update view model
     viewModel.contourEnabled = checked;
+    updateContours();
   };
 }
 
 Sandcastle.addToggleButton(
-  "Contours @ " + contoursViewModel.contourSpacing.toFixed(0) + "m",
-  contoursViewModel.enableContour,
+  "Contours @ " + QTSConfig.contourSpacing.toFixed(0) + "m",
+  viewModel.contourEnabled,
   setContourEnabledFunction()
 );
 
@@ -2399,21 +2387,27 @@ updateEntityVectors();
 // set initial state
 reset();
 setSceneLight(sunLightSPICE);
-updateTerrainMeshMaxError(defaultMeshMaxError);
+updateTerrainMeshMaxError(QTSConfig.defaultMeshMaxError);
 // terrain mesh error
-var terrainMeshMaxErrorIdx = maxErrorList.indexOf(defaultMeshMaxError);
+var terrainMeshMaxErrorIdx = maxErrorList.indexOf(
+  QTSConfig.defaultMeshMaxError
+);
 if (terrainMeshMaxErrorIdx >= 0) {
   terrainMaxErrMenu.selectedIndex = terrainMeshMaxErrorIdx;
 }
-newTerrainNameSelected(defaultTerrainName, defaultTerrainNormalsEnabled, true);
-initializeTime(defaultUTCTime);
+newTerrainNameSelected(
+  QTSConfig.defaultTerrainName,
+  QTSConfig.defaultTerrainNormalsEnabled,
+  true
+);
+initializeTime(QTSConfig.defaultUTCTime);
 
 // set location
 /*
 locationMenu.selectedIndex = defaultLocationIndex;
 locationToolbarOptions[defaultLocationIndex].onselect();
 */
-var defaultLocation = locationsInfo[defaultLocationName];
+var defaultLocation = locationsInfo[QTSConfig.defaultLocationName];
 if (defaultLocation) {
   setLocation(defaultLocation);
 }
@@ -2427,13 +2421,16 @@ if (shadowsMaxDistanceIdx >= 0) {
   shadowsMaxDistOptions[shadowsMaxDistanceIdx].onselect();
 }
 
+var setContourEnabled = setContourEnabledFunction();
+setContourEnabled(QTSConfig.enableContour);
+
 // CONTOUR
 var contourColor = Cesium.Color.RED.clone();
 var contourUniforms = {};
 var countoursVisible = false;
 
 function maybeUpdateContours(height) {
-  if (!contoursViewModel.enableContour) {
+  if (!viewModel.contourEnabled) {
     // nothing to do
     return;
   }
@@ -2448,15 +2445,15 @@ function maybeUpdateContours(height) {
   }
 
   if (
-    (countoursVisible && height > showContourAlt) ||
-    (!countoursVisible && height < showContourAlt)
+    (countoursVisible && height > QTSConfig.showContourAlt) ||
+    (!countoursVisible && height < QTSConfig.showContourAlt)
   ) {
     updateContours(height);
   }
 }
 
 function updateContours(height) {
-  var hasContour = contoursViewModel.enableContour;
+  var hasContour = viewModel.contourEnabled;
   var material;
   countoursVisible = false;
   if (hasContour) {
@@ -2469,11 +2466,11 @@ function updateContours(height) {
       height = cartographicCamera.height * 0.001; // km
     }
 
-    if (height < showContourAlt) {
+    if (height < QTSConfig.showContourAlt) {
       material = Cesium.Material.fromType("ElevationContour");
       contourUniforms = material.uniforms;
-      contourUniforms.width = contoursViewModel.contourWidth;
-      contourUniforms.spacing = contoursViewModel.contourSpacing;
+      contourUniforms.width = QTSConfig.contourWidth;
+      contourUniforms.spacing = QTSConfig.contourSpacing;
       contourUniforms.color = contourColor;
 
       countoursVisible = true;
