@@ -10,8 +10,7 @@ const QTSConfig = {
 
   defaultUTCTime: "2022-12-08T03:14:40.000Z",
   defaultMeshMaxError: 10,
-  // defaultTerrainName: "automatic",
-  defaultTerrainName: "USGS",
+  defaultTerrainName: "automatic",
   defaultTerrainNormalsEnabled: true,
 
   // contours settings
@@ -30,11 +29,11 @@ const QTSConfig = {
 
   terrainInfoList: {
     // Automatic
-    // automatic: {
-    //   name: "Automatic Terrain",
-    //   iconUrl: "./images/TerrainProviders/terrain_auto.png",
-    //   tooltip: "Automatic Terrain Selection based on latitude",
-    // },
+    automatic: {
+      name: "Automatic Terrain",
+      iconUrl: "./images/TerrainProviders/terrain_auto.png",
+      tooltip: "Automatic Terrain Selection based on latitude",
+    },
     // USGS
     USGS: {
       name: "USGS",
@@ -43,10 +42,18 @@ const QTSConfig = {
       urlSubpath: "/mercury",
       optimizedPolarTerrain: false,
     },
+    // GOTM
+    GOTM: {
+      name: "Polar Optimized",
+      iconUrl: "./images/TerrainProviders/gotm.png",
+      tooltip: "Polar Optimized",
+      urlSubpath: "/mercury_poles",
+      optimizedPolarTerrain: true,
+    },
   },
 
   defaultRegularTerrain: "USGS",
-  defaultPolarTerrain: "USGS",
+  defaultPolarTerrain: "GOTM",
 
   ////////////////////////////////////
   ///// LAYERS SETTINGS
