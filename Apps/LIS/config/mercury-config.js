@@ -1,7 +1,4 @@
-import { Color, Material } from "../../../Source/Cesium.js";
-
-let sunPrimitiveMaterial = Material.fromType(Material.RimLightingType);
-sunPrimitiveMaterial.uniforms.color = Color.YELLOW;
+import { Color } from "../../../Source/Cesium.js";
 
 const QTSConfig = {
   // ellipsoid radius in x,y,z directions
@@ -51,7 +48,7 @@ const QTSConfig = {
   },
 
   ////////////////////////////////////////////
-  // TERRAIN SETTINGS
+  // TERRAIN SETTINS
 
   // use this for having server caching enabled
   terrainServername: "https://lunar-dem-tiles2.quickmap.io",
@@ -59,11 +56,11 @@ const QTSConfig = {
 
   terrainInfoList: {
     // Automatic
-    automatic: {
-      name: "Automatic Terrain",
-      iconUrl: "./images/TerrainProviders/terrain_auto.png",
-      tooltip: "Automatic Terrain Selection based on latitude",
-    },
+    // automatic: {
+    //   name: "Automatic Terrain",
+    //   iconUrl: "./images/TerrainProviders/terrain_auto.png",
+    //   tooltip: "Automatic Terrain Selection based on latitude",
+    // },
     // USGS
     USGS: {
       name: "USGS",
@@ -72,18 +69,10 @@ const QTSConfig = {
       urlSubpath: "/mercury",
       optimizedPolarTerrain: false,
     },
-    // GOTM
-    GOTM: {
-      name: "Polar Optimized",
-      iconUrl: "./images/TerrainProviders/gotm.png",
-      tooltip: "Polar Optimized",
-      urlSubpath: "/mercury_poles",
-      optimizedPolarTerrain: true,
-    },
   },
 
   defaultRegularTerrain: "USGS",
-  defaultPolarTerrain: "GOTM",
+  defaultPolarTerrain: "USGS",
 
   ////////////////////////////////////
   ///// LAYERS SETTINGS
@@ -98,9 +87,6 @@ const QTSConfig = {
       layerFormat: "png",
     },
   },
-
-  eqcProjectionName: "mercury-eqc",
-  polarShiftedEqcProjectionName: "mercury-polarshifted-eqc",
 
   // LOCATIONS
   defaultLocationName: "Rachmaninoff",
