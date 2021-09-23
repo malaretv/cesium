@@ -1,5 +1,7 @@
 import * as Cesium from "../../Source/Cesium.js";
 
+import { QTSConfig } from "./config/config.js";
+
 import { viewer } from "./LIS.js";
 
 import { isOptimizedPolarTerrain } from "./terrainProvider.js";
@@ -29,41 +31,6 @@ const NullImageryProvider = createEmptyImageryProvider(
   "lunar-fulleqc",
   "png"
 );
-
-export var layersInfo = {
-  WACNoShadows: {
-    name: "WAC Global Albedo",
-    servername: "act-test.lroc.asu.edu",
-    iconUrl: "./images/ImageryProviders/wac_no_shadows.png",
-    tooltip: "WAC Global Albedo",
-    layerName: "wac_albedo",
-    layerFormat: "jpg",
-  },
-  sunVisibilty60m: {
-    name: "Sun Visibility 60m",
-    servername: "act-test.lroc.asu.edu",
-    iconUrl: "./images/ImageryProviders/sun_visibility_60m.png",
-    tooltip: "Sun Visibility 60m",
-    layerName: "lavgvis_s_60m",
-    layerFormat: "png",
-  },
-  NACPolarMosaics: {
-    name: "NAC Polar Mosaics",
-    servername: "act-test.lroc.asu.edu",
-    iconUrl: "./images/ImageryProviders/nac_polar_mosaics.png",
-    tooltip: "NAC Polar Mosaics",
-    layerName: "lnpole",
-    layerFormat: "png",
-  },
-  ACTSunlitModel: {
-    name: "ACT Sun Visibility 60m",
-    servername: "mare3.actgate.com",
-    iconUrl: "./images/ImageryProviders/act_sunlit_model.png",
-    tooltip: "ACT Sun Visibility 60m",
-    layerName: "act_sunlit_model",
-    layerFormat: "png",
-  },
-};
 
 function createLayerImageryProvider(
   servername,
@@ -107,7 +74,7 @@ function createLayerImageryProvider(
 }
 
 function createLayerImageModel(layerObj) {
-  var layerInfo = layersInfo[layerObj];
+  var layerInfo = QTSConfig.layersInfo[layerObj];
   var layerImageryModel = new Cesium.ProviderViewModel({
     name: layerInfo.name,
     iconUrl: layerInfo.iconUrl,
@@ -146,7 +113,7 @@ export function initializeImageryPicker() {
   var providerViewModels = [];
   providerViewModels.push(NullModel);
 
-  for (var layerObj in layersInfo) {
+  for (var layerObj in QTSConfig.layersInfo) {
     var layerImageryModel = createLayerImageModel(layerObj);
     providerViewModels.push(layerImageryModel);
   }

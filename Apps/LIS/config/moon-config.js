@@ -20,7 +20,8 @@ const QTSConfig = {
 
   showContourAlt: 100, // km
 
-  // terrain settings
+  ////////////////////////////////////////////
+  // TERRAIN SETTINS
   // use this for having server caching enabled
   terrainServername: "https://lunar-dem-tiles2.quickmap.io",
   // terrainServername: "https://lunar-dem-api.quickmap.io",
@@ -52,6 +53,44 @@ const QTSConfig = {
 
   defaultRegularTerrain: "sldem_lola",
   defaultPolarTerrain: "GOTM",
+
+  ////////////////////////////////////
+  ///// LAYERS SETTINGS
+
+  layersInfo: {
+    WACNoShadows: {
+      name: "WAC Global Albedo",
+      servername: "act-test.lroc.asu.edu",
+      iconUrl: "./images/ImageryProviders/wac_no_shadows.png",
+      tooltip: "WAC Global Albedo",
+      layerName: "wac_albedo",
+      layerFormat: "jpg",
+    },
+    sunVisibilty60m: {
+      name: "Sun Visibility 60m",
+      servername: "act-test.lroc.asu.edu",
+      iconUrl: "./images/ImageryProviders/sun_visibility_60m.png",
+      tooltip: "Sun Visibility 60m",
+      layerName: "lavgvis_s_60m",
+      layerFormat: "png",
+    },
+    NACPolarMosaics: {
+      name: "NAC Polar Mosaics",
+      servername: "act-test.lroc.asu.edu",
+      iconUrl: "./images/ImageryProviders/nac_polar_mosaics.png",
+      tooltip: "NAC Polar Mosaics",
+      layerName: "lnpole",
+      layerFormat: "png",
+    },
+    ACTSunlitModel: {
+      name: "ACT Sun Visibility 60m",
+      servername: "mare3.actgate.com",
+      iconUrl: "./images/ImageryProviders/act_sunlit_model.png",
+      tooltip: "ACT Sun Visibility 60m",
+      layerName: "act_sunlit_model",
+      layerFormat: "png",
+    },
+  },
 };
 
 export { QTSConfig };

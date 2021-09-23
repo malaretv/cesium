@@ -20,7 +20,6 @@ import {
 import {
   createLayerNACImageProvider,
   createLayerQMapImageProvider,
-  layersInfo,
   setLayerImageryEnabled,
   updateBaseLayerPickerImageryLayers,
 } from "./imageryProvider.js";
@@ -2726,7 +2725,7 @@ function loadStateFromQueryString() {
   // }
 
   // find layers enabled
-  for (var layerObj in layersInfo) {
+  for (var layerObj in QTSConfig.layersInfo) {
     if (searchParams.has(layerObj + "Enabled")) {
       setLayerImageryEnabled(layerObj);
     }
