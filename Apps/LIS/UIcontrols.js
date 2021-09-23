@@ -5,7 +5,9 @@ import {
   viewerCesiumInspectorMixin,
 } from "../../Source/Cesium.js";
 
-import { viewer, locationsInfo, setLocation, setTimes } from "./LIS.js";
+import { QTSConfig } from "./config/config.js";
+
+import { viewer, setLocation, setTimes } from "./LIS.js";
 
 import { adjustCartesianCoords } from "./adjustCartesian.js";
 
@@ -143,7 +145,7 @@ function addGoToButton() {
   goto.innerHTML = gotoformHTML;
 
   var locationsOptionList = "";
-  for (var locationName in locationsInfo) {
+  for (var locationName in QTSConfig.locationsInfo) {
     locationsOptionList += '<option value="' + locationName + '" />';
   }
 
@@ -277,8 +279,8 @@ function submit(event) {
   } else {
     // search key case insensitive
     var location =
-      locationsInfo[
-        Object.keys(locationsInfo).find(
+      QTSConfig.locationsInfo[
+        Object.keys(QTSConfig.locationsInfo).find(
           (key) => key.toLowerCase() === value.toLowerCase()
         )
       ];

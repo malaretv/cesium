@@ -54,74 +54,6 @@ Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(
 // tiles settings
 // https://lunar-dem-tiles2.quickmap.io/sldem_lola/docs#/default/serve_layer_info_layer_json_get
 
-// LOCATIONS
-export var locationsInfo = {
-  Tycho: {
-    name: "Tycho",
-    longitude: -11.34246,
-    latitude: -43.33986,
-    height: -1000,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  Haworth_1: {
-    name: "Haworth_1",
-    longitude: -17.665,
-    latitude: -86.744,
-    height: 1300,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  Haworth_2: {
-    name: "Haworth_2",
-    longitude: -19.023,
-    latitude: -86.516,
-    height: 1300,
-    color: Cesium.Color.TOMATO,
-    entity: null,
-  },
-  PSR0: {
-    name: "PSR0",
-    longitude: 135.36409,
-    latitude: -81.87225,
-    height: -4100,
-    color: Cesium.Color.TOMATO,
-    entity: null,
-  },
-  PSR1: {
-    name: "PSR1",
-    longitude: -11.77213,
-    latitude: -85.61268,
-    height: 2500,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  Hill_Top_Near_SP: {
-    name: "Hill_Top_Near_SP",
-    longitude: 222,
-    latitude: -89.44,
-    height: 2000,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  Hill_Top_Near_NP: {
-    name: "Hill_Top_Near_NP",
-    longitude: -45.63,
-    latitude: 89.645,
-    height: 500,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  testing2: {
-    name: "testing2",
-    longitude: -2.146,
-    latitude: 0.667,
-    height: -900,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-};
-
 export var viewer = new Cesium.Viewer("cesiumContainer", {
   //  terrainProvider: createTerrainProvider(),
   infoBox: false,
@@ -275,9 +207,9 @@ function updateBodiesPosToDummyPolar() {
 }
 
 function updateEntitiesPos() {
-  for (var locationName in locationsInfo) {
-    if (locationsInfo.hasOwnProperty(locationName)) {
-      var location = locationsInfo[locationName];
+  for (var locationName in QTSConfig.locationsInfo) {
+    if (QTSConfig.locationsInfo.hasOwnProperty(locationName)) {
+      var location = QTSConfig.locationsInfo[locationName];
       var entity = location.entity;
       entity.position.setValue(
         adjustCartesianCoords(
@@ -724,69 +656,8 @@ export function setCurrShadowsMaxDistVisible(showLbl) {
   }
 }
 
-//////////////////////////////////////////////////
-//////////// TERRAIN /////////////////////////////
-//////////////////////////////////////////////////
-/*
-var terrainNameList = [
-  "automatic terrain",
-  "automatic terrain" + noNormalsNameSuffix,
-  "sldem_lola",
-  "sldem_lola" + noNormalsNameSuffix,
-  "usgs_lola",
-  // "NASA JPL - no normals",
-  // "Optimized PolarDEM",
-  // "Optimized PolarDEM" + noNormalsNameSuffix,
-  "GOTM",
-  "GOTM" + noNormalsNameSuffix,
-  // "GOTM (High Res)",
-  // "GOTM (High Res)" + noNormalsNameSuffix,
-];
-
-function setTerrainFunction(terrainName) {
-  return function () {
-    newTerrainNameSelected(terrainName);
-  };
-}
-
-
-var terrainOptions = [];
-for (var i = 0; i < terrainNameList.length; i++) {
-  var terrainName = terrainNameList[i];
-  terrainOptions.push({
-    text: terrainName,
-    onselect: setTerrainFunction(terrainName),
-  });
-}
-*/
-
-function setLocationFunction(location) {
-  return function () {
-    setLocation(location);
-  };
-}
-
-/*
-var locationToolbarOptions = [];
-var i = 0;
-for (var locationName in locationsInfo) {
-  if (locationsInfo.hasOwnProperty(locationName)) {
-    var location = locationsInfo[locationName];
-    locationToolbarOptions.push({
-      text: locationName,
-      onselect: setLocationFunction(location),
-    });
-    i += 1;
-  }
-}
-*/
-
 Sandcastle.addToolbarMenu(illuminationOptions);
 var illuminationMenu = document.getElementById("toolbar").lastChild;
-/*
-Sandcastle.addToolbarMenu(terrainOptions);
-export var terrainMenu = document.getElementById("toolbar").lastChild;
-*/
 
 var polesHiresDataPolarUrl =
   "https://files.actgate.com/temp/poles_hires.geojson";
@@ -2011,8 +1882,8 @@ scene.preRender.addEventListener(icrf);
 /////
 // add entities
 var entitySphereRadius = 50;
-for (var locationName in locationsInfo) {
-  var location = locationsInfo[locationName];
+for (var locationName in QTSConfig.locationsInfo) {
+  var location = QTSConfig.locationsInfo[locationName];
   // add entity
   location.entity = viewer.entities.add({
     position: Cesium.Cartesian3.fromDegrees(
@@ -2406,7 +2277,7 @@ initializeTime(QTSConfig.defaultUTCTime);
 locationMenu.selectedIndex = defaultLocationIndex;
 locationToolbarOptions[defaultLocationIndex].onselect();
 */
-var defaultLocation = locationsInfo[QTSConfig.defaultLocationName];
+var defaultLocation = QTSConfig.locationsInfo[QTSConfig.defaultLocationName];
 if (defaultLocation) {
   setLocation(defaultLocation);
 }
@@ -2664,8 +2535,8 @@ function loadStateFromQueryString() {
   // location
   if (searchParams.has("selectedLocationName")) {
     var locationName = searchParams.get("selectedLocationName");
-    if (locationName in locationsInfo) {
-      setSelectedEntity(locationsInfo[locationName]);
+    if (locationName in QTSConfig.locationsInfo) {
+      setSelectedEntity(QTSConfig.locationsInfo[locationName]);
     }
     /*
     var locationNamesList = Object.keys(locationsInfo);
@@ -2709,20 +2580,6 @@ function loadStateFromQueryString() {
     var setHiresDemRegionsEnabled = setHiresDemRegionsEnabledFunction();
     setHiresDemRegionsEnabled(checked);
   }
-
-  // if (searchParams.has("WACMosaicNSEnabled")) {
-  //   var checked = searchParams.get("WACMosaicNSEnabled") === "true";
-  //   // enableWACNSCbx.checked = checked;
-  //   var setWACNoShadowsEnabled = setWACNoShadowsEnabledFunction();
-  //   setWACNoShadowsEnabled(checked, true);
-  // }
-
-  // if (searchParams.has("sunVisibility60Enabled")) {
-  //   var checked = searchParams.get("sunVisibility60Enabled") === "true";
-  //   // enableSunVisibility60mCbx.checked = checked;
-  //   var setSunVisibility60mEnabled = setSunVisibility60mEnabledFunction();
-  //   setSunVisibility60mEnabled(checked, true);
-  // }
 
   // find layers enabled
   for (var layerObj in QTSConfig.layersInfo) {

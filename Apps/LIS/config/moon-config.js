@@ -1,3 +1,5 @@
+import { Color } from "../../../Source/Cesium.js";
+
 const QTSConfig = {
   // ellipsoid radius in x,y,z directions
   ellipsoidRadius: {
@@ -22,6 +24,7 @@ const QTSConfig = {
 
   ////////////////////////////////////////////
   // TERRAIN SETTINS
+
   // use this for having server caching enabled
   terrainServername: "https://lunar-dem-tiles2.quickmap.io",
   // terrainServername: "https://lunar-dem-api.quickmap.io",
@@ -89,6 +92,66 @@ const QTSConfig = {
       tooltip: "ACT Sun Visibility 60m",
       layerName: "act_sunlit_model",
       layerFormat: "png",
+    },
+  },
+
+  // LOCATIONS
+  locationsInfo: {
+    Tycho: {
+      name: "Tycho",
+      longitude: -11.34246,
+      latitude: -43.33986,
+      height: -1000,
+      color: Color.WHITE,
+    },
+    Haworth_1: {
+      name: "Haworth_1",
+      longitude: -17.665,
+      latitude: -86.744,
+      height: 1300,
+      color: Color.WHITE,
+    },
+    Haworth_2: {
+      name: "Haworth_2",
+      longitude: -19.023,
+      latitude: -86.516,
+      height: 1300,
+      color: Color.TOMATO,
+    },
+    PSR0: {
+      name: "PSR0",
+      longitude: 135.36409,
+      latitude: -81.87225,
+      height: -4100,
+      color: Color.TOMATO,
+    },
+    PSR1: {
+      name: "PSR1",
+      longitude: -11.77213,
+      latitude: -85.61268,
+      height: 2500,
+      color: Color.WHITE,
+    },
+    Hill_Top_Near_SP: {
+      name: "Hill_Top_Near_SP",
+      longitude: 222,
+      latitude: -89.44,
+      height: 2000,
+      color: Color.WHITE,
+    },
+    Hill_Top_Near_NP: {
+      name: "Hill_Top_Near_NP",
+      longitude: -45.63,
+      latitude: 89.645,
+      height: 500,
+      color: Color.WHITE,
+    },
+    testing2: {
+      name: "testing2",
+      longitude: -2.146,
+      latitude: 0.667,
+      height: -900,
+      color: Color.WHITE,
     },
   },
 };
