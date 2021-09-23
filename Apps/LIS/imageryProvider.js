@@ -81,8 +81,8 @@ function createLayerImageModel(layerObj) {
     tooltip: layerInfo.tooltip,
     creationFunction: function () {
       var layerProjection = isOptimizedPolarTerrain
-        ? "lunar-polarshifted-eqc"
-        : "lunar-fulleqc";
+        ? QTSConfig.polarShiftedEqcProjectionName
+        : QTSConfig.eqcProjectionName;
       var layerImageryProvider = createLayerImageryProvider(
         layerInfo.servername,
         layerInfo.layerName,

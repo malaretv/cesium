@@ -62,6 +62,9 @@ const QTSConfig = {
     },
   },
 
+  eqcProjectionName: "mercury-eqc",
+  polarShiftedEqcProjectionName: "mercury-polarshifted-eqc",
+
   // LOCATIONS
   defaultLocationName: "Rachmaninoff",
 
