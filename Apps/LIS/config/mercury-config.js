@@ -1,7 +1,4 @@
-import { Color, Material } from "../../../Source/Cesium.js";
-
-let sunPrimitiveMaterial = Material.fromType(Material.RimLightingType);
-sunPrimitiveMaterial.uniforms.color = Color.YELLOW;
+import { Color } from "../../../Source/Cesium.js";
 
 const QTSConfig = {
   // ellipsoid radius in x,y,z directions
@@ -14,6 +11,7 @@ const QTSConfig = {
   defaultUTCTime: "2022-12-08T03:14:40.000Z",
   defaultMeshMaxError: 10,
   defaultTerrainName: "automatic",
+  // defaultTerrainName: "USGS",
   defaultTerrainNormalsEnabled: true,
 
   // contours settings
