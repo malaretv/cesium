@@ -985,7 +985,7 @@ function addStatusBar() {
 }
 
 const disclaimerDialogMessage =
-  "QTS 3D is a 3D engine for inspecting terrain topography and illumination. Both terrain and shadows are simulated. It provides many control options to speed up results, at the expense of accuracy in the resulting view.<br><br> \
+  "QTS-3D is a simulation engine for quick inspection of terrain topography and illumination. It provides many control options to speed up results, at the expense of accuracy in the resulting view. Shadows are computed using the subset of the topographic model loaded for a given camera perspective.<br><br> \
 For proper usage see manual.";
 
 function addDisclaimerDialogButton(statusBar) {
