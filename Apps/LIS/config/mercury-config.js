@@ -11,9 +11,12 @@ const QTSConfig = {
     z: 2439700,
   },
 
-  defaultUTCTime: "2022-12-08T03:14:40.000Z",
+  solarDayNumHours: 4224, // 176 earth days
+
+  defaultUTCTime: "2022-10-21T01:00:00.000Z",
   defaultMeshMaxError: 10,
   defaultTerrainName: "automatic",
+  // defaultTerrainName: "USGS",
   defaultTerrainNormalsEnabled: true,
 
   // contours settings
@@ -29,7 +32,7 @@ const QTSConfig = {
   lightSource: {
     SUN: {
       // magnify sun, just to see it better
-      radius: 6.955e8 * 2,
+      radius: 6.955e8,
       radiusScaleFactor: 1.0,
       lightParams: {
         lightColor: Color.WHITE,

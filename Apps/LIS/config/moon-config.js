@@ -149,6 +149,9 @@ const QTSConfig = {
     },
   },
 
+  eqcProjectionName: "lunar-fulleqc",
+  polarShiftedEqcProjectionName: "lunar-polarshifted-eqc",
+
   // LOCATIONS
   locationsInfo: {
     Tycho: {
