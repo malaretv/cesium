@@ -1718,7 +1718,9 @@ async function updateSubSolarPoint() {
 
   // build url to get sub solar point
   var act_subsolar_points_url =
-    "https://mare3.actgate.com/fcgi-bin/fprovweb.exe?_xtype=text/plain&dsource=satview&verbose=0&version=0&target=MOON&time=" +
+    "https://mare3.actgate.com/fcgi-bin/fprovweb.exe?_xtype=text/plain&dsource=satview&verbose=0&version=0&target=" +
+    QTSConfig.observer +
+    "&time=" +
     Cesium.JulianDate.toIso8601(viewModel.UTCTime, 3).replace("Z", "") +
     "&oformat=json&cmd_script=satview_get_subsolar_records.msh";
 
