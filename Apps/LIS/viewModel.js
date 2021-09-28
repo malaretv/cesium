@@ -12,7 +12,6 @@ import { updateUrlParams } from "./utils.js";
 import { viewer } from "./LIS.js";
 
 import { meshMaxErrorChanged } from "./UIcontrols.js";
-import CesiumMath from "../../Source/Core/Math.js";
 
 // The viewModel tracks the state of the application.
 // Decouple the state from the interface specific vars.
@@ -22,7 +21,7 @@ export var viewModel = {
   _camera_position: new Cartesian3(),
   _camera_direction: new Cartesian3(),
   _camera_up: new Cartesian3(),
-  _lightSourceIdx: -1,
+  _lightSource: "",
 
   // time
   _UTCTime: "",
@@ -108,8 +107,11 @@ export var viewModel = {
   },
 
   set UTCTime(value) {
-    this._UTCTime = JulianDate.toIso8601(value, 3);
-    maybeUpdateStateUrl();
+    if (value && !JulianDate.equals(this._UTCTime, value)) {
+      // console.log("current time changed: " + value);
+      this._UTCTime = JulianDate.clone(value);
+      maybeUpdateStateUrl();
+    }
   },
 
   // start UTCTime
@@ -118,8 +120,10 @@ export var viewModel = {
   },
 
   set startUTCTime(value) {
-    this._startUTCTime = JulianDate.toIso8601(value, 3);
-    saveStateToQueryString();
+    if (!JulianDate.equals(this._startUTCTime, value)) {
+      this._startUTCTime = JulianDate.clone(value);
+      saveStateToQueryString();
+    }
   },
 
   // stop UTCTime
@@ -128,17 +132,19 @@ export var viewModel = {
   },
 
   set stopUTCTime(value) {
-    this._stopUTCTime = JulianDate.toIso8601(value, 3);
-    saveStateToQueryString();
+    if (!JulianDate.equals(this._stopUTCTime, value)) {
+      this._stopUTCTime = JulianDate.clone(value);
+      saveStateToQueryString();
+    }
   },
 
-  // lightSourceIdx
-  get lightSourceIdx() {
-    return this._lightSourceIdx;
+  // lightSource
+  get lightSource() {
+    return this._lightSource;
   },
 
-  set lightSourceIdx(value) {
-    this._lightSourceIdx = value;
+  set lightSource(value) {
+    this._lightSource = value;
     saveStateToQueryString();
   },
 
@@ -359,12 +365,12 @@ export function resetStateUpdateTimer() {
 // this is needed in order to avoid to many history.push requests (there is a limit on Safari browser)
 export function maybeUpdateStateUrl() {
   if (
-    lastUrlStateUpdateTime !== viewModel.UTCTime ||
+    !JulianDate.equals(lastUrlStateUpdateTime, viewModel.UTCTime) ||
     !lastUrlCameraPosition.equals(viewModel.camera_position) ||
     !lastUrlCameraDirection.equals(viewModel.camera_direction) ||
     !lastUrlCameraUp.equals(viewModel.camera_up)
   ) {
-    lastUrlStateUpdateTime = viewModel.UTCTime;
+    lastUrlStateUpdateTime = JulianDate.clone(viewModel.UTCTime);
     lastUrlCameraPosition = Cartesian3.clone(viewModel.camera_position);
     lastUrlCameraDirection = Cartesian3.clone(viewModel.camera_direction);
     lastUrlCameraUp = Cartesian3.clone(viewModel.camera_up);
@@ -445,12 +451,12 @@ export function saveStateToQueryString() {
   );
 
   // time
-  var UTCTime = JulianDate.fromIso8601(viewModel.UTCTime);
-  var startUTCTime = JulianDate.fromIso8601(viewModel.startUTCTime);
-  var stopUTCTime = JulianDate.fromIso8601(viewModel.stopUTCTime);
+  var UTCTime = JulianDate.toIso8601(viewModel.UTCTime, 3);
+  var startUTCTime = JulianDate.toIso8601(viewModel.startUTCTime, 3);
+  var stopUTCTime = JulianDate.toIso8601(viewModel.stopUTCTime, 3);
 
   // illumination
-  var lightSourceIdx = viewModel.lightSourceIdx;
+  var lightSource = viewModel.lightSource;
 
   // terrain
   var terrainProviderName = viewModel.terrainProviderName;
@@ -498,7 +504,7 @@ export function saveStateToQueryString() {
     UTCTime,
     startUTCTime,
     stopUTCTime,
-    lightSourceIdx,
+    lightSource,
     terrainProviderName,
     terrainVertexNormalsEnabled,
     terrainMeshAlgorithm,
