@@ -1212,13 +1212,13 @@ function findFirstValidRowCoords(col, viewHeight) {
 function getScreenPixelCoords(pixelCoors) {
   let pixelPosCartesian;
   // pickEllipsoid does not work when camera height is negative
-  if (cartographicCamera.height >= 0) {
-    pixelPosCartesian = camera.pickEllipsoid(pixelCoors, ellipsoid);
-  } else {
-    // smarter way for finding ground interception (slower)
-    let pixelPosRay = viewer.camera.getPickRay(pixelCoors);
-    pixelPosCartesian = viewer.scene.globe.pick(pixelPosRay, viewer.scene);
-  }
+  // if (cartographicCamera.height >= 0) {
+  //   pixelPosCartesian = camera.pickEllipsoid(pixelCoors, ellipsoid);
+  // } else {
+  // more precise way for finding ground interception (a bit slower)
+  let pixelPosRay = viewer.camera.getPickRay(pixelCoors);
+  pixelPosCartesian = viewer.scene.globe.pick(pixelPosRay, viewer.scene);
+  // }
   return pixelPosCartesian;
 }
 
