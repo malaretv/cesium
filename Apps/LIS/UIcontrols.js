@@ -609,7 +609,11 @@ function submitTime() {
   }
 
   if (!stopTime) {
-    stopTime = JulianDate.addDays(startTime, 29, new JulianDate());
+    stopTime = JulianDate.addHours(
+      startTime,
+      QTSConfig.solarDayNumHours,
+      new JulianDate()
+    );
     stopTimeS = stopTime.toString(stopTime);
   }
 

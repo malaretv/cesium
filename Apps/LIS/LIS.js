@@ -235,9 +235,9 @@ export function initializeTime(
   var currentTime = Cesium.JulianDate.fromIso8601(currentTimeIso8601);
   var stopTime;
   if (stopTimeIso8601 === undefined) {
-    stopTime = Cesium.JulianDate.addDays(
+    stopTime = Cesium.JulianDate.addHours(
       currentTime,
-      29,
+      QTSConfig.solarDayNumHours,
       new Cesium.JulianDate()
     );
   } else {
