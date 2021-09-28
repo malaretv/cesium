@@ -679,9 +679,9 @@ function setTimeFormVisible(yes) {
     timeForm.setAttribute("hidden", "");
     hideTimeFormError();
     // clear input string
-    startTimeInput.value = JulianDate.fromIso8601(viewModel.startUTCTime);
-    stopTimeInput.value = JulianDate.fromIso8601(viewModel.stopUTCTime);
-    currentTimeInput.value = JulianDate.fromIso8601(viewModel.UTCTime);
+    startTimeInput.value = JulianDate.toIso8601(viewModel.startUTCTime, 3);
+    stopTimeInput.value = JulianDate.toIso8601(viewModel.stopUTCTime, 3);
+    currentTimeInput.value = JulianDate.toIso8601(viewModel.UTCTime, 3);
   }
 }
 

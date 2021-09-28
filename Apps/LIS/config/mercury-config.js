@@ -1,4 +1,7 @@
-import { Color } from "../../../Source/Cesium.js";
+import { Color, Material } from "../../../Source/Cesium.js";
+
+let sunPrimitiveMaterial = Material.fromType(Material.RimLightingType);
+sunPrimitiveMaterial.uniforms.color = Color.YELLOW;
 
 const QTSConfig = {
   // ellipsoid radius in x,y,z directions
@@ -20,8 +23,32 @@ const QTSConfig = {
 
   showContourAlt: 100, // km
 
+  //////////////////////////////////////////////
+  // ILLUMINATION SETTINGS
+  observer: "MERCURY",
+  lightSource: {
+    SUN: {
+      // magnify sun, just to see it better
+      radius: 6.955e8,
+      radiusScaleFactor: 1.0,
+      lightParams: {
+        lightColor: Color.WHITE,
+        lightIntensity: 2,
+      },
+      primitiveParams: {
+        material: sunPrimitiveMaterial,
+        // adjust rotation based on terrain reference system rotation
+        dependsOnTerrainModelRotation: false,
+      },
+      entityVectorParams: {
+        width: 10,
+        color: Color.YELLOW,
+      },
+    },
+  },
+
   ////////////////////////////////////////////
-  // TERRAIN SETTINS
+  // TERRAIN SETTINGS
 
   // use this for having server caching enabled
   terrainServername: "https://lunar-dem-tiles2.quickmap.io",

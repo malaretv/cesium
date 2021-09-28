@@ -1,4 +1,12 @@
-import { Color } from "../../../Source/Cesium.js";
+import { Color, Material } from "../../../Source/Cesium.js";
+
+let sunPrimitiveMaterial = Material.fromType(Material.RimLightingType);
+sunPrimitiveMaterial.uniforms.color = Color.YELLOW;
+
+let earthPrimitiveMaterial = Material.fromType(Material.ImageType);
+const earthTextureUrl = "https://files.actgate.com/earth/earthSmall.jpg";
+earthPrimitiveMaterial.uniforms.image = earthTextureUrl;
+earthPrimitiveMaterial.translucent = false;
 
 const QTSConfig = {
   // ellipsoid radius in x,y,z directions
@@ -21,6 +29,50 @@ const QTSConfig = {
   contourWidth: 2.0,
 
   showContourAlt: 100, // km
+
+  //////////////////////////////////////////////
+  // ILLUMINATION SETTINGS
+  observer: "MOON",
+  lightSource: {
+    SUN: {
+      // magnify sun, just to see it better
+      radius: 6.955e8 * 2,
+      radiusScaleFactor: 1.0,
+      lightParams: {
+        lightColor: Color.WHITE,
+        lightIntensity: 2,
+      },
+      primitiveParams: {
+        material: sunPrimitiveMaterial,
+        // adjust rotation based on terrain reference system rotation
+        dependsOnTerrainModelRotation: false,
+      },
+      entityVectorParams: {
+        width: 10,
+        color: Color.YELLOW,
+      },
+    },
+    EARTH: {
+      radius: 6.371e6,
+      // apply a scale factor to earth size/distance in order to have it nearer to the viewer
+      // when too far away the earth is not rendered some time when not in the near frustum
+      radiusScaleFactor: 5.0,
+      lightParams: {
+        lightColor: new Color(0.9, 0.925, 1.0),
+        lightIntensity: 1,
+      },
+      primitiveParams: {
+        material: earthPrimitiveMaterial,
+
+        // adjust rotation based on terrain reference system rotation
+        dependsOnTerrainModelRotation: true,
+      },
+      entityVectorParams: {
+        width: 10,
+        color: Color.BLUE,
+      },
+    },
+  },
 
   ////////////////////////////////////////////
   // TERRAIN SETTINS
