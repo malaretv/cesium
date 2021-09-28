@@ -11,6 +11,8 @@ const QTSConfig = {
     z: 2439700,
   },
 
+  solarDayNumHours: 4224, // 176 earth days
+
   defaultUTCTime: "2022-10-21T01:00:00.000Z",
   defaultMeshMaxError: 10,
   defaultTerrainName: "automatic",
