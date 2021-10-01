@@ -2,6 +2,8 @@ window.CESIUM_BASE_URL = "../../Source/";
 
 import * as Cesium from "../../Source/Cesium.js";
 
+import { QTSConfig } from "./config/config.js";
+
 import { resetStateUpdateTimer, viewModel } from "./viewModel.js";
 
 import {
@@ -16,9 +18,19 @@ import {
 } from "./terrainProvider.js";
 
 import {
+  getBodySPICEPosition,
+  getLightSourceSPICEPosition,
+  getIlluminationOptions,
+  initializeBodiesSPICE,
+  setSceneLight,
+  updateBodiesPosSPICE,
+  updateBodiesPosAtCurrentTime,
+  updateBodiesPosition,
+} from "./illumination.js";
+
+import {
   createLayerNACImageProvider,
   createLayerQMapImageProvider,
-  layersInfo,
   setLayerImageryEnabled,
   updateBaseLayerPickerImageryLayers,
 } from "./imageryProvider.js";
@@ -44,94 +56,14 @@ import {
 
 import { cameraFlyToLookDownNorthUp } from "./utils.js";
 
-Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(1737400, 1737400, 1737400);
+Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(
+  QTSConfig.ellipsoidRadius.x,
+  QTSConfig.ellipsoidRadius.y,
+  QTSConfig.ellipsoidRadius.z
+);
 
 // tiles settings
 // https://lunar-dem-tiles2.quickmap.io/sldem_lola/docs#/default/serve_layer_info_layer_json_get
-
-var defaultUTCTime = "2022-12-04T00:00:00.000Z";
-var defaultMeshMaxError = 10;
-var defaultTerrainName = "automatic terrain";
-var defaultTerrainNormalsEnabled = true;
-
-var defaultLocationName = "Tycho";
-
-// The viewModel tracks the state of our mini application.
-var contoursViewModel = {
-  enableContour: false,
-  contourSpacing: 150.0,
-  contourWidth: 2.0,
-};
-
-var showContourAlt = 100; // km
-
-// LOCATIONS
-export var locationsInfo = {
-  Tycho: {
-    name: "Tycho",
-    longitude: -11.34246,
-    latitude: -43.33986,
-    height: -1000,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  Haworth_1: {
-    name: "Haworth_1",
-    longitude: -17.665,
-    latitude: -86.744,
-    height: 1300,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  Haworth_2: {
-    name: "Haworth_2",
-    longitude: -19.023,
-    latitude: -86.516,
-    height: 1300,
-    color: Cesium.Color.TOMATO,
-    entity: null,
-  },
-  PSR0: {
-    name: "PSR0",
-    longitude: 135.36409,
-    latitude: -81.87225,
-    height: -4100,
-    color: Cesium.Color.TOMATO,
-    entity: null,
-  },
-  PSR1: {
-    name: "PSR1",
-    longitude: -11.77213,
-    latitude: -85.61268,
-    height: 2500,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  Hill_Top_Near_SP: {
-    name: "Hill_Top_Near_SP",
-    longitude: 222,
-    latitude: -89.44,
-    height: 2000,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  Hill_Top_Near_NP: {
-    name: "Hill_Top_Near_NP",
-    longitude: -45.63,
-    latitude: 89.645,
-    height: 500,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-  testing2: {
-    name: "testing2",
-    longitude: -2.146,
-    latitude: 0.667,
-    height: -900,
-    color: Cesium.Color.WHITE,
-    entity: null,
-  },
-};
 
 export var viewer = new Cesium.Viewer("cesiumContainer", {
   //  terrainProvider: createTerrainProvider(),
@@ -142,14 +74,6 @@ export var viewer = new Cesium.Viewer("cesiumContainer", {
   terrainShadows: Cesium.ShadowMode.ENABLED,
   scene3DOnly: true,
 });
-
-/*
-// TBD: enhance the geocoder (search tool)
-var geocoder = viewer.geocoder.viewModel;
-geocoder.searchText = "Vienna";
-geocoder.flightDuration = 0.0;
-geocoder.search();
-*/
 
 var scene = viewer.scene;
 var globe = scene.globe;
@@ -168,127 +92,10 @@ shadowMap.darkness = 0; // lower -> darker shadows
 
 viewer.imageryLayers.removeAll();
 
-// update celestial bodies positions using ACT SPICE based service
-var sunLightDirectionSPICE = new Cesium.Cartesian3(1, 1, 1);
-var sunPosSPICE = new Cesium.Cartesian3(1, 1, 1);
-var earthLightDirectionSPICE = new Cesium.Cartesian3(1, 1, 1);
-var earthPosSPICE = new Cesium.Cartesian3(1, 1, 1);
-var bodiesPosList;
-var secsFromStartUTCArray = [];
-var lastBodiesPosActiveIndex = -1;
-
-async function updateBodiesPosSPICE() {
-  // build url to get the source light direction
-  var startUTCTime = viewer.clock.startTime;
-  var endUTCTime = viewer.clock.stopTime;
-  var nSecs = Cesium.JulianDate.secondsDifference(endUTCTime, startUTCTime);
-  // Server limit is max 1000 times returned. Do not pass that limit
-  var stepSec = nSecs / 700; //
-  // var stepSec = 3600 * 2; // 1 hr
-  var act_bodies_pos_moon_url =
-    "https://mare3.actgate.com/fcgi-bin/fprovweb.exe?_xtype=text/plain&version=0&start_utc_time=" +
-    startUTCTime +
-    "&end_utc_time=" +
-    endUTCTime +
-    "&step_sec=" +
-    stepSec +
-    "&cmd_script=get_bodies_position_moon.msh";
-  console.log(act_bodies_pos_moon_url);
-  var response = await fetch(act_bodies_pos_moon_url);
-  var bodiesPos = await response.json();
-  bodiesPosList = bodiesPos.utc_times;
-  // reset
-  lastBodiesPosActiveIndex = -1;
-
-  console.log("bodies pos num:");
-  console.log(bodiesPosList.length);
-  secsFromStartUTCArray.length = bodiesPosList.length;
-  for (var i = 0; i < bodiesPosList.length; i++) {
-    secsFromStartUTCArray[i] = Cesium.JulianDate.secondsDifference(
-      Cesium.JulianDate.fromIso8601(bodiesPos.utc_times[i].utc_time),
-      startUTCTime
-    );
-    // console.log(secsFromStartUTCArray[i]);
-  }
-
-  updateBodiesPos();
-}
-
-function nearestTimeIndexBinarySearch(secsFromStartUTC) {
-  let start = 0;
-  let end = secsFromStartUTCArray.length - 1;
-
-  while (start <= end) {
-    let middle = Math.floor((start + end) / 2);
-
-    if (secsFromStartUTCArray[middle] === secsFromStartUTC) {
-      // found the key
-      return middle;
-    } else if (secsFromStartUTCArray[middle] < secsFromStartUTC) {
-      // continue searching to the right
-      start = middle + 1;
-    } else {
-      // search searching to the left
-      end = middle - 1;
-    }
-  }
-
-  // key wasn't found
-  if (start === 0 || start === secsFromStartUTCArray.length - 1) {
-    return start;
-  }
-
-  if (
-    Math.abs(secsFromStartUTC - secsFromStartUTCArray[start - 1]) <
-    Math.abs(secsFromStartUTC - secsFromStartUTCArray[start])
-  ) {
-    return start - 1;
-  }
-  return start;
-}
-
-// apply a scale factor to earth size/distance in order to have it nearer to the viewer
-// when too far away the earth is not rendered some time when not in the near frustum
-var earthScaleFactor = 5.0;
-// var earthScaleFactor = 1.0;
-
-function updateBodiesPosToDummyPolar() {
-  if (lastBodiesPosActiveIndex < 0) {
-    // nothing to do
-    return;
-  }
-
-  var bodiesPos = bodiesPosList[lastBodiesPosActiveIndex];
-  // SUN position
-  sunLightDirectionSPICE.x = bodiesPos.SUN.light_direction[0];
-  sunLightDirectionSPICE.y = bodiesPos.SUN.light_direction[1];
-  sunLightDirectionSPICE.z = bodiesPos.SUN.light_direction[2];
-  sunLightDirectionSPICE = adjustCartesianCoords(
-    sunLightDirectionSPICE,
-    isOptimizedPolarTerrain
-  );
-  sunPosSPICE.x = bodiesPos.SUN.position[0] * 1000.0;
-  sunPosSPICE.y = bodiesPos.SUN.position[1] * 1000.0;
-  sunPosSPICE.z = bodiesPos.SUN.position[2] * 1000.0;
-  sunPosSPICE = adjustCartesianCoords(sunPosSPICE, isOptimizedPolarTerrain);
-  // EARTH position
-  earthLightDirectionSPICE.x = bodiesPos.EARTH.light_direction[0];
-  earthLightDirectionSPICE.y = bodiesPos.EARTH.light_direction[1];
-  earthLightDirectionSPICE.z = bodiesPos.EARTH.light_direction[2];
-  earthLightDirectionSPICE = adjustCartesianCoords(
-    earthLightDirectionSPICE,
-    isOptimizedPolarTerrain
-  );
-  earthPosSPICE.x = (bodiesPos.EARTH.position[0] * 1000.0) / earthScaleFactor;
-  earthPosSPICE.y = (bodiesPos.EARTH.position[1] * 1000.0) / earthScaleFactor;
-  earthPosSPICE.z = (bodiesPos.EARTH.position[2] * 1000.0) / earthScaleFactor;
-  earthPosSPICE = adjustCartesianCoords(earthPosSPICE, isOptimizedPolarTerrain);
-}
-
 function updateEntitiesPos() {
-  for (var locationName in locationsInfo) {
-    if (locationsInfo.hasOwnProperty(locationName)) {
-      var location = locationsInfo[locationName];
+  for (var locationName in QTSConfig.locationsInfo) {
+    if (QTSConfig.locationsInfo.hasOwnProperty(locationName)) {
+      var location = QTSConfig.locationsInfo[locationName];
       var entity = location.entity;
       entity.position.setValue(
         adjustCartesianCoords(
@@ -326,7 +133,7 @@ export function updateGlobeCartesianPositions() {
     }
     updateTransform = true;
   }
-  updateBodiesPosToDummyPolar();
+  updateBodiesPosition();
   updateEntitiesPos();
   updateEntityVectors(true);
   updateBaseLayerPickerImageryLayers();
@@ -390,101 +197,19 @@ export function updateGlobeCartesianPositions() {
   }
 }
 
-function updateBodiesPos() {
-  if (secsFromStartUTCArray.length <= 0) {
-    return;
-  }
-
-  var currUTCTime = viewer.clock.currentTime;
-  var startUTCTime = viewer.clock.startTime;
-  var secsFromStartUTC = Cesium.JulianDate.secondsDifference(
-    currUTCTime,
-    startUTCTime
-  );
-
-  var closestTimeIndex = nearestTimeIndexBinarySearch(secsFromStartUTC);
-  if (closestTimeIndex >= 0 && lastBodiesPosActiveIndex !== closestTimeIndex) {
-    lastBodiesPosActiveIndex = closestTimeIndex;
-    // console.log("found pos idx:");
-    // console.log(lastBodiesPosActiveIndex);
-    var bodiesPos = bodiesPosList[closestTimeIndex];
-    // SUN position
-    sunLightDirectionSPICE.x = bodiesPos.SUN.light_direction[0];
-    sunLightDirectionSPICE.y = bodiesPos.SUN.light_direction[1];
-    sunLightDirectionSPICE.z = bodiesPos.SUN.light_direction[2];
-    sunLightDirectionSPICE = adjustCartesianCoords(
-      sunLightDirectionSPICE,
-      isOptimizedPolarTerrain
-    );
-    sunPosSPICE.x = bodiesPos.SUN.position[0] * 1000.0;
-    sunPosSPICE.y = bodiesPos.SUN.position[1] * 1000.0;
-    sunPosSPICE.z = bodiesPos.SUN.position[2] * 1000.0;
-    sunPosSPICE = adjustCartesianCoords(sunPosSPICE, isOptimizedPolarTerrain);
-    // EARTH position
-    earthLightDirectionSPICE.x = bodiesPos.EARTH.light_direction[0];
-    earthLightDirectionSPICE.y = bodiesPos.EARTH.light_direction[1];
-    earthLightDirectionSPICE.z = bodiesPos.EARTH.light_direction[2];
-    earthLightDirectionSPICE = adjustCartesianCoords(
-      earthLightDirectionSPICE,
-      isOptimizedPolarTerrain
-    );
-    earthPosSPICE.x = (bodiesPos.EARTH.position[0] * 1000.0) / earthScaleFactor;
-    earthPosSPICE.y = (bodiesPos.EARTH.position[1] * 1000.0) / earthScaleFactor;
-    earthPosSPICE.z = (bodiesPos.EARTH.position[2] * 1000.0) / earthScaleFactor;
-    earthPosSPICE = adjustCartesianCoords(
-      earthPosSPICE,
-      isOptimizedPolarTerrain
-    );
-
-    updateEntityVectors(false);
-    if (rotateCameraAroundPointSunInFrontEnabled) {
-      rotateCameraAroundPointSunInFront(mouseClickPosCartesian);
-    }
-
-    /*
-console.log("sun pos");
-console.log(sunPosSPICE);
-console.log("earth pos");
-console.log(earthPosSPICE);
-*/
-  }
-}
-
 // avoid to flood the server with requests
 // let us send a request when a certain amount of events is reached
 // or when a timer expires
 // define some constants
-var lastBodiesUpdateTime = -1;
+var lastBodiesUpdateTime;
 function maybeUpdateBodiesPosSPICE() {
-  if (scene.light === sunLightSPICE || scene.light === earthLightSPICE) {
-    var date = viewer.clock.currentTime;
-    var time = Cesium.JulianDate.toIso8601(date, 3);
-    if (lastBodiesUpdateTime !== time) {
-      lastBodiesUpdateTime = time;
-      updateBodiesPos();
-    }
+  if (
+    !Cesium.JulianDate.equals(lastBodiesUpdateTime, viewer.clock.currentTime)
+  ) {
+    lastBodiesUpdateTime = Cesium.JulianDate.clone(viewer.clock.currentTime);
+    updateBodiesPosAtCurrentTime();
   }
 }
-
-var sunLightSPICE = new Cesium.DirectionalLight({
-  direction: sunLightDirectionSPICE,
-  color: Cesium.Color.WHITE,
-  intensity: 2,
-});
-
-var earthLightSPICE = new Cesium.DirectionalLight({
-  direction: earthLightDirectionSPICE,
-  color: new Cesium.Color(0.9, 0.925, 1.0),
-  intensity: 1,
-});
-
-scene.preRender.addEventListener(function (scene, time) {
-  if (scene.light === sunLightSPICE) {
-    scene.light.direction = sunLightDirectionSPICE;
-  } else if (scene.light === earthLightSPICE) {
-    scene.light.direction = earthLightDirectionSPICE;
-  }
-});
 
 // viewer.timeline.addEventListener('settime', maybeUpdateBodiesPosSPICE, false);
 // catch click on home button
@@ -510,9 +235,9 @@ export function initializeTime(
   var currentTime = Cesium.JulianDate.fromIso8601(currentTimeIso8601);
   var stopTime;
   if (stopTimeIso8601 === undefined) {
-    stopTime = Cesium.JulianDate.addDays(
+    stopTime = Cesium.JulianDate.addHours(
       currentTime,
-      29,
+      QTSConfig.solarDayNumHours,
       new Cesium.JulianDate()
     );
   } else {
@@ -526,30 +251,6 @@ export function initializeTime(
     startTime = Cesium.JulianDate.fromIso8601(startTimeIso8601);
   }
 
-  /*
-  // lunar day: 29 days, 12 hr, 44 min, 3 sec
-  var endTime = Cesium.JulianDate.addDays(
-  currentTime,
-  29,
-  new Cesium.JulianDate()
-  );
-  endTime = Cesium.JulianDate.addHours(
-  endTime,
-  12,
-  new Cesium.JulianDate()
-  );
-  endTime = Cesium.JulianDate.addMinutes(
-  endTime,
-  44,
-  new Cesium.JulianDate()
-  );
-  endTime = Cesium.JulianDate.addSeconds(
-  endTime,
-  3,
-  new Cesium.JulianDate()
-  );
-  */
-
   setTimes(startTime, stopTime, currentTime);
 }
 
@@ -562,10 +263,10 @@ export function setTimes(startTime, stopTime, currentTime) {
     isTimeRangeChanged = true;
   }
 
-  viewer.clock.startTime = startTime;
-  viewer.clock.stopTime = stopTime;
+  viewer.clock.startTime = Cesium.JulianDate.clone(startTime);
+  viewer.clock.stopTime = Cesium.JulianDate.clone(stopTime);
   viewer.timeline.zoomTo(startTime, stopTime);
-  viewer.clock.currentTime = currentTime;
+  viewer.clock.currentTime = Cesium.JulianDate.clone(currentTime);
 
   viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
 
@@ -579,8 +280,7 @@ export function setTimes(startTime, stopTime, currentTime) {
 }
 
 function setTime(iso8601) {
-  var currentTime = Cesium.JulianDate.fromIso8601(iso8601);
-  viewer.clock.currentTime = currentTime;
+  viewer.clock.currentTime = Cesium.JulianDate.fromIso8601(iso8601);
 }
 
 function reset() {
@@ -590,8 +290,6 @@ function reset() {
   scene.moon.show = false;
   // Turn off the sky box
   scene.skyBox.show = false;
-  sunSPICE.show = true;
-  earthSPICE.show = true;
 
   scene.globe.dynamicAtmosphereLighting = true;
   scene.globe.dynamicAtmosphereLightingFromSun = false;
@@ -640,31 +338,6 @@ export function updateShadowsMaxDistanceDisplay(shadowsMaxDist) {
 }
 
 // CONTROLS
-var illuminationOptions = [
-  {
-    text: "Sun -> Moon (SatV)",
-    onselect: function () {
-      console.log("SUN -> Moon selected...");
-      reset();
-      setSceneLight(sunLightSPICE);
-    },
-  },
-  {
-    text: "Earth -> Moon (SatV)",
-    onselect: function () {
-      console.log("Earth -> Moon selected...");
-      reset();
-      setSceneLight(earthLightSPICE);
-    },
-  },
-];
-
-function setSceneLight(lightSource) {
-  scene.light = lightSource;
-
-  // update model
-  viewModel.lightSourceIdx = illuminationMenu.selectedIndex;
-}
 
 globe.tileLoadProgressEvent.addEventListener(terrainTileLoaded);
 
@@ -735,69 +408,9 @@ export function setCurrShadowsMaxDistVisible(showLbl) {
   }
 }
 
-//////////////////////////////////////////////////
-//////////// TERRAIN /////////////////////////////
-//////////////////////////////////////////////////
-/*
-var terrainNameList = [
-  "automatic terrain",
-  "automatic terrain" + noNormalsNameSuffix,
-  "sldem_lola",
-  "sldem_lola" + noNormalsNameSuffix,
-  "usgs_lola",
-  // "NASA JPL - no normals",
-  // "Optimized PolarDEM",
-  // "Optimized PolarDEM" + noNormalsNameSuffix,
-  "GOTM",
-  "GOTM" + noNormalsNameSuffix,
-  // "GOTM (High Res)",
-  // "GOTM (High Res)" + noNormalsNameSuffix,
-];
-
-function setTerrainFunction(terrainName) {
-  return function () {
-    newTerrainNameSelected(terrainName);
-  };
-}
-
-
-var terrainOptions = [];
-for (var i = 0; i < terrainNameList.length; i++) {
-  var terrainName = terrainNameList[i];
-  terrainOptions.push({
-    text: terrainName,
-    onselect: setTerrainFunction(terrainName),
-  });
-}
-*/
-
-function setLocationFunction(location) {
-  return function () {
-    setLocation(location);
-  };
-}
-
-/*
-var locationToolbarOptions = [];
-var i = 0;
-for (var locationName in locationsInfo) {
-  if (locationsInfo.hasOwnProperty(locationName)) {
-    var location = locationsInfo[locationName];
-    locationToolbarOptions.push({
-      text: locationName,
-      onselect: setLocationFunction(location),
-    });
-    i += 1;
-  }
-}
-*/
-
+var illuminationOptions = getIlluminationOptions();
 Sandcastle.addToolbarMenu(illuminationOptions);
 var illuminationMenu = document.getElementById("toolbar").lastChild;
-/*
-Sandcastle.addToolbarMenu(terrainOptions);
-export var terrainMenu = document.getElementById("toolbar").lastChild;
-*/
 
 var polesHiresDataPolarUrl =
   "https://files.actgate.com/temp/poles_hires.geojson";
@@ -913,17 +526,15 @@ if (window.LIS_MODE === "development") {
 
 function setContourEnabledFunction() {
   return function (checked) {
-    contoursViewModel.enableContour = checked;
-    updateContours();
-
     // update view model
     viewModel.contourEnabled = checked;
+    updateContours();
   };
 }
 
 Sandcastle.addToggleButton(
-  "Contours @ " + contoursViewModel.contourSpacing.toFixed(0) + "m",
-  contoursViewModel.enableContour,
+  "Contours @ " + QTSConfig.contourSpacing.toFixed(0) + "m",
+  viewModel.contourEnabled,
   setContourEnabledFunction()
 );
 
@@ -1074,16 +685,10 @@ function setRotateCameraAroundPointEnabledFunction() {
     // make sure fly around is disabled
     if (
       rotateCameraAroundPointEnabled &&
-      rotateCameraAroundPointSunInFrontEnabled
+      rotateCameraAroundPointLightInFrontEnabled
     ) {
       enableRotateAroundPointSunInFrontCbx.checked = false;
-      rotateCameraAroundPointSunInFrontEnabled = false;
-
-      // // re-use current POI
-      // var mouseClickPosCartesianBack = mouseClickPosCartesian;
-      // var setRotateCameraAroundPointSunInFrontEnabled = setRotateCameraAroundPointSunInFrontEnabledFunction();
-      // setRotateCameraAroundPointSunInFrontEnabled(false);
-      // mouseClickPosCartesian = mouseClickPosCartesianBack;
+      rotateCameraAroundPointLightInFrontEnabled = false;
     }
 
     if (
@@ -1097,16 +702,16 @@ function setRotateCameraAroundPointEnabledFunction() {
   };
 }
 
-function setRotateCameraAroundPointSunInFrontEnabledFunction() {
+function setRotateCameraAroundPointLightInFrontEnabledFunction() {
   return function (checked) {
-    if (rotateCameraAroundPointSunInFrontEnabled === checked) {
+    if (rotateCameraAroundPointLightInFrontEnabled === checked) {
       return;
     }
-    rotateCameraAroundPointSunInFrontEnabled = checked;
+    rotateCameraAroundPointLightInFrontEnabled = checked;
 
     // make sure fly around is disabled
     if (
-      rotateCameraAroundPointSunInFrontEnabled &&
+      rotateCameraAroundPointLightInFrontEnabled &&
       rotateCameraAroundPointEnabled
     ) {
       // re-use current POI
@@ -1123,12 +728,12 @@ function setRotateCameraAroundPointSunInFrontEnabledFunction() {
     }
 
     if (
-      !rotateCameraAroundPointSunInFrontEnabled &&
+      !rotateCameraAroundPointLightInFrontEnabled &&
       !Cesium.defined(scene.trackedEntity)
     ) {
       resetCameraPivotPoint();
     } else {
-      rotateCameraAroundPointSunInFront(mouseClickPosCartesian);
+      rotateCameraAroundPointLightInFront(mouseClickPosCartesian);
     }
   };
 }
@@ -1138,9 +743,9 @@ function setRotateAroundPointDisabled() {
     enableRotateAroundPointCbx.checked = false;
     var setRotateCameraAroundPointEnabled = setRotateCameraAroundPointEnabledFunction();
     setRotateCameraAroundPointEnabled(false);
-  } else if (rotateCameraAroundPointSunInFrontEnabled) {
+  } else if (rotateCameraAroundPointLightInFrontEnabled) {
     enableRotateAroundPointSunInFrontCbx.checked = false;
-    var setRotateCameraAroundPointSunInFrontEnabled = setRotateCameraAroundPointSunInFrontEnabledFunction();
+    var setRotateCameraAroundPointSunInFrontEnabled = setRotateCameraAroundPointLightInFrontEnabledFunction();
     setRotateCameraAroundPointSunInFrontEnabled(false);
   }
 }
@@ -1367,11 +972,11 @@ enableRotateAroundPointButton.title = "Fly around selected point";
 var enableRotateAroundPointCbx =
   enableRotateAroundPointButton.firstChild.firstChild; // input
 
-var rotateCameraAroundPointSunInFrontEnabled = false;
+var rotateCameraAroundPointLightInFrontEnabled = false;
 Sandcastle.addToggleButton(
   "Force Sun in Front Point",
-  rotateCameraAroundPointSunInFrontEnabled,
-  setRotateCameraAroundPointSunInFrontEnabledFunction()
+  rotateCameraAroundPointLightInFrontEnabled,
+  setRotateCameraAroundPointLightInFrontEnabledFunction()
 );
 // get checkbox input to be able to modify it programmatically
 var enableRotateAroundPointSunInFrontButton = document.getElementById("toolbar")
@@ -1644,13 +1249,13 @@ var mouseClickPosCartesian;
 handler.setInputAction(() => {
   if (
     (rotateCameraAroundPointEnabled ||
-      rotateCameraAroundPointSunInFrontEnabled) &&
+      rotateCameraAroundPointLightInFrontEnabled) &&
     !mouseClickPosCartesian
   ) {
     mouseClickPosCartesian = Cesium.Cartesian3.clone(mousePosCartesian);
     // start rotating
-    if (rotateCameraAroundPointSunInFrontEnabled) {
-      initializeRotateCameraAroundPointSunInFront(mouseClickPosCartesian);
+    if (rotateCameraAroundPointLightInFrontEnabled) {
+      initializeRotateCameraAroundPointLightInFront(mouseClickPosCartesian);
     } else {
       rotateCameraAroundPoint(mouseClickPosCartesian);
     }
@@ -1915,119 +1520,23 @@ if (window.LIS_MODE === "development") {
   shadowsMaxDistanceDisplay = addStatusBarDetailInfo();
 }
 
-/*
-// Add buttons, for convenience.
-Sandcastle.addToolbarButton("1km height", function () {
-setHeightKm(1);
-});
-Sandcastle.addToolbarButton("10km height", function () {
-setHeightKm(10);
-});
-Sandcastle.addToolbarButton("100km height", function () {
-setHeightKm(100);
-});
-Sandcastle.addToolbarButton("500km height", function () {
-setHeightKm(500);
-});
-*/
-
-// SUN
-var solarRadiusInMeters = 6.955e8;
-// magnify sun, just to see it better
-// Will need to render as in cesium
-solarRadiusInMeters = solarRadiusInMeters * 2;
-
 //Move the far wall of the viewing frustum.
 viewer.scene.camera.frustum.far = 1e12;
 
-// Create a Yellow rim-lit material.
-var material = Cesium.Material.fromType(Cesium.Material.RimLightingType);
-material.uniforms.color = Cesium.Color.YELLOW;
+initializeBodiesSPICE();
 
-// Create Sun graphics primitive.
-var sunSPICE = scene.primitives.add(
-  new Cesium.EllipsoidPrimitive({
-    center: new Cesium.Cartesian3(), // For now, place the Sun at the origin.
-    radii: new Cesium.Cartesian3(
-      solarRadiusInMeters,
-      solarRadiusInMeters,
-      solarRadiusInMeters
-    ),
-    material: material,
-  })
-);
-
-// EARTH
-var earthRadiusInMeters = 6.371e6 / earthScaleFactor;
-
-var materialEarth = Cesium.Material.fromType(Cesium.Material.ImageType);
-// materialEarth.uniforms.color = Cesium.Color.BLUE;
-var earthTextureUrl = "https://files.actgate.com/earth/earthSmall.jpg";
-// var earthTextureUrl = "https://files.actgate.com/earth/earthNoCloudsSmall.jpg";
-materialEarth.uniforms.image = earthTextureUrl;
-materialEarth.translucent = false;
-
-// Create Earth graphics primitive.
-var earthSPICE = scene.primitives.add(
-  new Cesium.EllipsoidPrimitive({
-    center: new Cesium.Cartesian3(), // For now, place the Earth at the origin.
-    radii: new Cesium.Cartesian3(
-      earthRadiusInMeters,
-      earthRadiusInMeters,
-      earthRadiusInMeters
-    ),
-    material: materialEarth,
-    // enables sun lighting on earth but uses cesium earth based sun position
-    //    onlySunLighting: true
-  })
-);
-
-// Allocate "new" variables outside of the render loop when possible, to reduce garbage collection.
-var sunModelMatrixScratch = new Cesium.Matrix4();
-var earthModelMatrixScratch = new Cesium.Matrix4();
-
-// needed for properly rotate earth texture when using polar dem terrain
-// rotate around y axis by 90 deg
-var poleRotationM = new Cesium.Matrix3(0, 0, -1, 0, 1, 0, 1, 0, 0);
-
-// Update the camera and the Sun with each animation frame.
-function icrf(scene, time) {
-  if (scene.mode !== Cesium.SceneMode.SCENE3D) {
-    return;
+document.addEventListener("bodiesPosUpdated", function (e) {
+  updateEntityVectors(false);
+  if (rotateCameraAroundPointLightInFrontEnabled) {
+    rotateCameraAroundPointLightInFront(mouseClickPosCartesian);
   }
-
-  if (scene.light === sunLightSPICE || scene.light === earthLightSPICE) {
-    sunSPICE.modelMatrix = Cesium.Matrix4.fromRotationTranslation(
-      Cesium.Matrix3.IDENTITY,
-      sunPosSPICE,
-      sunModelMatrixScratch
-    );
-    if (!isOptimizedPolarTerrain) {
-      earthSPICE.modelMatrix = Cesium.Matrix4.fromRotationTranslation(
-        Cesium.Matrix3.IDENTITY,
-        earthPosSPICE,
-        earthModelMatrixScratch
-      );
-    } else {
-      earthSPICE.modelMatrix = Cesium.Matrix4.fromRotationTranslation(
-        poleRotationM,
-        earthPosSPICE,
-        earthModelMatrixScratch
-      );
-    }
-  }
-
-  // if (rotateCameraAroundPointEnabled) {
-  //   rotateCameraAroundPointSunInFront(mouseClickPosCartesian);
-  // }
-}
-scene.preRender.addEventListener(icrf);
+});
 
 /////
 // add entities
 var entitySphereRadius = 50;
-for (var locationName in locationsInfo) {
-  var location = locationsInfo[locationName];
+for (var locationName in QTSConfig.locationsInfo) {
+  var location = QTSConfig.locationsInfo[locationName];
   // add entity
   location.entity = viewer.entities.add({
     position: Cesium.Cartesian3.fromDegrees(
@@ -2096,63 +1605,45 @@ function setCustomCameraView() {
       roll: Cesium.Math.toRadians(360.0),
     },
   });
-
-  /*
-// earth rise
-destination : Cesium.Cartesian3.fromDegrees(
--121.012,
-72.995,
-29700,
-Cesium.Ellipsoid.WGS84),
-orientation: {
-heading : Cesium.Math.toRadians(62.6),
-pitch : Cesium.Math.toRadians(-23.7),
-roll : Cesium.Math.toRadians(359.7)
-}
-});
-*/
 }
 
 // ENTITY TO SUN/EARTH VECTORS
-var itemToSunArrow = viewer.entities.add({
-  name: "Item to Sun vector",
-  polyline: {
-    // for synchronously line drawing
-    positions: new Cesium.CallbackProperty(
-      getSelectedEntityToSunLinePositions,
-      false
-    ),
-    width: 10,
-    arcType: Cesium.ArcType.NONE,
-    material: new Cesium.PolylineArrowMaterialProperty(Cesium.Color.YELLOW),
-  },
-  show: true,
-});
+var itemToBodyArrowEntities = {};
+var entityToBodyArrowTipPos = {};
+function getSelectedEntityToBodyLinePositionsCallbackFunction(body) {
+  return function selectedEntityToBodyLinePositionsFunction() {
+    return [entityCartesianPos, entityToBodyArrowTipPos[body]];
+  };
+}
 
-var itemToEarthArrow = viewer.entities.add({
-  name: "Item to Earth vector",
-  polyline: {
-    // for synchronously line drawing
-    positions: new Cesium.CallbackProperty(
-      getSelectedEntityToSunEarthPositions,
-      false
-    ),
-    width: 10,
-    arcType: Cesium.ArcType.NONE,
-    material: new Cesium.PolylineArrowMaterialProperty(Cesium.Color.BLUE),
-  },
-  show: true,
-});
+for (var body in QTSConfig.lightSource) {
+  if (QTSConfig.lightSource[body].hasOwnProperty("entityVectorParams")) {
+    var itemToBodyArrow = viewer.entities.add({
+      name: "Item to " + body + " vector",
+      polyline: {
+        // for synchronously line drawing
+        positions: new Cesium.CallbackProperty(
+          getSelectedEntityToBodyLinePositionsCallbackFunction(body),
+          false
+        ),
+        width: QTSConfig.lightSource[body].entityVectorParams.width,
+        arcType: Cesium.ArcType.NONE,
+        material: new Cesium.PolylineArrowMaterialProperty(
+          QTSConfig.lightSource[body].entityVectorParams.color
+        ),
+      },
+      show: true,
+    });
+    itemToBodyArrowEntities[body] = itemToBodyArrow;
+    // initialize arrow tips
+    entityToBodyArrowTipPos[body] = new Cesium.Cartesian3();
+  }
+}
 
-var entityToSunVec = new Cesium.Cartesian3();
-var entityToSunVecNorm = new Cesium.Cartesian3();
-var entityToSunVecScaled = new Cesium.Cartesian3();
-var entityToSunArrowTipPos = new Cesium.Cartesian3();
-var entityToEarthVec = new Cesium.Cartesian3();
-var entityToEarthVecNorm = new Cesium.Cartesian3();
-var entityToEarthVecScaled = new Cesium.Cartesian3();
-var entityToEarthArrowTipPos = new Cesium.Cartesian3();
 var entityCartesianPos;
+var entityToBodyVec = new Cesium.Cartesian3();
+var entityToBodyVecNorm = new Cesium.Cartesian3();
+var entityToBodyVecScaled = new Cesium.Cartesian3();
 function updateEntityVectors(entityChanged) {
   if (entityChanged) {
     entityCartesianPos = entitySelected.position.getValue(
@@ -2160,38 +1651,29 @@ function updateEntityVectors(entityChanged) {
     );
   }
 
-  if (itemToSunArrow.show) {
-    Cesium.Cartesian3.subtract(sunPosSPICE, entityCartesianPos, entityToSunVec);
-    Cesium.Cartesian3.normalize(entityToSunVec, entityToSunVecNorm);
-    Cesium.Cartesian3.multiplyByScalar(
-      entityToSunVecNorm,
-      4 * entitySphereRadius,
-      entityToSunVecScaled
-    );
-    Cesium.Cartesian3.add(
-      entityToSunVecScaled,
-      entityCartesianPos,
-      entityToSunArrowTipPos
-    );
-  }
-
-  if (itemToEarthArrow.show) {
-    Cesium.Cartesian3.subtract(
-      earthPosSPICE,
-      entityCartesianPos,
-      entityToEarthVec
-    );
-    Cesium.Cartesian3.normalize(entityToEarthVec, entityToEarthVecNorm);
-    Cesium.Cartesian3.multiplyByScalar(
-      entityToEarthVecNorm,
-      4 * entitySphereRadius,
-      entityToEarthVecScaled
-    );
-    Cesium.Cartesian3.add(
-      entityToEarthVecScaled,
-      entityCartesianPos,
-      entityToEarthArrowTipPos
-    );
+  var bodySPICEPosition;
+  for (var body in itemToBodyArrowEntities) {
+    if (itemToBodyArrowEntities[body].show) {
+      bodySPICEPosition = getBodySPICEPosition(body);
+      if (bodySPICEPosition) {
+        Cesium.Cartesian3.subtract(
+          bodySPICEPosition,
+          entityCartesianPos,
+          entityToBodyVec
+        );
+        Cesium.Cartesian3.normalize(entityToBodyVec, entityToBodyVecNorm);
+        Cesium.Cartesian3.multiplyByScalar(
+          entityToBodyVecNorm,
+          4 * entitySphereRadius,
+          entityToBodyVecScaled
+        );
+        Cesium.Cartesian3.add(
+          entityToBodyVecScaled,
+          entityCartesianPos,
+          entityToBodyArrowTipPos[body]
+        );
+      }
+    }
   }
 }
 
@@ -2209,13 +1691,13 @@ export function resetSubSolarPointUpdateTimer() {
 function maybeUpdateSubSolarPoint() {
   if (
     lastSubSolarPointTriggerTime &&
-    lastSubSolarPointTriggerTime === viewModel.UTCTime
+    Cesium.JulianDate.equals(lastSubSolarPointTriggerTime, viewModel.UTCTime)
   ) {
     // nothing to be done
     return;
   }
 
-  lastSubSolarPointTriggerTime = viewModel.UTCTime;
+  lastSubSolarPointTriggerTime = Cesium.JulianDate.clone(viewModel.UTCTime);
 
   if (updateSubSolarPointTimerId >= 0) {
     // reset the timer
@@ -2232,16 +1714,16 @@ function maybeUpdateSubSolarPoint() {
   updateSubSolarPointDisplay();
 }
 
-var sunDir = new Cesium.Cartesian3();
-var sunDirNorm = new Cesium.Cartesian3();
 // compute sub solar point
 async function updateSubSolarPoint() {
   resetSubSolarPointUpdateTimer();
 
   // build url to get sub solar point
   var act_subsolar_points_url =
-    "https://mare3.actgate.com/fcgi-bin/fprovweb.exe?_xtype=text/plain&dsource=satview&verbose=0&version=0&target=MOON&time=" +
-    viewModel.UTCTime.replace("Z", "") +
+    "https://mare3.actgate.com/fcgi-bin/fprovweb.exe?_xtype=text/plain&dsource=satview&verbose=0&version=0&target=" +
+    QTSConfig.observer +
+    "&time=" +
+    Cesium.JulianDate.toIso8601(viewModel.UTCTime, 3).replace("Z", "") +
     "&oformat=json&cmd_script=satview_get_subsolar_records.msh";
 
   // console.log(act_subsolar_points_url);
@@ -2262,18 +1744,10 @@ async function updateSubSolarPoint() {
   );
 }
 
-function getSelectedEntityToSunLinePositions() {
-  return [entityCartesianPos, entityToSunArrowTipPos];
-}
-
-function getSelectedEntityToSunEarthPositions() {
-  return [entityCartesianPos, entityToEarthArrowTipPos];
-}
-
 var POICartesianPos = new Cesium.Cartesian3();
-var POIToSunVec = new Cesium.Cartesian3();
+var POIToLightVec = new Cesium.Cartesian3();
 var POIToCameraVec = new Cesium.Cartesian3();
-var POIToSunOVec = new Cesium.Cartesian3();
+var POIToLightOVec = new Cesium.Cartesian3();
 var POIToCameraOVec = new Cesium.Cartesian3();
 var crossVec = new Cesium.Cartesian3();
 
@@ -2329,21 +1803,28 @@ function rotateCameraAroundPoint(pointCartesianCoords) {
   });
 }
 
-function initializeRotateCameraAroundPointSunInFront(pointCartesianCoords) {
+function initializeRotateCameraAroundPointLightInFront(pointCartesianCoords) {
   if (!setCameraPivotPoint(pointCartesianCoords)) {
     return;
   }
 
-  rotateCameraAroundPointSunInFront(pointCartesianCoords);
+  rotateCameraAroundPointLightInFront(pointCartesianCoords);
 }
 
 const PI2 = 2 * Math.PI;
-function rotateCameraAroundPointSunInFront(pointCartesianCoords) {
+function rotateCameraAroundPointLightInFront(pointCartesianCoords) {
   if (!pointCartesianCoords) return;
 
+  let lightPosSPICE = getLightSourceSPICEPosition();
+  if (!lightPosSPICE) return;
+
   // POI to sun vector
-  Cesium.Cartesian3.subtract(sunPosSPICE, pointCartesianCoords, POIToSunVec);
-  Cesium.Cartesian3.normalize(POIToSunVec, POIToSunVec);
+  Cesium.Cartesian3.subtract(
+    lightPosSPICE,
+    pointCartesianCoords,
+    POIToLightVec
+  );
+  Cesium.Cartesian3.normalize(POIToLightVec, POIToLightVec);
   // POI to camera vector
   Cesium.Cartesian3.subtract(
     camera.positionWC,
@@ -2354,68 +1835,54 @@ function rotateCameraAroundPointSunInFront(pointCartesianCoords) {
 
   // compute orthogonal vectors (they are on the same plane)
   Cesium.Cartesian3.normalize(pointCartesianCoords, POICartesianPos);
-  Cesium.Cartesian3.cross(POIToSunVec, POICartesianPos, POIToSunOVec);
+  Cesium.Cartesian3.cross(POIToLightVec, POICartesianPos, POIToLightOVec);
   Cesium.Cartesian3.cross(POIToCameraVec, POICartesianPos, POIToCameraOVec);
   // compute angle between then
-  // var toSunVsToCameraAngle = Cesium.Cartesian3.angleBetween(POIToSunOVec, POIToCameraOVec);
+  // var toLightVsToCameraAngle = Cesium.Cartesian3.angleBetween(POIToLightOVec, POIToCameraOVec);
   // Note: Extracted from Cartesian3.angleBetween, for optimization purposes
-  var cosine = Cesium.Cartesian3.dot(POIToSunOVec, POIToCameraOVec);
-  Cesium.Cartesian3.cross(POIToSunOVec, POIToCameraOVec, crossVec);
+  var cosine = Cesium.Cartesian3.dot(POIToLightOVec, POIToCameraOVec);
+  Cesium.Cartesian3.cross(POIToLightOVec, POIToCameraOVec, crossVec);
   var sine = Cesium.Cartesian3.magnitude(crossVec);
-  var toSunVsToCameraAngle = Math.atan2(sine, cosine);
+  var toLightVsToCameraAngle = Math.atan2(sine, cosine);
 
   // adjust the sign of the angle
   // Use cross product of the two vectors to get the normal of the plane formed by the two vectors.
   // Then check the dotproduct between that and the original plane normal to see if they are facing
   // the same direction.
   if (Cesium.Cartesian3.dot(POICartesianPos, crossVec) < 0) {
-    toSunVsToCameraAngle = PI2 - toSunVsToCameraAngle;
+    toLightVsToCameraAngle = PI2 - toLightVsToCameraAngle;
   }
 
   // rotate camera for having the sun in front
-  const deltaAngle = toSunVsToCameraAngle - Math.PI;
+  const deltaAngle = toLightVsToCameraAngle - Math.PI;
   // console.log("rotate camera by angle: " + rad2deg(deltaAngle));
   viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, deltaAngle);
 }
 
-/*
-Sandcastle.addToggleButton(
-"Sun Vector",
-itemToSunArrow.polyline.show,
-function (checked) {
-itemToSunArrow.polyline.show = checked;
-updateEntityVectors();
-}
-);
-
-Sandcastle.addToggleButton(
-"Earth Vector",
-itemToEarthArrow.polyline.show,
-function (checked) {
-itemToEarthArrow.polyline.show = checked;
-updateEntityVectors();
-}
-);
-*/
-
 // set initial state
 reset();
-setSceneLight(sunLightSPICE);
-updateTerrainMeshMaxError(defaultMeshMaxError);
+setSceneLight("SUN");
+updateTerrainMeshMaxError(QTSConfig.defaultMeshMaxError);
 // terrain mesh error
-var terrainMeshMaxErrorIdx = maxErrorList.indexOf(defaultMeshMaxError);
+var terrainMeshMaxErrorIdx = maxErrorList.indexOf(
+  QTSConfig.defaultMeshMaxError
+);
 if (terrainMeshMaxErrorIdx >= 0) {
   terrainMaxErrMenu.selectedIndex = terrainMeshMaxErrorIdx;
 }
-newTerrainNameSelected(defaultTerrainName, defaultTerrainNormalsEnabled, true);
-initializeTime(defaultUTCTime);
+newTerrainNameSelected(
+  QTSConfig.defaultTerrainName,
+  QTSConfig.defaultTerrainNormalsEnabled,
+  true
+);
+initializeTime(QTSConfig.defaultUTCTime);
 
 // set location
 /*
 locationMenu.selectedIndex = defaultLocationIndex;
 locationToolbarOptions[defaultLocationIndex].onselect();
 */
-var defaultLocation = locationsInfo[defaultLocationName];
+var defaultLocation = QTSConfig.locationsInfo[QTSConfig.defaultLocationName];
 if (defaultLocation) {
   setLocation(defaultLocation);
 }
@@ -2429,13 +1896,16 @@ if (shadowsMaxDistanceIdx >= 0) {
   shadowsMaxDistOptions[shadowsMaxDistanceIdx].onselect();
 }
 
+var setContourEnabled = setContourEnabledFunction();
+setContourEnabled(QTSConfig.enableContour);
+
 // CONTOUR
 var contourColor = Cesium.Color.RED.clone();
 var contourUniforms = {};
 var countoursVisible = false;
 
 function maybeUpdateContours(height) {
-  if (!contoursViewModel.enableContour) {
+  if (!viewModel.contourEnabled) {
     // nothing to do
     return;
   }
@@ -2450,15 +1920,15 @@ function maybeUpdateContours(height) {
   }
 
   if (
-    (countoursVisible && height > showContourAlt) ||
-    (!countoursVisible && height < showContourAlt)
+    (countoursVisible && height > QTSConfig.showContourAlt) ||
+    (!countoursVisible && height < QTSConfig.showContourAlt)
   ) {
     updateContours(height);
   }
 }
 
 function updateContours(height) {
-  var hasContour = contoursViewModel.enableContour;
+  var hasContour = viewModel.contourEnabled;
   var material;
   countoursVisible = false;
   if (hasContour) {
@@ -2471,11 +1941,11 @@ function updateContours(height) {
       height = cartographicCamera.height * 0.001; // km
     }
 
-    if (height < showContourAlt) {
+    if (height < QTSConfig.showContourAlt) {
       material = Cesium.Material.fromType("ElevationContour");
       contourUniforms = material.uniforms;
-      contourUniforms.width = contoursViewModel.contourWidth;
-      contourUniforms.spacing = contoursViewModel.contourSpacing;
+      contourUniforms.width = QTSConfig.contourWidth;
+      contourUniforms.spacing = QTSConfig.contourSpacing;
       contourUniforms.color = contourColor;
 
       countoursVisible = true;
@@ -2506,7 +1976,7 @@ function loadStateFromQueryString() {
     currTime = searchParams.get("UTCTime");
     setTime(currTime);
   } else {
-    currTime = viewModel.UTCTime;
+    currTime = Cesium.JulianDate.toIso8601(viewModel.UTCTime, 3);
   }
 
   // if (startUTCTime !== undefined || stopUTCTime !== undefined) {
@@ -2514,10 +1984,16 @@ function loadStateFromQueryString() {
   // }
 
   // illumination
-  if (searchParams.has("lightSourceIdx")) {
-    var lightSourceIdx = searchParams.get("lightSourceIdx");
-    illuminationMenu.selectedIndex = lightSourceIdx;
-    illuminationOptions[lightSourceIdx].onselect();
+  if (searchParams.has("lightSource")) {
+    var lightSource = searchParams.get("lightSource");
+    let lightSourceOpt = illuminationOptions.find((option) => {
+      return option.text.toLowerCase().startsWith(lightSource.toLowerCase());
+    });
+    let lightSourceIdx = illuminationOptions.indexOf(lightSourceOpt);
+    if (lightSourceIdx >= 0) {
+      illuminationMenu.selectedIndex = lightSourceIdx;
+      illuminationOptions[lightSourceIdx].onselect();
+    }
   }
 
   // terrain mesh max error
@@ -2670,8 +2146,8 @@ function loadStateFromQueryString() {
   // location
   if (searchParams.has("selectedLocationName")) {
     var locationName = searchParams.get("selectedLocationName");
-    if (locationName in locationsInfo) {
-      setSelectedEntity(locationsInfo[locationName]);
+    if (locationName in QTSConfig.locationsInfo) {
+      setSelectedEntity(QTSConfig.locationsInfo[locationName]);
     }
     /*
     var locationNamesList = Object.keys(locationsInfo);
@@ -2716,22 +2192,8 @@ function loadStateFromQueryString() {
     setHiresDemRegionsEnabled(checked);
   }
 
-  // if (searchParams.has("WACMosaicNSEnabled")) {
-  //   var checked = searchParams.get("WACMosaicNSEnabled") === "true";
-  //   // enableWACNSCbx.checked = checked;
-  //   var setWACNoShadowsEnabled = setWACNoShadowsEnabledFunction();
-  //   setWACNoShadowsEnabled(checked, true);
-  // }
-
-  // if (searchParams.has("sunVisibility60Enabled")) {
-  //   var checked = searchParams.get("sunVisibility60Enabled") === "true";
-  //   // enableSunVisibility60mCbx.checked = checked;
-  //   var setSunVisibility60mEnabled = setSunVisibility60mEnabledFunction();
-  //   setSunVisibility60mEnabled(checked, true);
-  // }
-
   // find layers enabled
-  for (var layerObj in layersInfo) {
+  for (var layerObj in QTSConfig.layersInfo) {
     if (searchParams.has(layerObj + "Enabled")) {
       setLayerImageryEnabled(layerObj);
     }
