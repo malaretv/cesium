@@ -1222,7 +1222,9 @@ function getScreenPixelCoords(pixelCoors) {
   return pixelPosCartesian;
 }
 
-const SHADOWS_MAX_DISTANCE_DEFAULT = 100.0 * 1000.0; // 100 Km default
+// const SHADOWS_MAX_DISTANCE_DEFAULT = 10000.0 * 1000.0;
+const SHADOWS_MAX_DISTANCE_DEFAULT =
+  Cesium.Ellipsoid.WGS84.maximumRadius * 10.0;
 function getBestShadowsMaxDistance() {
   // do not update shadows max distance when not needed
   if (viewModel.terrainShadowsEnabled === false) {
@@ -1230,10 +1232,10 @@ function getBestShadowsMaxDistance() {
   }
 
   var camH = cartographicCamera.height * 0.001; // km
-  if (camH > 500) {
-    // high elevation
-    return SHADOWS_MAX_DISTANCE_DEFAULT;
-  }
+  // if (camH > 500) {
+  //   // high elevation
+  //   return SHADOWS_MAX_DISTANCE_DEFAULT;
+  // }
 
   const canvas = scene.canvas;
   let w = canvas.width,
@@ -1278,7 +1280,7 @@ function getBestShadowsMaxDistance() {
 
   if (maxDist > 0) return maxDist * 1.2; // increase a little bit the shadows max dist (20%)
 
-  return SHADOWS_MAX_DISTANCE_DEFAULT; // 100 Km default
+  return SHADOWS_MAX_DISTANCE_DEFAULT;
 }
 
 function updateShadowsMaxDist(maxDist) {
