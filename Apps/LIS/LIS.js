@@ -232,8 +232,8 @@ export function initializeTime(
   startTimeIso8601,
   stopTimeIso8601
 ) {
-  var currentTime = Cesium.JulianDate.fromIso8601(currentTimeIso8601);
-  var stopTime;
+  const currentTime = Cesium.JulianDate.fromIso8601(currentTimeIso8601);
+  let stopTime;
   if (stopTimeIso8601 === undefined) {
     stopTime = Cesium.JulianDate.addHours(
       currentTime,
@@ -244,7 +244,7 @@ export function initializeTime(
     stopTime = Cesium.JulianDate.fromIso8601(stopTimeIso8601);
   }
 
-  var startTime;
+  let startTime;
   if (startTimeIso8601 === undefined) {
     startTime = currentTime;
   } else {
@@ -1877,11 +1877,11 @@ newTerrainNameSelected(
 );
 let defaultStartUTCTime;
 if (QTSConfig.hasOwnProperty("defaultStartUTCTime")) {
-  defaultStartUTCTime = TSConfig.defaultStartUTCTime;
+  defaultStartUTCTime = QTSConfig.defaultStartUTCTime;
 }
 let defaultStopUTCTime;
 if (QTSConfig.hasOwnProperty("defaultStoptUTCTime")) {
-  defaultStopUTCTime = TSConfig.defaultStoptUTCTime;
+  defaultStopUTCTime = QTSConfig.defaultStoptUTCTime;
 }
 initializeTime(
   QTSConfig.defaultUTCTime,
@@ -1976,11 +1976,15 @@ function loadStateFromQueryString() {
   var startUTCTime;
   if (searchParams.has("startUTCTime")) {
     startUTCTime = searchParams.get("startUTCTime");
+  } else {
+    startUTCTime = Cesium.JulianDate.toIso8601(viewModel.startUTCTime, 3);
   }
 
   var stopUTCTime;
   if (searchParams.has("stopUTCTime")) {
     stopUTCTime = searchParams.get("stopUTCTime");
+  } else {
+    stopUTCTime = Cesium.JulianDate.toIso8601(viewModel.stopUTCTime, 3);
   }
 
   var currTime;
