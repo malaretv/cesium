@@ -29,7 +29,7 @@ var terrainMeshScale = 3;
 // for automatic regular/polar terrain switch
 var automaticPolarTerrainTransition = false;
 // switch to polar dem when abs(lat) > polarDemLatTh
-var polarDemLatTh = 70; // deg
+var polarDemLatTh = 45; // deg
 // lat tolerance for switching terrain
 // the switch is happening if abs(lat) > (polarDemLatTh + autoDemTransitionLatTol)
 // or abs(lat) < (polarDemLatTh - autoDemTransitionLatTol)
