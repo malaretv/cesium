@@ -138,7 +138,7 @@ function addGoToButton() {
   var gotoformHTML =
     "<form id='goto-form' hidden> \
             <p id='goto-error' hidden>Please fill out all fields.</p> \
-            <input list='locationsList' type='text' id='goto-input' placeholder='lon,lat[,ele (km)]' required /> \
+            <input list='locationsList' type='text' id='goto-input' placeholder='lat,lon[,ele (km)]' required /> \
             <datalist id='locationsList'></datalist> \
             <button type='submit'>Go</button> \
     </form>";
@@ -241,23 +241,8 @@ function submit(event) {
         // default elevation
         coords.push(20);
       }
-      const [lon, lat, ele] = coords;
-      console.log(`lon: ${lon} lat: ${lat} ele: ${ele}`);
-
-      // var newCameraPos = adjustCartesianCoords(
-      //   Cartesian3.fromDegrees(
-      //     lon,
-      //     lat,
-      //     ele * 1000.0, // m
-      //     viewer.scene.globe.ellipsoid
-      //   ),
-      //   isOptimizedPolarTerrain
-      // );
-
-      // viewer.scene.camera.flyTo({
-      //   destination: newCameraPos,
-      //   duration: deltaT,
-      // });
+      const [lat, lon, ele] = coords;
+      console.log(`lat: ${lat} lon: ${lon} ele: ${ele}`);
 
       var newCameraPos = Cartesian3.fromDegrees(
         lon,
@@ -941,14 +926,6 @@ function addStatusBar() {
 
   // position info
   statusBarLblPosition = document.createElement("div");
-  // lon label
-  var lonLbl = statusBarLblPosition.appendChild(document.createElement("div"));
-  lonLbl.innerHTML = "Lon:";
-  // lon
-  statusBarLblLongitude = document.createElement("div");
-  statusBarLblLongitude.className = "min-w-[4em] text-right";
-  statusBarLblLongitude.id = "lbl-lon";
-  statusBarLblPosition.appendChild(statusBarLblLongitude);
   // lat label
   var latLbl = statusBarLblPosition.appendChild(document.createElement("div"));
   latLbl.innerHTML = "Lat:";
@@ -957,6 +934,14 @@ function addStatusBar() {
   statusBarLblLatitude.className = "min-w-[4em] text-right";
   statusBarLblLatitude.id = "lbl-lat";
   statusBarLblPosition.appendChild(statusBarLblLatitude);
+  // lon label
+  var lonLbl = statusBarLblPosition.appendChild(document.createElement("div"));
+  lonLbl.innerHTML = "Lon:";
+  // lon
+  statusBarLblLongitude = document.createElement("div");
+  statusBarLblLongitude.className = "min-w-[4em] text-right";
+  statusBarLblLongitude.id = "lbl-lon";
+  statusBarLblPosition.appendChild(statusBarLblLongitude);
   // height label
   var heightLbl = statusBarLblPosition.appendChild(
     document.createElement("div")

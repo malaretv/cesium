@@ -317,10 +317,10 @@ function updateSubSolarPointDisplay(lon, lat) {
       // lon in [-180,180] range
       lon -= 360;
     }
-    subSolarPointValueS = `${lon.toFixed(3)},${lat.toFixed(3)}`;
+    subSolarPointValueS = `${lat.toFixed(3)},${lon.toFixed(3)}`;
   }
 
-  let msg = `Sub Solar Point (Lon,Lat): ${subSolarPointValueS}`;
+  let msg = `Sub Solar Point (Lat,Lon): ${subSolarPointValueS}`;
   subSolarPointDisplay.innerHTML = msg;
 }
 
@@ -1418,10 +1418,10 @@ function cameraPositionUpdated() {
   var camLon = Cesium.Math.toDegrees(cartographicCamera.longitude);
   var camH = cartographicCamera.height * 0.001; // km
   var lbl =
-    "Camera: (Lon,Lat,H)=" +
-    camLon.toFixed(3) +
-    ",&nbsp;" +
+    "Camera: (Lat,Lon,H)=" +
     camLat.toFixed(3) +
+    ",&nbsp;" +
+    camLon.toFixed(3) +
     ",&nbsp;" +
     camH.toFixed(1) +
     "&nbsp;&nbsp;--&nbsp;&nbsp;" +
