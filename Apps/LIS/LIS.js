@@ -1875,7 +1875,19 @@ newTerrainNameSelected(
   QTSConfig.defaultTerrainNormalsEnabled,
   true
 );
-initializeTime(QTSConfig.defaultUTCTime);
+let defaultStartUTCTime;
+if (QTSConfig.hasOwnProperty("defaultStartUTCTime")) {
+  defaultStartUTCTime = TSConfig.defaultStartUTCTime;
+}
+let defaultStopUTCTime;
+if (QTSConfig.hasOwnProperty("defaultStoptUTCTime")) {
+  defaultStopUTCTime = TSConfig.defaultStoptUTCTime;
+}
+initializeTime(
+  QTSConfig.defaultUTCTime,
+  defaultStartUTCTime,
+  defaultStopUTCTime
+);
 
 // set location
 /*
