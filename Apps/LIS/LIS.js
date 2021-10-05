@@ -67,6 +67,7 @@ Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(
 
 export var viewer = new Cesium.Viewer("cesiumContainer", {
   //  terrainProvider: createTerrainProvider(),
+  projectionPicker: true,
   infoBox: false,
   selectionIndicator: false,
   skyAtmosphere: false,
