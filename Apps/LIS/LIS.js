@@ -54,7 +54,7 @@ import {
   setStatusBarObs2CursorDist,
 } from "./UIcontrols.js";
 
-import { cameraFlyToLookDownNorthUp } from "./utils.js";
+import { cameraFlyToLookDownNorthUp, cameraFlyTo } from "./utils.js";
 
 Cesium.Ellipsoid.WGS84 = new Cesium.Ellipsoid(
   QTSConfig.ellipsoidRadius.x,
@@ -219,11 +219,28 @@ viewer.homeButton.viewModel.command.beforeExecute.addEventListener(
 );
 // time tick event
 viewer.clock.onTick.addEventListener(maybeUpdateBodiesPosSPICE);
-viewer.clock.onTick.addEventListener(timeUpdated);
+viewer.clock.onTick.addEventListener(onTickEvent);
 
-function timeUpdated() {
+function cameraProjectionChanged() {
+  return (
+    (viewer.projectionPicker.viewModel.isOrthographicProjection &&
+      viewModel.cameraProjection !== "Ortho") ||
+    (!viewer.projectionPicker.viewModel.isOrthographicProjection &&
+      viewModel.cameraProjection === "Ortho")
+  );
+}
+
+function onTickEvent() {
   // update view model
   viewModel.UTCTime = viewer.clock.currentTime;
+
+  if (cameraProjectionChanged()) {
+    // update camera projection
+    viewModel.cameraProjection = viewer.projectionPicker.viewModel
+      .isOrthographicProjection
+      ? "Ortho"
+      : "Persp";
+  }
 
   maybeUpdateSubSolarPoint();
 }
@@ -1453,7 +1470,27 @@ viewer.camera.moveEnd.addEventListener(() => {
   if (flyingToNewPositionStarted) {
     flyingToNewPositionStarted = false;
   }
+
+  if (waitingCameraProjection.length) {
+    setCameraProjection(waitingCameraProjection);
+    waitingCameraProjection = "";
+  }
 });
+
+// wait the camera move finishes before updating the camera projection
+var waitingCameraProjection = "";
+function enqueuCameraProjectionChange(cameraProjection) {
+  waitingCameraProjection = cameraProjection;
+}
+
+function setCameraProjection(cameraProjection) {
+  viewModel.cameraProjection = cameraProjection;
+  if (viewModel.cameraProjection === "Ortho") {
+    viewer.projectionPicker.viewModel.switchToOrthographic();
+  } else {
+    viewer.projectionPicker.viewModel.switchToPerspective();
+  }
+}
 
 viewer.camera.changed.addEventListener(() => {
   // this is exected after the camera has changed by percentageChanged
@@ -2084,12 +2121,9 @@ function loadStateFromQueryString() {
     );
     camera_up = adjustCartesianCoords(camera_up, isOptimizedPolarTerrain);
 
-    viewer.scene.camera.flyTo({
-      destination: camera_position,
-      orientation: {
-        direction: camera_direction,
-        up: camera_up,
-      },
+    cameraFlyTo(viewer.scene.camera, camera_position, {
+      direction: camera_direction,
+      up: camera_up,
     });
   } else if (
     searchParams.has("ul") &&
@@ -2126,6 +2160,11 @@ function loadStateFromQueryString() {
     // });
 
     cameraFlyToLookDownNorthUp(viewer.scene.camera, rectangle, ellipsoid);
+  }
+
+  if (searchParams.has("cameraProjection")) {
+    // wait updating the camera projection
+    enqueuCameraProjectionChange(searchParams.get("cameraProjection"));
   }
 
   // contour enabled

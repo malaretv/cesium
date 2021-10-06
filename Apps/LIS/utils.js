@@ -121,3 +121,15 @@ export function cameraFlyToLookDownNorthUp(
   //   });
   // }
 }
+
+export function cameraFlyTo(camera, destination, orientation, duration) {
+  flyingToNewPosition();
+  let flyOpt = {
+    destination: destination,
+    orientation: orientation,
+  };
+  if (duration !== "undefined") {
+    flyOpt["duration"] = duration;
+  }
+  camera.flyTo(flyOpt);
+}

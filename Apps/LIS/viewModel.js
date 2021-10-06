@@ -22,6 +22,7 @@ export var viewModel = {
   _camera_direction: new Cartesian3(),
   _camera_up: new Cartesian3(),
   _lightSource: "",
+  _cameraProjection: "",
 
   // time
   _UTCTime: "",
@@ -98,6 +99,15 @@ export var viewModel = {
 
   set camera_up(value) {
     this._camera_up = value;
+    saveStateToQueryString();
+  },
+
+  get cameraProjection() {
+    return this._cameraProjection;
+  },
+
+  set cameraProjection(value) {
+    this._cameraProjection = value;
     saveStateToQueryString();
   },
 
@@ -450,6 +460,8 @@ export function saveStateToQueryString() {
     []
   );
 
+  let cameraProjection = viewModel.cameraProjection;
+
   // time
   var UTCTime = JulianDate.toIso8601(viewModel.UTCTime, 3);
   var startUTCTime = JulianDate.toIso8601(viewModel.startUTCTime, 3);
@@ -558,6 +570,10 @@ export function saveStateToQueryString() {
       viewModel._terrainAutoMeshMaxErrorMax;
     urlParams["terrainAutoMeshMaxErrorThMult"] =
       viewModel._terrainAutoMeshMaxErrorThMult;
+  }
+
+  if (cameraProjection.length > 0) {
+    urlParams["cameraProjection"] = cameraProjection;
   }
 
   // update url
