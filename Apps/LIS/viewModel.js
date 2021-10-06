@@ -29,6 +29,10 @@ export var viewModel = {
   _startUTCTime: "",
   _stopUTCTime: "",
 
+  // time animation
+  _shouldAnimateTime: false,
+  _timeMultiplier: 1.0,
+
   // terrain
   _terrainProviderName: undefined,
   _terrainVertexNormalsEnabled: true,
@@ -146,6 +150,24 @@ export var viewModel = {
       this._stopUTCTime = JulianDate.clone(value);
       saveStateToQueryString();
     }
+  },
+
+  get shouldAnimateTime() {
+    return this._shouldAnimateTime;
+  },
+
+  set shouldAnimateTime(value) {
+    this._shouldAnimateTime = value;
+    saveStateToQueryString();
+  },
+
+  get timeMultiplier() {
+    return this._timeMultiplier;
+  },
+
+  set timeMultiplier(value) {
+    this._timeMultiplier = value;
+    saveStateToQueryString();
   },
 
   // lightSource
@@ -467,6 +489,9 @@ export function saveStateToQueryString() {
   var startUTCTime = JulianDate.toIso8601(viewModel.startUTCTime, 3);
   var stopUTCTime = JulianDate.toIso8601(viewModel.stopUTCTime, 3);
 
+  let shouldAnimateTime = viewModel.shouldAnimateTime;
+  let timeMultiplier = viewModel.timeMultiplier;
+
   // illumination
   var lightSource = viewModel.lightSource;
 
@@ -516,6 +541,8 @@ export function saveStateToQueryString() {
     UTCTime,
     startUTCTime,
     stopUTCTime,
+    shouldAnimateTime,
+    timeMultiplier,
     lightSource,
     terrainProviderName,
     terrainVertexNormalsEnabled,

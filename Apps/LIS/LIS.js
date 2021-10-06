@@ -243,6 +243,14 @@ function onTickEvent() {
   }
 
   maybeUpdateSubSolarPoint();
+
+  // time animation
+  if (viewer.clock.shouldAnimate !== viewModel.shouldAnimateTime) {
+    viewModel.shouldAnimateTime = viewer.clock.shouldAnimate;
+  }
+  if (viewer.clock.multiplier !== viewModel.timeMultiplier) {
+    viewModel.timeMultiplier = viewer.clock.multiplier;
+  }
 }
 
 export function initializeTime(
@@ -2036,6 +2044,17 @@ function loadStateFromQueryString() {
   // if (startUTCTime !== undefined || stopUTCTime !== undefined) {
   initializeTime(currTime, startUTCTime, stopUTCTime);
   // }
+
+  if (searchParams.has("shouldAnimateTime")) {
+    let animateEnabled = searchParams.get("shouldAnimateTime") === "true";
+    viewModel.shouldAnimateTime = animateEnabled;
+    viewer.clock.shouldAnimate = animateEnabled;
+  }
+  if (searchParams.has("timeMultiplier")) {
+    let timeMultiplier = parseFloat(searchParams.get("timeMultiplier"));
+    viewModel.timeMultiplier = timeMultiplier;
+    viewer.clock.multiplier = timeMultiplier;
+  }
 
   // illumination
   if (searchParams.has("lightSource")) {
