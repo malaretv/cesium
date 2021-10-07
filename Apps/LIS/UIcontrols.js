@@ -27,6 +27,8 @@ var buttonBgColor = "rgba(42, 42, 42, 0.7)";
 var buttonBgSelectedColor = "rgba(255, 255, 255, 0.7)";
 
 export function initializeUI() {
+  addSaveButton();
+
   if (window.LIS_MODE === "development") {
     addMeshControls();
   }
@@ -1124,4 +1126,59 @@ function setStatusDetailInfoVisible(checked) {
     detailInfoShowButton.style.display = "";
     statusBarLblCamera.style.display = "";
   }
+}
+
+function addSaveButton() {
+  let downloadBtn = document.createElement("button");
+  downloadBtn.innerHTML = "<i class='fa fa-download'></i> Export Image";
+  downloadBtn.className = "cesium-button";
+
+  downloadBtn.onclick = downloadPNGFile;
+
+  document.getElementById("toolbar").appendChild(downloadBtn);
+}
+
+function downloadPNGFile() {
+  let imageUrl = fetchCanvasImageForCesium();
+  if (!imageUrl) return;
+  let file = `${QTSConfig.toolName}.png`;
+
+  //creating an invisible element
+  var element = document.createElement("a");
+  element.setAttribute("href", imageUrl);
+  element.setAttribute("download", file);
+
+  // Above code is equivalent to
+  // <a href="path of file" download="file name">
+
+  document.body.appendChild(element);
+
+  //onClick property
+  element.click();
+
+  document.body.removeChild(element);
+}
+
+function fetchCanvasImageForCesium() {
+  let canvas = viewer.canvas;
+  viewer.render();
+
+  if (canvas) {
+    try {
+      const binStr = window.atob(canvas.toDataURL("image/png").split(",")[1]);
+      const len = binStr.length;
+      const arr = new Uint8Array(len);
+
+      for (let i = 0; i < len; i++) {
+        arr[i] = binStr.charCodeAt(i);
+      }
+
+      const blob = new Blob([arr], { type: "image/png" });
+      const url = URL.createObjectURL(blob);
+      return url;
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  return null;
 }

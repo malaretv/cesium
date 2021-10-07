@@ -9,6 +9,8 @@ earthPrimitiveMaterial.uniforms.image = earthTextureUrl;
 earthPrimitiveMaterial.translucent = false;
 
 const QTSConfig = {
+  toolName: "qts-3d-moon",
+
   // ellipsoid radius in x,y,z directions
   ellipsoidRadius: {
     x: 1737400,
