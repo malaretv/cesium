@@ -941,11 +941,11 @@ function updateShadowsMaxDist(maxDist) {
 function maybeUpdateShadowsMaxDistance() {
   if (viewModel.shadowsMaxDistance === "auto") {
     shadowMap.maximumDistance = getBestShadowsMaxDistance();
-    console.log(
-      "Updating shadow max distance: " +
-        (shadowMap.maximumDistance / 1000.0).toFixed(3) +
-        "km"
-    );
+    // console.log(
+    //   "Updating shadow max distance: " +
+    //     (shadowMap.maximumDistance / 1000.0).toFixed(3) +
+    //     "km"
+    // );
     updateShadowsMaxDistanceDisplay(shadowMap.maximumDistance);
   }
 }
@@ -1433,7 +1433,7 @@ function deg2rad(degrees) {
   return degrees * (Math.PI / 180.0);
 }
 
-function cameraPositionUpdated() {
+function cameraPositionUpdated(isCameraMoveEnd) {
   // console.log("updating camera position...");
   ellipsoid.cartesianToCartographic(
     invAdjustCartesianCoords(camera.positionWC, isOptimizedPolarTerrain),
@@ -1468,13 +1468,19 @@ function cameraPositionUpdated() {
   // viewModel.camera_direction = camera.direction;
   // viewModel.camera_up = camera.up;
 
-  viewModel.setCameraPandO(camera.position, camera.direction, camera.up);
+  viewModel.setCameraPandO(
+    camera.position,
+    camera.direction,
+    camera.up,
+    isCameraMoveEnd
+  );
 
   maybeUpdateShadowsMaxDistance();
 }
 
 viewer.camera.moveEnd.addEventListener(() => {
-  cameraPositionUpdated();
+  let isCameraMoveEnd = true;
+  cameraPositionUpdated(isCameraMoveEnd);
   if (flyingToNewPositionStarted) {
     flyingToNewPositionStarted = false;
   }
@@ -1506,7 +1512,8 @@ viewer.camera.changed.addEventListener(() => {
     // avoid too many camera updates
     return;
   }
-  cameraPositionUpdated();
+  let isCameraMoveEnd = false;
+  cameraPositionUpdated(isCameraMoveEnd);
 });
 
 function setHeightKm(heightInKilometers) {

@@ -346,7 +346,8 @@ export var viewModel = {
 viewModel.setCameraPandO = function (
   camera_position,
   camera_direction,
-  camera_up
+  camera_up,
+  isCameraMoveEnd
 ) {
   var diff1 = Cartesian3.distance(this._camera_position, camera_position);
   var diff2 = Cartesian3.distance(this._camera_direction, camera_direction);
@@ -357,7 +358,13 @@ viewModel.setCameraPandO = function (
     this._camera_direction = Cartesian3.clone(camera_direction);
     this._camera_up = Cartesian3.clone(camera_up);
 
-    maybeUpdateStateUrl();
+    if (isCameraMoveEnd) {
+      // force state url update
+      saveStateToQueryString();
+    } else {
+      // avoid too many url updates
+      maybeUpdateStateUrl();
+    }
   }
 };
 
@@ -394,7 +401,7 @@ export function resetStateUpdateTimer() {
 }
 
 // wait FORCE_UPDATE_URL_STATE_TRIGGER_INTERVAL since last time update before updating the url
-// this is needed in order to avoid to many history.push requests (there is a limit on Safari browser)
+// this is needed in order to avoid too many history.push requests (there is a limit on Safari browser)
 export function maybeUpdateStateUrl() {
   if (
     !JulianDate.equals(lastUrlStateUpdateTime, viewModel.UTCTime) ||
