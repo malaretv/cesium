@@ -25,7 +25,7 @@ const QTSConfig = {
   defaultTerrainName: "automatic",
   defaultTerrainNormalsEnabled: true,
 
-  defaultLocationName: "Tycho",
+  defaultLocationName: "home",
 
   // contours settings
   enableContour: false,
@@ -161,6 +161,7 @@ const QTSConfig = {
       longitude: -11.34246,
       latitude: -43.33986,
       height: -1000,
+      addEntity: true,
       color: Color.WHITE,
     },
     Haworth_1: {
@@ -168,6 +169,7 @@ const QTSConfig = {
       longitude: -17.665,
       latitude: -86.744,
       height: 1300,
+      addEntity: true,
       color: Color.WHITE,
     },
     Haworth_2: {
@@ -175,6 +177,7 @@ const QTSConfig = {
       longitude: -19.023,
       latitude: -86.516,
       height: 1300,
+      addEntity: true,
       color: Color.TOMATO,
     },
     PSR0: {
@@ -182,6 +185,7 @@ const QTSConfig = {
       longitude: 135.36409,
       latitude: -81.87225,
       height: -4100,
+      addEntity: true,
       color: Color.TOMATO,
     },
     PSR1: {
@@ -189,6 +193,7 @@ const QTSConfig = {
       longitude: -11.77213,
       latitude: -85.61268,
       height: 2500,
+      addEntity: true,
       color: Color.WHITE,
     },
     Hill_Top_Near_SP: {
@@ -196,6 +201,7 @@ const QTSConfig = {
       longitude: 222,
       latitude: -89.44,
       height: 2000,
+      addEntity: true,
       color: Color.WHITE,
     },
     Hill_Top_Near_NP: {
@@ -203,14 +209,15 @@ const QTSConfig = {
       longitude: -45.63,
       latitude: 89.645,
       height: 500,
+      addEntity: true,
       color: Color.WHITE,
     },
-    testing2: {
-      name: "testing2",
-      longitude: -2.146,
-      latitude: 0.667,
-      height: -900,
-      color: Color.WHITE,
+    home: {
+      name: "home",
+      longitude: 0.0,
+      latitude: 0.0,
+      height: 3600000, // km
+      addEntity: false,
     },
   },
 };

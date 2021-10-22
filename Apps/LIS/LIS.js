@@ -1590,24 +1590,26 @@ document.addEventListener("bodiesPosUpdated", function (e) {
 var entitySphereRadius = 50;
 for (var locationName in QTSConfig.locationsInfo) {
   var location = QTSConfig.locationsInfo[locationName];
-  // add entity
-  location.entity = viewer.entities.add({
-    position: Cesium.Cartesian3.fromDegrees(
-      location.longitude,
-      location.latitude,
-      location.height,
-      Cesium.Ellipsoid.WGS84
-    ),
-    ellipsoid: {
-      radii: new Cesium.Cartesian3(
-        entitySphereRadius,
-        entitySphereRadius,
-        entitySphereRadius
+  if (location.addEntity) {
+    // add entity
+    location.entity = viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(
+        location.longitude,
+        location.latitude,
+        location.height,
+        Cesium.Ellipsoid.WGS84
       ),
-      material: location.color,
-      shadows: Cesium.ShadowMode.ENABLED,
-    },
-  });
+      ellipsoid: {
+        radii: new Cesium.Cartesian3(
+          entitySphereRadius,
+          entitySphereRadius,
+          entitySphereRadius
+        ),
+        material: location.color,
+        shadows: Cesium.ShadowMode.ENABLED,
+      },
+    });
+  }
   // console.log(location.entity.position.getValue(viewer.clock.currentTime));
 }
 
@@ -1622,22 +1624,21 @@ function setSelectedEntity(location) {
 }
 
 const deltaT = 10;
-var entities = viewer.entities.values;
 export function setLocation(location) {
+  let cameraHeight = location.height;
   if (location.entity) {
     setSelectedEntity(location);
-    //   viewer.zoomTo(entity, new Cesium.HeadingPitchRange(0.5,-0.2,20000));
-    //    viewer.zoomTo(entitySelected, new Cesium.HeadingPitchRange(0,-3.14,20000));
-
-    var newCameraPos = Cesium.Cartesian3.fromDegrees(
-      location.longitude,
-      location.latitude,
-      location.height + 20000,
-      ellipsoid
-    );
-
-    cameraFlyToLookDownNorthUp(scene.camera, newCameraPos, ellipsoid, deltaT);
+    cameraHeight += 20000;
   }
+
+  var newCameraPos = Cesium.Cartesian3.fromDegrees(
+    location.longitude,
+    location.latitude,
+    cameraHeight,
+    ellipsoid
+  );
+
+  cameraFlyToLookDownNorthUp(scene.camera, newCameraPos, ellipsoid, deltaT);
 }
 
 function setCustomCameraView() {
