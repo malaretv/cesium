@@ -25,7 +25,8 @@ const QTSConfig = {
   defaultTerrainName: "automatic",
   defaultTerrainNormalsEnabled: true,
 
-  defaultLocationName: "Tycho",
+  defaultLocationName: "Tycho", // set this as default location when none is selected
+  defaultViewLocationName: "Home", // set this as default camera view location
   defaultLayerName: "WACNoShadows",
 
   // contours settings
@@ -213,7 +214,7 @@ const QTSConfig = {
       addEntity: true,
       color: Color.WHITE,
     },
-    home: {
+    Home: {
       name: "home",
       longitude: 0.0,
       latitude: 0.0,

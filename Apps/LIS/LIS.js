@@ -98,17 +98,19 @@ function updateEntitiesPos() {
     if (QTSConfig.locationsInfo.hasOwnProperty(locationName)) {
       var location = QTSConfig.locationsInfo[locationName];
       var entity = location.entity;
-      entity.position.setValue(
-        adjustCartesianCoords(
-          Cesium.Cartesian3.fromDegrees(
-            location.longitude,
-            location.latitude,
-            location.height,
-            Cesium.Ellipsoid.WGS84
-          ),
-          isOptimizedPolarTerrain
-        )
-      );
+      if (entity) {
+        entity.position.setValue(
+          adjustCartesianCoords(
+            Cesium.Cartesian3.fromDegrees(
+              location.longitude,
+              location.latitude,
+              location.height,
+              Cesium.Ellipsoid.WGS84
+            ),
+            isOptimizedPolarTerrain
+          )
+        );
+      }
     }
   }
 }
@@ -1616,6 +1618,11 @@ for (var locationName in QTSConfig.locationsInfo) {
 var entitySelected;
 function setSelectedEntity(location) {
   entitySelected = location.entity;
+  if (!entitySelected) {
+    // force a default entity in order to properly update entity to light vectors
+    entitySelected =
+      QTSConfig.locationsInfo[QTSConfig.defaultLocationName].entity;
+  }
 
   updateEntityVectors(true);
 
@@ -1626,8 +1633,8 @@ function setSelectedEntity(location) {
 const deltaT = 10;
 export function setLocation(location) {
   let cameraHeight = location.height;
+  setSelectedEntity(location);
   if (location.entity) {
-    setSelectedEntity(location);
     cameraHeight += 20000;
   }
 
@@ -1948,7 +1955,8 @@ initializeTime(
 locationMenu.selectedIndex = defaultLocationIndex;
 locationToolbarOptions[defaultLocationIndex].onselect();
 */
-var defaultLocation = QTSConfig.locationsInfo[QTSConfig.defaultLocationName];
+var defaultLocation =
+  QTSConfig.locationsInfo[QTSConfig.defaultViewLocationName];
 if (defaultLocation) {
   setLocation(defaultLocation);
 }
