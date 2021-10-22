@@ -25,7 +25,8 @@ const QTSConfig = {
   defaultTerrainName: "automatic",
   defaultTerrainNormalsEnabled: true,
 
-  defaultLocationName: "home",
+  defaultLocationName: "Tycho",
+  defaultLayerName: "WACNoShadows",
 
   // contours settings
   enableContour: false,

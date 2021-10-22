@@ -1952,6 +1952,9 @@ var defaultLocation = QTSConfig.locationsInfo[QTSConfig.defaultLocationName];
 if (defaultLocation) {
   setLocation(defaultLocation);
 }
+if (QTSConfig.defaultLayerName.length) {
+  setLayerImageryEnabled(QTSConfig.defaultLayerName);
+}
 
 // shadows max distance
 var shadowsMaxDistanceIdx = shadowsMaxDistList.indexOf(
