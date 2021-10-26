@@ -72,6 +72,17 @@ export function cameraFlyToLookDownNorthUp(
     );
   } else {
     poiCarto = Cartographic.fromCartesian(destination, ellipsoid);
+
+    if (
+      poiCarto.latitude === 0 &&
+      poiCarto.longitude === 0 &&
+      isOptimizedPolarTerrain
+    ) {
+      // special case, this is the tip of y axis in GOTM, let us recenter a bit off it in
+      // order to avoid orientation issues with flyTo
+      poiCarto.longitude = Math.toRadians(poiCarto.longitude + Math.EPSILON15);
+      destination = Cartographic.toCartesian(poiCarto, ellipsoid, destination);
+    }
   }
 
   if (!defined(polarLat)) {
