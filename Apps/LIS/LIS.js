@@ -2037,27 +2037,27 @@ maybeUpdateContours();
 function loadStateFromQueryString() {
   var searchParams = new URL(window.location).searchParams;
 
-  // time
-  var startUTCTime;
-  if (searchParams.has("startUTCTime")) {
-    startUTCTime = searchParams.get("startUTCTime");
-  } else {
-    startUTCTime = Cesium.JulianDate.toIso8601(viewModel.startUTCTime, 3);
-  }
-
-  var stopUTCTime;
-  if (searchParams.has("stopUTCTime")) {
-    stopUTCTime = searchParams.get("stopUTCTime");
-  } else {
-    stopUTCTime = Cesium.JulianDate.toIso8601(viewModel.stopUTCTime, 3);
-  }
-
-  var currTime;
+  let currTime;
   if (searchParams.has("UTCTime")) {
     currTime = searchParams.get("UTCTime");
     setTime(currTime);
   } else {
     currTime = Cesium.JulianDate.toIso8601(viewModel.UTCTime, 3);
+  }
+
+  // time
+  let startUTCTime;
+  if (searchParams.has("startUTCTime")) {
+    startUTCTime = searchParams.get("startUTCTime");
+  } else {
+    // startUTCTime = Cesium.JulianDate.toIso8601(viewModel.startUTCTime, 3);
+  }
+
+  let stopUTCTime;
+  if (searchParams.has("stopUTCTime")) {
+    stopUTCTime = searchParams.get("stopUTCTime");
+  } else {
+    // stopUTCTime = Cesium.JulianDate.toIso8601(viewModel.stopUTCTime, 3);
   }
 
   // if (startUTCTime !== undefined || stopUTCTime !== undefined) {
