@@ -52,7 +52,7 @@ export var viewModel = {
   // shadows
   _shadowsMaxDistance: 100000.0, // m
   _skirtsEnabled: true,
-  _shadowsFading: true,
+  _shadowsFading: false,
   _terrainShadowsEnabled: true,
 
   // selected location

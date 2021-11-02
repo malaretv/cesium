@@ -649,6 +649,7 @@ function setShadowsFadingEnabledFunction() {
   };
 }
 
+shadowMap.fadingEnabled = viewModel.shadowsFadingEnabled;
 Sandcastle.addToggleButton(
   "Shadows Fading",
   shadowMap.fadingEnabled,
