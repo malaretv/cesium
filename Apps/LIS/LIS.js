@@ -2051,14 +2051,18 @@ function loadStateFromQueryString() {
   if (searchParams.has("startUTCTime")) {
     startUTCTime = searchParams.get("startUTCTime");
   } else {
-    // startUTCTime = Cesium.JulianDate.toIso8601(viewModel.startUTCTime, 3);
+    if (!searchParams.has("UTCTime")) {
+      startUTCTime = Cesium.JulianDate.toIso8601(viewModel.startUTCTime, 3);
+    }
   }
 
   let stopUTCTime;
   if (searchParams.has("stopUTCTime")) {
     stopUTCTime = searchParams.get("stopUTCTime");
   } else {
-    // stopUTCTime = Cesium.JulianDate.toIso8601(viewModel.stopUTCTime, 3);
+    if (!searchParams.has("UTCTime")) {
+      stopUTCTime = Cesium.JulianDate.toIso8601(viewModel.stopUTCTime, 3);
+    }
   }
 
   // if (startUTCTime !== undefined || stopUTCTime !== undefined) {
