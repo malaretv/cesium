@@ -151,6 +151,14 @@ const QTSConfig = {
       layerName: "act_sunlit_model",
       layerFormat: "png",
     },
+    HillShadeGlobal: {
+      name: "Hill Shade (Global)",
+      servername: "lroc-tiles.quickmap.io",
+      iconUrl: "./images/ImageryProviders/hill_shade.png",
+      tooltip: "Hill Shade (Global)",
+      layerName: "hillshade",
+      layerFormat: "png",
+    },
   },
 
   eqcProjectionName: "lunar-fulleqc",
