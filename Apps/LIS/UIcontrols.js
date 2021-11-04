@@ -286,6 +286,8 @@ function submit(event) {
     } else if (!Matrix4.equals(viewer.camera.transform, Matrix4.IDENTITY)) {
       viewer.camera.lookAtTransform(Matrix4.IDENTITY);
     }
+    // clear input string
+    gotoInput.value = "";
   }
 
   // For this example, don't actually submit the form
