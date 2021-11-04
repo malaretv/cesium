@@ -3,6 +3,7 @@ import {
   Cartesian3,
   Matrix4,
   viewerCesiumInspectorMixin,
+  createCommand,
 } from "../../Source/Cesium.js";
 
 import { QTSConfig } from "./config/config.js";
@@ -46,6 +47,9 @@ export function initializeUI() {
   addTutorialButton();
 
   initializeBaseLayerPicker();
+
+  // initialize home button
+  initializeHomeButton();
 
   if (window.LIS_MODE === "development") {
     viewer.extend(viewerCesiumInspectorMixin);
@@ -1184,4 +1188,22 @@ function fetchCanvasImageForCesium() {
     }
   }
   return null;
+}
+
+function initializeHomeButton() {
+  const homeLocationKey = "home";
+  var location =
+    QTSConfig.locationsInfo[
+      Object.keys(QTSConfig.locationsInfo).find(
+        (key) => key.toLowerCase() === homeLocationKey
+      )
+    ];
+  if (homeLocationKey === undefined) {
+    // not home location found
+    return;
+  }
+  // override default home button command
+  viewer.homeButton.viewModel._command = createCommand(function () {
+    setLocation(location);
+  });
 }
