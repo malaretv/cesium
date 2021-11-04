@@ -82,6 +82,10 @@ export var viewModel = {
   },
 
   set camera_position(value) {
+    if (this._camera_position === value) {
+      // nothing to do
+      return;
+    }
     this._camera_position = value;
     saveStateToQueryString();
   },
@@ -92,6 +96,10 @@ export var viewModel = {
   },
 
   set camera_direction(value) {
+    if (this._camera_direction === value) {
+      // nothing to do
+      return;
+    }
     this._camera_direction = value;
     saveStateToQueryString();
   },
@@ -102,6 +110,10 @@ export var viewModel = {
   },
 
   set camera_up(value) {
+    if (this._camera_up === value) {
+      // nothing to do
+      return;
+    }
     this._camera_up = value;
     saveStateToQueryString();
   },
@@ -111,6 +123,10 @@ export var viewModel = {
   },
 
   set cameraProjection(value) {
+    if (this._cameraProjection === value) {
+      // nothing to do
+      return;
+    }
     this._cameraProjection = value;
     saveStateToQueryString();
   },
@@ -186,6 +202,10 @@ export var viewModel = {
   },
 
   set terrainProviderName(value) {
+    if (this._terrainProviderName === value) {
+      // nothing to do
+      return;
+    }
     this._terrainProviderName = value;
     saveStateToQueryString();
   },
@@ -196,6 +216,10 @@ export var viewModel = {
   },
 
   set terrainVertexNormalsEnabled(value) {
+    if (this._terrainVertexNormalsEnabled === value) {
+      // nothing to do
+      return;
+    }
     this._terrainVertexNormalsEnabled = value;
     saveStateToQueryString();
   },
@@ -206,6 +230,10 @@ export var viewModel = {
   },
 
   set terrainMeshMaxError(value) {
+    if (this._terrainMeshMaxError === value) {
+      // nothing to do
+      return;
+    }
     this._terrainMeshMaxError = value;
     meshMaxErrorChanged(this._terrainMeshMaxError);
     saveStateToQueryString();
@@ -217,6 +245,10 @@ export var viewModel = {
   },
 
   set terrainMeshAlgorithm(value) {
+    if (this._terrainMeshAlgorithm === value) {
+      // nothing to do
+      return;
+    }
     this._terrainMeshAlgorithm = value;
     saveStateToQueryString();
   },
@@ -287,6 +319,10 @@ export var viewModel = {
   },
 
   set selectedLocationName(value) {
+    if (this._selectedLocationName === value) {
+      // nothing to do
+      return;
+    }
     this._selectedLocationName = value;
     saveStateToQueryString();
   },
@@ -427,6 +463,16 @@ export function maybeUpdateStateUrl() {
     );
   }
 }
+
+// function debounce(func, timeout = 300){
+//   let timer;
+//   return (...args) => {
+//     clearTimeout(timer);
+//     timer = setTimeout(() => { func.apply(this, args); }, timeout);
+//   };
+// }
+
+// const stateChange = debounce(() => saveStateToQueryString());
 
 /**
  * Get current base state and saves to querystring
