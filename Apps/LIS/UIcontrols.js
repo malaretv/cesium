@@ -919,15 +919,9 @@ function addStatusBar() {
   statusBar.appendChild(detailInfoShowButton);
   detailInfoShowButton.onclick = detailInfoShowButtonClicked;
 
-  // camera info
-  statusBarLblCamera = document.createElement("div");
-  statusBarLblCamera.id = "lbl-camera";
-  statusBarLblCamera.title = "Elevation of the camera above average radius";
-  statusBar.appendChild(statusBarLblCamera);
-  statusBarLblCamera.innerHTML = "Camera: ";
-
   // position info
   statusBarLblPosition = document.createElement("div");
+  statusBarLblPosition.id = "lbl-curs-position";
   // lat label
   var latLbl = statusBarLblPosition.appendChild(document.createElement("div"));
   latLbl.innerHTML = "Lat:";
@@ -958,6 +952,13 @@ function addStatusBar() {
 
   statusBarLblPosition.title = "Ground point coordinates at cursor position";
   statusBar.appendChild(statusBarLblPosition);
+
+  // camera info
+  statusBarLblCamera = document.createElement("div");
+  statusBarLblCamera.id = "lbl-camera";
+  statusBarLblCamera.title = "Elevation of the camera above average radius";
+  statusBar.appendChild(statusBarLblCamera);
+  statusBarLblCamera.innerHTML = "Camera: ";
 
   // observer to cursor distance
   statusBarLBLObs2PosDist = document.createElement("div");

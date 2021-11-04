@@ -212,6 +212,10 @@ body {
   padding-right: 25px;
 }
 
+.statusbar #lbl-curs-position {
+  padding-left: 10px;
+}
+
 .statusbar #lbl-obs2pos-dist {
   padding-left: 10px;
 }
