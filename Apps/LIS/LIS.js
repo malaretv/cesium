@@ -1350,6 +1350,12 @@ function handleKeyDown(e) {
   if (e.defaultPrevented) {
     return; // Do nothing if the event was already processed
   }
+  if (!document.activeElement.contains(viewer.canvas)) {
+    // canvas has no focus
+    // ignore
+    return;
+  }
+
   if (e.key === "Shift") {
     isShiftPressed = true;
     return;
@@ -1365,6 +1371,11 @@ function handleKeyDown(e) {
 function handleKeyUp(e) {
   if (e.defaultPrevented) {
     return; // Do nothing if the event was already processed
+  }
+  if (!document.activeElement.contains(viewer.canvas)) {
+    // canvas has no focus
+    // ignore
+    return;
   }
   if (e.key === "Shift") {
     isShiftPressed = false;
