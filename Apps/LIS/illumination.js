@@ -117,12 +117,20 @@ export async function updateBodiesPosSPICE() {
   console.log(act_bodies_pos_moon_url);
   var response = await fetch(act_bodies_pos_moon_url);
   var bodiesPos = await response.json();
+
+  let responseStartUTCTime = bodiesPos.utc_times[0].utc_time;
+  let currentStartUTCTime = Cesium.JulianDate.toIso8601(viewer.clock.startTime);
+  if (responseStartUTCTime !== currentStartUTCTime) {
+    // old pos list request... discarding
+    return;
+  }
+
   bodiesPosList = bodiesPos.utc_times;
   // reset
   lastBodiesPosActiveIndex = -1;
-
   console.log("bodies pos num:");
   console.log(bodiesPosList.length);
+
   secsFromStartUTCArray.length = bodiesPosList.length;
   for (var i = 0; i < bodiesPosList.length; i++) {
     secsFromStartUTCArray[i] = Cesium.JulianDate.secondsDifference(
@@ -237,8 +245,8 @@ function nearestTimeIndexBinarySearch(secsFromStartUTC) {
   }
 
   // key wasn't found
-  if (start === 0 || start === secsFromStartUTCArray.length - 1) {
-    return start;
+  if (start === 0 || start === secsFromStartUTCArray.length) {
+    return -1;
   }
 
   if (
