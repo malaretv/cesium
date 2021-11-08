@@ -108,9 +108,9 @@ export async function updateBodiesPosSPICE() {
     "&bodies=" +
     String(Object.keys(QTSConfig.lightSource)) +
     "&start_utc_time=" +
-    startUTCTime +
+    Cesium.JulianDate.toIso8601(startUTCTime, 0) +
     "&end_utc_time=" +
-    endUTCTime +
+    Cesium.JulianDate.toIso8601(endUTCTime, 0) +
     "&step_sec=" +
     stepSec +
     "&cmd_script=satiview_get_bodies_position.msh";
@@ -119,9 +119,15 @@ export async function updateBodiesPosSPICE() {
   var bodiesPos = await response.json();
 
   let responseStartUTCTime = bodiesPos.utc_times[0].utc_time;
-  let currentStartUTCTime = Cesium.JulianDate.toIso8601(viewer.clock.startTime);
+  let currentStartUTCTime = Cesium.JulianDate.toIso8601(
+    viewer.clock.startTime,
+    0
+  );
   if (responseStartUTCTime !== currentStartUTCTime) {
     // old pos list request... discarding
+    // console.log(responseStartUTCTime);
+    // console.log(currentStartUTCTime);
+    // console.log("discarding");
     return;
   }
 
