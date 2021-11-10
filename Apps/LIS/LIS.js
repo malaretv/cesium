@@ -696,97 +696,9 @@ udpateBodiesPosToDummyPolar(!checked);
 );
 */
 
-function resetCameraPivotPoint() {
-  camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
-  if (referenceFramePrimitive) {
-    scene.primitives.remove(referenceFramePrimitive);
-    referenceFramePrimitive = undefined;
-  }
-  if (cancelOrbitEventHandler) {
-    cancelOrbitEventHandler();
-  }
-  mouseClickPosCartesian = undefined;
-}
-
-function setRotateCameraAroundPointEnabledFunction() {
-  return function (checked) {
-    if (rotateCameraAroundPointEnabled === checked) {
-      return;
-    }
-    rotateCameraAroundPointEnabled = checked;
-
-    // make sure fly around is disabled
-    if (
-      rotateCameraAroundPointEnabled &&
-      rotateCameraAroundPointLightInFrontEnabled
-    ) {
-      enableRotateAroundPointSunInFrontCbx.checked = false;
-      rotateCameraAroundPointLightInFrontEnabled = false;
-    }
-
-    if (
-      !rotateCameraAroundPointEnabled &&
-      !Cesium.defined(scene.trackedEntity)
-    ) {
-      resetCameraPivotPoint();
-    } else {
-      rotateCameraAroundPoint(mouseClickPosCartesian);
-    }
-  };
-}
-
-function setRotateCameraAroundPointLightInFrontEnabledFunction() {
-  return function (checked) {
-    if (rotateCameraAroundPointLightInFrontEnabled === checked) {
-      return;
-    }
-    rotateCameraAroundPointLightInFrontEnabled = checked;
-
-    // make sure fly around is disabled
-    if (
-      rotateCameraAroundPointLightInFrontEnabled &&
-      rotateCameraAroundPointEnabled
-    ) {
-      // re-use current POI
-      enableRotateAroundPointCbx.checked = false;
-      rotateCameraAroundPointEnabled = false;
-      if (cancelOrbitEventHandler) {
-        cancelOrbitEventHandler();
-      }
-
-      // var mouseClickPosCartesianBack = mouseClickPosCartesian;
-      // var setRotateCameraAroundPointEnabled = setRotateCameraAroundPointEnabledFunction();
-      // setRotateCameraAroundPointEnabled(false);
-      // mouseClickPosCartesian = mouseClickPosCartesianBack;
-    }
-
-    if (
-      !rotateCameraAroundPointLightInFrontEnabled &&
-      !Cesium.defined(scene.trackedEntity)
-    ) {
-      resetCameraPivotPoint();
-    } else {
-      rotateCameraAroundPointLightInFront(mouseClickPosCartesian);
-    }
-  };
-}
-
-function setRotateAroundPointDisabled() {
-  if (rotateCameraAroundPointEnabled) {
-    enableRotateAroundPointCbx.checked = false;
-    var setRotateCameraAroundPointEnabled = setRotateCameraAroundPointEnabledFunction();
-    setRotateCameraAroundPointEnabled(false);
-  } else if (rotateCameraAroundPointLightInFrontEnabled) {
-    enableRotateAroundPointSunInFrontCbx.checked = false;
-    var setRotateCameraAroundPointSunInFrontEnabled = setRotateCameraAroundPointLightInFrontEnabledFunction();
-    setRotateCameraAroundPointSunInFrontEnabled(false);
-  }
-}
-
 var flyingToNewPositionStarted = false;
 export function flyingToNewPosition() {
   flyingToNewPositionStarted = true;
-  setRotateAroundPointDisabled();
 }
 // find first valid view row given a view column (recursive)
 function findFirstValidRowPixelBinarySearchRec(
@@ -994,33 +906,6 @@ function setAtmSimuEnabledFunction() {
     viewModel.atmSimuEnabled = checked;
   };
 }
-
-var rotateCameraAroundPointEnabled = false;
-Sandcastle.addToggleButton(
-  "Fly Around Point",
-  rotateCameraAroundPointEnabled,
-  setRotateCameraAroundPointEnabledFunction()
-);
-// get checkbox input to be able to modify it programmatically
-var enableRotateAroundPointButton = document.getElementById("toolbar")
-  .lastChild;
-enableRotateAroundPointButton.title = "Fly around selected point";
-var enableRotateAroundPointCbx =
-  enableRotateAroundPointButton.firstChild.firstChild; // input
-
-var rotateCameraAroundPointLightInFrontEnabled = false;
-Sandcastle.addToggleButton(
-  "Force Sun in Front Point",
-  rotateCameraAroundPointLightInFrontEnabled,
-  setRotateCameraAroundPointLightInFrontEnabledFunction()
-);
-// get checkbox input to be able to modify it programmatically
-var enableRotateAroundPointSunInFrontButton = document.getElementById("toolbar")
-  .lastChild;
-enableRotateAroundPointSunInFrontButton.title =
-  "Rotate around selected point, forcing the sun to be in front of the viewer";
-var enableRotateAroundPointSunInFrontCbx =
-  enableRotateAroundPointSunInFrontButton.firstChild.firstChild; // input
 
 /*
 Sandcastle.addToggleButton(
@@ -1279,24 +1164,6 @@ handler.setInputAction(() => {
     camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
   }
 }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
-
-// LEFT CLICK
-var mouseClickPosCartesian;
-handler.setInputAction(() => {
-  if (
-    (rotateCameraAroundPointEnabled ||
-      rotateCameraAroundPointLightInFrontEnabled) &&
-    !mouseClickPosCartesian
-  ) {
-    mouseClickPosCartesian = Cesium.Cartesian3.clone(mousePosCartesian);
-    // start rotating
-    if (rotateCameraAroundPointLightInFrontEnabled) {
-      initializeRotateCameraAroundPointLightInFront(mouseClickPosCartesian);
-    } else {
-      rotateCameraAroundPoint(mouseClickPosCartesian);
-    }
-  }
-}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
 ///////////////////////////////////////////////////////////
 // KEYBOARD NAVIGATION
@@ -1601,9 +1468,6 @@ initializeBodiesSPICE();
 
 document.addEventListener("bodiesPosUpdated", function (e) {
   updateEntityVectors(false);
-  if (rotateCameraAroundPointLightInFrontEnabled) {
-    rotateCameraAroundPointLightInFront(mouseClickPosCartesian);
-  }
 });
 
 /////
@@ -1822,121 +1686,6 @@ async function updateSubSolarPoint() {
     subSolarPosRecord.SubSolLON,
     subSolarPosRecord.SubSolLAT
   );
-}
-
-var POICartesianPos = new Cesium.Cartesian3();
-var POIToLightVec = new Cesium.Cartesian3();
-var POIToCameraVec = new Cesium.Cartesian3();
-var POIToLightOVec = new Cesium.Cartesian3();
-var POIToCameraOVec = new Cesium.Cartesian3();
-var crossVec = new Cesium.Cartesian3();
-
-const pithCorrectTh = deg2rad(0.01);
-var referenceFramePrimitive;
-function setCameraPivotPoint(pointCartesianCoords) {
-  if (cancelOrbitEventHandler) cancelOrbitEventHandler();
-  if (!pointCartesianCoords) return false;
-
-  var transform = Cesium.Transforms.eastNorthUpToFixedFrame(
-    pointCartesianCoords,
-    ellipsoid
-  );
-
-  // console.log("camera pitch: " + camera.pitch + "(deg: " + rad2deg(camera.pitch) +")");
-  if (Math.abs(camera.pitch) > Math.PI / 2 - pithCorrectTh) {
-    // note: slightly change the pitch as there could be rotation issues around Z axis when changing transformation
-    // Cesium issue???
-    const p = camera.pitch + pithCorrectTh;
-    const h = 0;
-    const m = Cesium.Cartesian3.distance(
-      camera.positionWC,
-      pointCartesianCoords
-    );
-    camera.lookAtTransform(transform, new Cesium.HeadingPitchRange(h, p, m));
-  } else {
-    // View in east-north-up frame
-    // camera.constrainedAxis = Cesium.Cartesian3.UNIT_Z;
-    camera.lookAtTransform(transform);
-  }
-
-  // console.log("camera pitch: " + camera.pitch + "(deg: " + rad2deg(camera.pitch) +")");
-
-  // referenceFramePrimitive = scene.primitives.add(
-  //   new Cesium.DebugModelMatrixPrimitive({
-  //     modelMatrix: transform,
-  //     length: 10000.0,
-  //   })
-  // );
-
-  return true;
-}
-
-var cancelOrbitEventHandler = null;
-function rotateCameraAroundPoint(pointCartesianCoords) {
-  if (!setCameraPivotPoint(pointCartesianCoords)) {
-    return;
-  }
-
-  const deltaAngle = deg2rad(0.05);
-  cancelOrbitEventHandler = viewer.clock.onTick.addEventListener(() => {
-    viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, deltaAngle);
-  });
-}
-
-function initializeRotateCameraAroundPointLightInFront(pointCartesianCoords) {
-  if (!setCameraPivotPoint(pointCartesianCoords)) {
-    return;
-  }
-
-  rotateCameraAroundPointLightInFront(pointCartesianCoords);
-}
-
-const PI2 = 2 * Math.PI;
-function rotateCameraAroundPointLightInFront(pointCartesianCoords) {
-  if (!pointCartesianCoords) return;
-
-  let lightPosSPICE = getLightSourceSPICEPosition();
-  if (!lightPosSPICE) return;
-
-  // POI to sun vector
-  Cesium.Cartesian3.subtract(
-    lightPosSPICE,
-    pointCartesianCoords,
-    POIToLightVec
-  );
-  Cesium.Cartesian3.normalize(POIToLightVec, POIToLightVec);
-  // POI to camera vector
-  Cesium.Cartesian3.subtract(
-    camera.positionWC,
-    pointCartesianCoords,
-    POIToCameraVec
-  );
-  Cesium.Cartesian3.normalize(POIToCameraVec, POIToCameraVec);
-
-  // compute orthogonal vectors (they are on the same plane)
-  Cesium.Cartesian3.normalize(pointCartesianCoords, POICartesianPos);
-  Cesium.Cartesian3.cross(POIToLightVec, POICartesianPos, POIToLightOVec);
-  Cesium.Cartesian3.cross(POIToCameraVec, POICartesianPos, POIToCameraOVec);
-  // compute angle between then
-  // var toLightVsToCameraAngle = Cesium.Cartesian3.angleBetween(POIToLightOVec, POIToCameraOVec);
-  // Note: Extracted from Cartesian3.angleBetween, for optimization purposes
-  var cosine = Cesium.Cartesian3.dot(POIToLightOVec, POIToCameraOVec);
-  Cesium.Cartesian3.cross(POIToLightOVec, POIToCameraOVec, crossVec);
-  var sine = Cesium.Cartesian3.magnitude(crossVec);
-  var toLightVsToCameraAngle = Math.atan2(sine, cosine);
-
-  // adjust the sign of the angle
-  // Use cross product of the two vectors to get the normal of the plane formed by the two vectors.
-  // Then check the dotproduct between that and the original plane normal to see if they are facing
-  // the same direction.
-  if (Cesium.Cartesian3.dot(POICartesianPos, crossVec) < 0) {
-    toLightVsToCameraAngle = PI2 - toLightVsToCameraAngle;
-  }
-
-  // rotate camera for having the sun in front
-  const deltaAngle = toLightVsToCameraAngle - Math.PI;
-  // console.log("rotate camera by angle: " + rad2deg(deltaAngle));
-  viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, deltaAngle);
 }
 
 // set initial state
