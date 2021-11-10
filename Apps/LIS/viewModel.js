@@ -279,6 +279,10 @@ export var viewModel = {
   },
 
   set shadowsMaxDistance(value) {
+    if (this._shadowsMaxDistance === value) {
+      // nothing to do
+      return;
+    }
     this._shadowsMaxDistance = value;
     saveStateToQueryString();
   },

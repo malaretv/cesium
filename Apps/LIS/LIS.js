@@ -386,6 +386,9 @@ function forceTerrainShadowsRefresh() {
   // force shadows update
   scene.globe.showGroundAtmosphere = !scene.globe.showGroundAtmosphere;
 
+  // update auto shadows max distance
+  maybeUpdateShadowsMaxDistance();
+
   // restore previous state after timeout
   setTimeout(finishForceTerrainShadowsRefresh, 100);
 }
@@ -919,7 +922,7 @@ function getBestShadowsMaxDistance() {
 }
 
 function updateShadowsMaxDist(maxDist) {
-  if (viewModel.shadowsMaxDistance == maxDist) {
+  if (viewModel.shadowsMaxDistance === maxDist) {
     return;
   }
 
@@ -928,18 +931,21 @@ function updateShadowsMaxDist(maxDist) {
     shadowsMaxDistance = maxDist * 1000.0; // m
   }
   viewModel.shadowsMaxDistance = shadowsMaxDistance;
-  var effectiveShadowsMaxDistance = shadowsMaxDistance;
   setCurrShadowsMaxDistVisible(shadowsMaxDistance === "auto");
   if (shadowsMaxDistance === "auto") {
-    effectiveShadowsMaxDistance = getBestShadowsMaxDistance();
-    console.log(
-      "best shadows max dist " +
-        (effectiveShadowsMaxDistance / 1000.0).toFixed(3) +
-        "km"
-    );
-    updateShadowsMaxDistanceDisplay(effectiveShadowsMaxDistance);
+    updateAutoShadowsMaxDistance();
+  } else {
+    shadowMap.maximumDistance = shadowsMaxDistance;
   }
-  shadowMap.maximumDistance = effectiveShadowsMaxDistance;
+}
+
+function updateAutoShadowsMaxDistance() {
+  let shadowsMaxDistance = getBestShadowsMaxDistance();
+  console.log(
+    "best shadows max dist " + (shadowsMaxDistance / 1000.0).toFixed(3) + "km"
+  );
+  updateShadowsMaxDistanceDisplay(shadowsMaxDistance);
+  shadowMap.maximumDistance = shadowsMaxDistance;
 }
 
 function maybeUpdateShadowsMaxDistance() {
@@ -1204,7 +1210,7 @@ function updateQMapImage() {
 }
 
 // SHOW COORDINATES
-var mousePosCartesian = new Cesium.Cartesian3();
+export var mousePosCartesian = new Cesium.Cartesian3();
 var cartesianCamera = new Cesium.Cartesian3();
 export var cartographicCamera = new Cesium.Cartographic();
 var cartographic = new Cesium.Cartographic();
