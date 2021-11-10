@@ -20,6 +20,8 @@ import {
 
 import { initializeImageryPicker } from "./imageryProvider.js";
 
+import FlyAroundPicker from "./FlyAroundPicker/FlyAroundPicker.js";
+
 import { cameraFlyToLookDownNorthUp } from "./utils.js";
 
 import { viewModel } from "./viewModel.js";
@@ -50,6 +52,9 @@ export function initializeUI() {
 
   // initialize home button
   initializeHomeButton();
+
+  var toolbar = document.getElementsByClassName("cesium-viewer-toolbar")[0];
+  var flyAroundPicker = new FlyAroundPicker(toolbar, viewer);
 
   if (window.LIS_MODE === "development") {
     viewer.extend(viewerCesiumInspectorMixin);

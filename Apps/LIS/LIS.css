@@ -1,5 +1,6 @@
 @import url(../../Source/Widgets/widgets.css);
 @import url(../../Source/Widgets/lighter.css);
+@import url(./FlyAroundPicker/FlyAroundPicker.css);
 
 html {
   height: 100%;
