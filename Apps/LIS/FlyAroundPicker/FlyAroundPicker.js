@@ -103,21 +103,6 @@ cesiumSvgPath: { path: _rotateAroundPointSunInFrontPath, width: 64, height: 64 }
   );
   wrapper.appendChild(rotateAroundPointSunInFrontButton);
 
-  var rotateAroundPointSelectButton = document.createElement("button");
-  rotateAroundPointSelectButton.type = "button";
-  rotateAroundPointSelectButton.className =
-    "cesium-button cesium-toolbar-button cesium-flyAroundPicker-dropDown-icon";
-  rotateAroundPointSelectButton.setAttribute(
-    "data-bind",
-    '\
-css: { "cesium-flyAroundPicker-visible" : false,\
-       "cesium-flyAroundPicker-hidden" : true },\
-attr: { title: selectedTooltip },\
-click: onPickerClick,\
-cesiumSvgPath: { path: _rotateAroundPointSelectPath, width: 64, height: 64 }'
-  );
-  wrapper.appendChild(rotateAroundPointSelectButton);
-
   knockout.applyBindings(viewModel, wrapper);
 
   this._viewModel = viewModel;
