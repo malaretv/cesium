@@ -12,9 +12,16 @@ import ScreenSpaceEventHandler from "../../../Source/Core/ScreenSpaceEventHandle
 import ScreenSpaceEventType from "../../../Source/Core/ScreenSpaceEventType.js";
 import Transforms from "../../../Source/Core/Transforms.js";
 
+import {
+  cartesianToDummyPolar,
+  dummyPolarToCartesian,
+} from "../adjustCartesian.js";
+
 import { mousePosCartesian } from "../LIS.js";
 
 import { getLightSourceSPICEPosition } from "../illumination.js";
+
+import { isOptimizedPolarTerrain } from "../terrainProvider.js";
 
 /**
  * The view model for {@link FlyAroundPicker}.
@@ -128,6 +135,21 @@ function FlyAroundPickerViewModel(viewer) {
   document.addEventListener("bodiesPosUpdated", function (e) {
     if (that._rotateCameraAroundPointLightInFrontEnabled) {
       that.rotateCameraAroundPointLightInFront(that._mouseClickPosCartesian);
+    }
+  });
+
+  document.addEventListener("globeRefereceSystemUpdated", function (e) {
+    if (that._mouseClickPosCartesian) {
+      // update mouse click position
+      if (isOptimizedPolarTerrain) {
+        that._mouseClickPosCartesian = cartesianToDummyPolar(
+          that._mouseClickPosCartesian
+        );
+      } else {
+        that._mouseClickPosCartesian = dummyPolarToCartesian(
+          that._mouseClickPosCartesian
+        );
+      }
     }
   });
 

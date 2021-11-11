@@ -116,6 +116,8 @@ function updateEntitiesPos() {
   }
 }
 
+const globeRefereceSystemUpdatedEvent = new Event("globeRefereceSystemUpdated");
+
 var newCameraPos;
 var newCameraDir;
 var newCameraUp;
@@ -191,14 +193,7 @@ export function updateGlobeCartesianPositions() {
   camera.direction = newCameraDir;
   camera.up = newCameraUp;
 
-  if (mouseClickPosCartesian) {
-    // update mouse click position
-    if (isOptimizedPolarTerrain) {
-      mouseClickPosCartesian = cartesianToDummyPolar(mouseClickPosCartesian);
-    } else {
-      mouseClickPosCartesian = dummyPolarToCartesian(mouseClickPosCartesian);
-    }
-  }
+  document.dispatchEvent(globeRefereceSystemUpdatedEvent);
 }
 
 // avoid to flood the server with requests
