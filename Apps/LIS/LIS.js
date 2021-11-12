@@ -123,6 +123,7 @@ var newCameraDir;
 var newCameraUp;
 var cameraR = new Cesium.Matrix3();
 var cameraT = new Cesium.Cartesian3();
+let emulateTrackedEntity = false;
 export function updateGlobeCartesianPositions() {
   var transform = camera.transform;
   var updateTransform = false;
@@ -133,6 +134,7 @@ export function updateGlobeCartesianPositions() {
     if (viewer.trackedEntity) {
       // untrack the current entity in order to custom update the camera transform matrix
       viewer.trackedEntity = undefined;
+      emulateTrackedEntity = true;
     } else {
       // reset camera transform
       camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
@@ -1152,11 +1154,13 @@ handler.setInputAction(({ endPosition }) => {
 handler.setInputAction(() => {
   if (
     !Cesium.Matrix4.equals(camera.transform, Cesium.Matrix4.IDENTITY) &&
-    !viewer.trackedEntity
+    !viewer.trackedEntity &&
+    emulateTrackedEntity
   ) {
     // console.log("reset transform");
     // reset camera transfor to emulate Cesium behavior when an entity is tracked
     camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+    emulateTrackedEntity = false;
   }
 }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
