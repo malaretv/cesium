@@ -83,7 +83,11 @@ function FlyAroundPickerViewModel(viewer) {
     if (that._rotateCameraAroundPointLightInFrontEnabled) {
       return that.tooltipRotateAroundPointSunInFront;
     }
-    return that.tooltipRotateAroundPoint;
+    if (that._rotateCameraAroundPointEnabled) {
+      return that.tooltipRotateAroundPoint;
+    }
+
+    return "Select how to fly around a point of interest";
   });
 
   knockout
