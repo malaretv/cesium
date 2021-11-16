@@ -1219,6 +1219,7 @@ const flags = {
 const flagsActive = {};
 
 let isShiftPressed = false;
+let isAltPressed = false;
 function handleKeyDown(e) {
   if (e.defaultPrevented) {
     return; // Do nothing if the event was already processed
@@ -1231,6 +1232,10 @@ function handleKeyDown(e) {
 
   if (e.key === "Shift") {
     isShiftPressed = true;
+    return;
+  }
+  if (e.key === "Alt") {
+    isAltPressed = true;
     return;
   }
   var flagName = getFlagForKeyCode(e.key);
@@ -1254,6 +1259,11 @@ function handleKeyUp(e) {
     isShiftPressed = false;
     return;
   }
+  if (e.key === "Alt") {
+    isAltPressed = false;
+    return;
+  }
+
   var flagName = getFlagForKeyCode(e.key);
   if (typeof flagName !== "undefined") {
     if (flags[flagName].active === true) {
@@ -1303,6 +1313,9 @@ function handleKeyboardControls(clock) {
     }
     if (op.includes("look")) {
       rate = 0.01;
+    }
+    if (isAltPressed) {
+      rate = rate / 10.0;
     }
     viewer?.camera?.[op]?.(rate);
   });
