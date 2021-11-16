@@ -1,6 +1,7 @@
 import createCommand from "../../../Source/Widgets/createCommand.js";
 import defined from "../../../Source/Core/defined.js";
 import destroyObject from "../../../Source/Core/destroyObject.js";
+import Cartesian2 from "../../../Source/Core/Cartesian2.js";
 import Cartesian3 from "../../../Source/Core/Cartesian3.js";
 import DeveloperError from "../../../Source/Core/DeveloperError.js";
 import EventHelper from "../../../Source/Core/EventHelper.js";
@@ -22,6 +23,8 @@ import { mousePosCartesian } from "../LIS.js";
 import { getLightSourceSPICEPosition } from "../illumination.js";
 
 import { isOptimizedPolarTerrain } from "../terrainProvider.js";
+
+import { cameraFlyTo } from "../utils.js";
 
 /**
  * The view model for {@link FlyAroundPicker}.
@@ -125,28 +128,6 @@ function FlyAroundPickerViewModel(viewer) {
       !that._mouseClickPosCartesian
     ) {
       that._mouseClickPosCartesian = Cartesian3.clone(mousePosCartesian);
-
-      // // recenter on point
-      // // get current click carto coords
-      // let ellipsoid
-      // let mouseClickPosCarto =
-      // that._scene.globe.ellipsoid.cartesianToCartographic(
-      //   that._mouseClickPosCartesian
-      // );
-      // // get camera height
-      // let cameraPosCarto =
-      // that._scene.globe.ellipsoid.cartesianToCartographic(
-      //   that._scene.camera.positionWC
-      // );
-
-      // var newCameraPos = Cartesian3.fromDegrees(
-      //   mouseClickPosCarto.longitude,
-      //   mouseClickPosCarto.latitude,
-      //   cameraPosCarto.height,
-      //   ellipsoid
-      // );
-
-      // that._scene.camera.position = newCameraPos;
 
       // start rotating
       if (that._rotateCameraAroundPointLightInFrontEnabled) {
@@ -324,24 +305,33 @@ FlyAroundPickerViewModel.prototype.setCameraPivotPoint = function (
 
   const pithCorrectTh = CesiumMath.toRadians(0.01);
   // console.log("camera pitch: " + camera.pitch + "(deg: " + rad2deg(camera.pitch) +")");
-  if (Math.abs(this._scene.camera.pitch) > CesiumMath.PI / 2 - pithCorrectTh) {
-    // note: slightly change the pitch as there could be rotation issues around Z axis when changing transformation
-    // Cesium issue???
-    const p = this._scene.camera.pitch + pithCorrectTh;
-    const h = 0;
-    const m = Cartesian3.distance(
+
+  // find center pixel coords
+  let centerScreenPos = new Cartesian2(
+    this._viewer.canvas.width / 2,
+    this._viewer.canvas.height / 2
+  );
+  const ray = this._scene.camera.getPickRay(centerScreenPos);
+  let viewCenterCartesian = this._scene.globe.pick(ray, this._scene);
+  let m;
+  if (viewCenterCartesian) {
+    m = Cartesian3.distance(this._scene.camera.positionWC, viewCenterCartesian);
+  } else {
+    m = Cartesian3.distance(
       this._scene.camera.positionWC,
       pointCartesianCoords
     );
-    this._scene.camera.lookAtTransform(
-      transform,
-      new HeadingPitchRange(h, p, m)
-    );
-  } else {
-    // View in east-north-up frame
-    // camera.constrainedAxis = Cesium.Cartesian3.UNIT_Z;
-    this._scene.camera.lookAtTransform(transform);
   }
+  const h = 0;
+  let p;
+  if (Math.abs(this._scene.camera.pitch) > CesiumMath.PI / 2 - pithCorrectTh) {
+    // note: slightly change the pitch as there could be rotation issues around Z axis when changing transformation
+    // Cesium issue???
+    p = this._scene.camera.pitch + pithCorrectTh;
+  } else {
+    p = this._scene.camera.pitch;
+  }
+  this._scene.camera.lookAtTransform(transform, new HeadingPitchRange(h, p, m));
 
   // console.log("camera pitch: " + camera.pitch + "(deg: " + rad2deg(camera.pitch) +")");
 
