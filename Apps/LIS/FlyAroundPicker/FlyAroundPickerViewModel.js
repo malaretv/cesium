@@ -121,6 +121,29 @@ function FlyAroundPickerViewModel(viewer) {
       !that._mouseClickPosCartesian
     ) {
       that._mouseClickPosCartesian = Cartesian3.clone(mousePosCartesian);
+
+      // // recenter on point
+      // // get current click carto coords
+      // let ellipsoid
+      // let mouseClickPosCarto =
+      // that._scene.globe.ellipsoid.cartesianToCartographic(
+      //   that._mouseClickPosCartesian
+      // );
+      // // get camera height
+      // let cameraPosCarto =
+      // that._scene.globe.ellipsoid.cartesianToCartographic(
+      //   that._scene.camera.positionWC
+      // );
+
+      // var newCameraPos = Cartesian3.fromDegrees(
+      //   mouseClickPosCarto.longitude,
+      //   mouseClickPosCarto.latitude,
+      //   cameraPosCarto.height,
+      //   ellipsoid
+      // );
+
+      // that._scene.camera.position = newCameraPos;
+
       // start rotating
       if (that._rotateCameraAroundPointLightInFrontEnabled) {
         that.initializeRotateCameraAroundPointLightInFront(
