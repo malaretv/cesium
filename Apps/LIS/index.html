@@ -22,14 +22,18 @@
       src="ThirdParty/dtsel-master/dtsel.js"
     ></script>
     <script src="https://unpkg.com/@popperjs/core@2"></script>
-    <script>
-      window.LIS_MODE = "development";
-    </script>
     <script
       src="https://js.sentry-cdn.com/845c42c4dcbd4fb68f4b12db7ff31f46.min.js"
       crossorigin="anonymous"
-      data-lazy="no"
     ></script>
+    <script>
+      window.LIS_MODE = "development";
+      Sentry.onLoad(function () {
+        Sentry.init({
+          allowUrls: [/quickmap\.io/],
+        });
+      });
+    </script>
   </head>
   <body
     class="sandcastle-loading"
